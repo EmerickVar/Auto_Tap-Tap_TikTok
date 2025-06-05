@@ -602,11 +602,11 @@
             console.log('⏳ Chat no encontrado inicialmente, iniciando observador...');
             iniciarObservador();
         }
-
-        // Registrar limpieza para cuando la extensión se desmonte
-        chrome.runtime.onSuspend.addListener(chatObserver.cleanup);
         
-        return chatObserver; // Retornar para limpieza externa si es necesario
+        // Guardar la referencia del observador para limpieza posterior
+        state.chatObserver = chatObserver;
+        
+        return chatObserver;
     }
 
     function configurarEventosChat(chatInput) {
@@ -703,11 +703,11 @@
             timers.cleanupAll();
             document.removeEventListener('click', handleClickOutside);
         };
-
-        // Registrar limpieza cuando la extensión se suspende
-        chrome.runtime.onSuspend.addListener(cleanup);
         
-        return cleanup; // Retornar función de limpieza para uso externo
+        // Guardar la función de limpieza
+        state.chatCleanup = cleanup;
+        
+        return cleanup;
     }
 
     // Función para mostrar notificaciones del chat
@@ -878,11 +878,11 @@
                 state.chatTimeout = null;
             }
         };
-
-        // Registrar limpieza cuando la extensión se suspende
-        chrome.runtime.onSuspend.addListener(cleanup);
         
-        return cleanup; // Retornar función de limpieza para uso externo
+        // Almacenar la función de limpieza en el estado global
+        state.cleanup = cleanup;
+        
+        return cleanup;
     }
 
     // Función para verificar el estado de la extensión
