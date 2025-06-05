@@ -1,17 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Elementos DOM
+    // Referencias a elementos del DOM
     const elementos = {
-        toggleButton: document.getElementById('toggleButton'),
-        statusText: document.getElementById('statusText'),
-        totalTapTaps: document.getElementById('totalTapTaps'),
-        sessionLikes: document.getElementById('sessionLikes'),
-        resetStats: document.getElementById('resetStats'),
-        openTikTok: document.getElementById('openTikTok'),
-        chatReactivationTime: document.getElementById('chatReactivationTime')
+        toggleButton: document.getElementById('toggleButton'),          // Botón de activar/desactivar
+        statusText: document.getElementById('statusText'),             // Texto de estado
+        totalTapTaps: document.getElementById('totalTapTaps'),        // Total histórico de tap-taps
+        sessionTapTaps: document.getElementById('sessionTapTaps'),     // Tap-taps de la sesión actual
+        resetStats: document.getElementById('resetStats'),             // Botón de reiniciar estadísticas
+        openTikTok: document.getElementById('openTikTok'),            // Botón para abrir TikTok
+        chatReactivationTime: document.getElementById('chatReactivationTime') // Input de tiempo de reactivación
     };
     
-    // Estado
-    let updateInterval = null;
+    // Variables de estado
+    let updateInterval = null; // Intervalo para actualizar el estado
     
     // Funciones
     const updateUI = (activo, contador = 0) => {
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elementos.toggleButton.textContent = 'Iniciar';
             elementos.toggleButton.className = 'toggle-button start';
         }
-        elementos.sessionLikes.textContent = contador;
+        elementos.sessionTapTaps.textContent = contador;
     };
     
     const updatePopupStatus = async () => {
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
             
             if (!tab.url.includes('tiktok.com')) {
-                elementos.statusText.textContent = 'Abre TikTok primero';
+                elementos.statusText.textContent = '⚠️ Abre TikTok primero';
                 elementos.toggleButton.disabled = true;
                 elementos.openTikTok.style.display = 'block';
                 return;
@@ -44,9 +44,9 @@ document.addEventListener('DOMContentLoaded', () => {
             
             chrome.tabs.sendMessage(tab.id, { action: 'getStatus' }, response => {
                 if (chrome.runtime.lastError) {
-                    elementos.statusText.textContent = 'Recarga la página de TikTok';
+                    elementos.statusText.textContent = '🔄 Recarga la página de TikTok';
                     elementos.toggleButton.disabled = true;
-                    elementos.sessionLikes.textContent = '0';
+                    elementos.sessionTapTaps.textContent = '0';
                 } else if (response) {
                     updateUI(response.activo, response.contador);
                     elementos.toggleButton.disabled = false;
@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     elementos.resetStats.addEventListener('click', () => {
-        if (confirm('¿Estás seguro de resetear las estadísticas?')) {
+        if (confirm('¿Estás seguro de que deseas reiniciar las estadísticas? Esta acción no se puede deshacer.')) {
             chrome.storage.local.set({ totalTapTaps: 0 }, () => {
                 elementos.totalTapTaps.textContent = '0';
             });

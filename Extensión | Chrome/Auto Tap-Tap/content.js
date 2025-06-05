@@ -6,23 +6,23 @@
     
     // Estado de la aplicación
     const state = {
-        intervalo: null,
-        activo: false,
-        contador: 0,
-        isDragging: false,
-        currentX: 0,
-        currentY: 0,
-        initialX: 0,
-        initialY: 0,
-        xOffset: 0,
-        yOffset: 0,
-        chatTimeout: null,
-        tiempoReactivacion: 10,
-        pausadoPorChat: false,
-        apagadoManualmente: false
+        intervalo: null, // Intervalo para los tap-taps
+        activo: false,  // Estado actual del auto tap-tap
+        contador: 0,    // Contador de tap-taps en la sesión actual
+        isDragging: false,         // Estado de arrastre de la ventana
+        currentX: 0,             // Posición X actual
+        currentY: 0,             // Posición Y actual
+        initialX: 0,             // Posición X inicial del arrastre
+        initialY: 0,             // Posición Y inicial del arrastre
+        xOffset: 0,              // Desplazamiento X guardado
+        yOffset: 0,              // Desplazamiento Y guardado
+        chatTimeout: null,       // Temporizador para reactivación del chat
+        tiempoReactivacion: 10,  // Tiempo en segundos para reactivar después del chat
+        pausadoPorChat: false,   // Indica si está pausado por uso del chat
+        apagadoManualmente: false // Indica si fue apagado manualmente por el usuario
     };
     
-    // Configuración
+    // Configuración de intervalos
     const config = {
         intervalos: [
             { valor: 200, texto: '200 milisegundos | [Muy rápido]' },
@@ -30,29 +30,65 @@
             { valor: 500, texto: '500 milisegundos | [Normal]' },
             { valor: 1000, texto: '1  segundo      | [Lento]' }
         ],
-        defaultInterval: 200 // Valor por defecto en milisegundos
+        defaultInterval: 200 // Intervalo predeterminado en milisegundos
     };
     
     // Elementos DOM
     const elementos = {};
     
-    // Funciones principales
-    function presionarL() {
-        const evento = new KeyboardEvent('keydown', {
-            key: 'l',
-            code: 'KeyL',
-            keyCode: 76,
-            which: 76,
-            bubbles: true,
-            cancelable: true
-        });
-        document.dispatchEvent(evento);
-        state.contador++;
-        actualizarContador();
-        guardarEstadisticas();
+    // Funciones principales para el manejo de almacenamiento y extensión
+    function safeStorageOperation(operation) {
+        try {
+            return operation();
+        } catch (error) {
+            console.warn('Error en operación de almacenamiento:', error);
+            if (error.message.includes('Extension context invalidated')) {
+                reloadExtension();
+            }
+            return Promise.reject(error);
+        }
     }
 
-    // En content.js, modifica la función presionarL para actualizar el badge:
+    function reloadExtension() {
+        console.log('🔄 Reconectando extensión...');
+        // Limpiar timers y estado anterior
+        if (state.intervalo) clearInterval(state.intervalo);
+        if (state.chatTimeout) clearTimeout(state.chatTimeout);
+        
+        // Intentar reconectar sin recargar la página
+        try {
+            // Restaurar el estado anterior si estaba activo
+            if (state.activo) {
+                const intervalo = parseInt(elementos.selector.value);
+                state.intervalo = setInterval(presionarL, intervalo);
+            }
+            
+            // Reconfigurar los listeners
+            setupMessageListener();
+        } catch (error) {
+            console.warn('❌ Error al reconectar:', error);
+        }
+    }
+
+    function safeRuntimeMessage(message) {
+        try {
+            chrome.runtime.sendMessage(message, response => {
+                if (chrome.runtime.lastError) {
+                    console.warn('Error de comunicación:', chrome.runtime.lastError.message);
+                    if (chrome.runtime.lastError.message.includes('Extension context invalidated') ||
+                        chrome.runtime.lastError.message.includes('message port closed')) {
+                        reloadExtension();
+                    }
+                }
+            });
+        } catch (error) {
+            console.warn('Error al enviar mensaje:', error);
+            if (error.message.includes('Extension context invalidated')) {
+                reloadExtension();
+            }
+        }
+    }
+
     function presionarL() {
         const evento = new KeyboardEvent('keydown', {
             key: 'l',
@@ -67,9 +103,9 @@
         actualizarContador();
         guardarEstadisticas();
         
-        // Actualizar badge
-        chrome.runtime.sendMessage({ 
-            action: 'updateLikes', 
+        // Actualizar badge usando la función segura
+        safeRuntimeMessage({ 
+            action: 'updateTapTaps', 
             count: state.contador 
         });
     }
@@ -81,9 +117,11 @@
     }
     
     function guardarEstadisticas() {
-        chrome.storage.local.get(['totalTapTaps'], result => {
-            chrome.storage.local.set({ 
-                totalTapTaps: (result.totalTapTaps || 0) + 1 
+        safeStorageOperation(() => {
+            chrome.storage.local.get(['totalTapTaps'], result => {
+                chrome.storage.local.set({ 
+                    totalTapTaps: (result.totalTapTaps || 0) + 1 
+                });
             });
         });
     }
@@ -104,7 +142,7 @@
             
             presionarL();
             state.intervalo = setInterval(presionarL, intervalo);
-            chrome.runtime.sendMessage({ action: 'started' });
+            safeRuntimeMessage({ action: 'started' });
         } else {
             elementos.boton.textContent = '❤️ Auto Tap-Tap: OFF';
             elementos.boton.style.background = '#ff0050';
@@ -112,7 +150,7 @@
             elementos.selector.style.opacity = '1';
             
             clearInterval(state.intervalo);
-            chrome.runtime.sendMessage({ action: 'stopped' });
+            safeRuntimeMessage({ action: 'stopped' });
         }
     }
     
@@ -134,8 +172,10 @@
         state.initialY = state.currentY;
         state.isDragging = false;
         
-        chrome.storage.local.set({ 
-            position: { x: state.xOffset, y: state.yOffset } 
+        safeStorageOperation(() => {
+            chrome.storage.local.set({ 
+                position: { x: state.xOffset, y: state.yOffset } 
+            });
         });
     }
     
@@ -165,7 +205,7 @@
             right: 20px;
             z-index: 99999;
             background: rgba(0, 0, 0, 0.8);
-            width: 250px;
+            width: 350px;
             padding: 15px;
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
@@ -338,7 +378,7 @@
             padding-top: 10px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             text-align: center;
-            font-size: 10px;
+            font-size: 14px;
         `;
 
         const copyrightLinks = document.createElement('div');
@@ -392,16 +432,28 @@
     
     // Funciones del chat
     function manejarInteraccionChat() {
+        // Función auxiliar para encontrar la caja de chat
+        const buscarChatInput = () => {
+            // Primero intentar encontrar el div editable del chat
+            const chatInput = document.querySelector([
+                // Buscar el div editable específico de TikTok Live
+                'div[contenteditable="plaintext-only"][placeholder="Di algo bonito"]',
+                'div[contenteditable="plaintext-only"][maxlength="150"]',
+                'div[contenteditable][placeholder="Di algo bonito"]',
+                // Buscar cualquier div editable que tenga el límite de caracteres
+                'div[contenteditable][maxlength="150"]',
+                'div[contenteditable][role="textbox"]',
+                // Selectores alternativos por si fallan los anteriores
+                'div[role="textbox"]',
+                'input[placeholder="Di algo bonito"]'
+            ].join(','));
+
+            return chatInput;
+        };
+
         // Observador para detectar cuando el chat se añade al DOM
         const observer = new MutationObserver((mutations) => {
-            // Buscar el chat usando varios selectores posibles para mayor robustez
-            const chatInput = document.querySelector([
-                'input[placeholder="Escribe algo bonito"]',
-                '.tiktok-ikuba6.e2lzvyu1',
-                'div[data-e2e="chat-input"] input',
-                'div[role="textbox"]'
-            ].join(','));
-            
+            const chatInput = buscarChatInput();
             if (chatInput) {
                 observer.disconnect();
                 configurarEventosChat(chatInput);
@@ -413,14 +465,8 @@
             subtree: true
         });
 
-        // Intentar encontrar el chat inmediatamente también
-        const chatInput = document.querySelector([
-            'input[placeholder="Escribe algo bonito"]',
-            '.tiktok-ikuba6.e2lzvyu1',
-            'div[data-e2e="chat-input"] input',
-            'div[role="textbox"]'
-        ].join(','));
-        
+        // Intentar encontrar el chat inmediatamente
+        const chatInput = buscarChatInput();
         if (chatInput) {
             configurarEventosChat(chatInput);
         }
@@ -429,54 +475,153 @@
     function configurarEventosChat(chatInput) {
         // Buscar el contenedor del chat de forma más robusta
         const chatContainer = chatInput.closest([
-            '.tiktok-1u9a62k.e2lzvyu4',
-            'div[data-e2e="chat-room"]',
-            'div[data-e2e="chat-input"]',
+            'div[contenteditable="plaintext-only"]',
+            'div[contenteditable][maxlength="150"]',
+            'div[contenteditable][role="textbox"]',
             chatInput.parentElement
-        ].find(selector => chatInput.closest(selector)));
+        ].find(selector => chatInput.closest(selector))) || chatInput.parentElement;
 
         if (!chatContainer) return;
 
         let typingTimer;
+        let countdownInterval;
+
+        // Función para reactivar el Auto Tap-Tap después de usar el chat
+        const reactivarAutoTapTap = () => {
+            if (!state.apagadoManualmente) {
+                state.pausadoPorChat = false;
+                if (countdownInterval) {
+                    clearInterval(countdownInterval);
+                }
+                // Para divs editables de TikTok Live, quitar el foco
+                if (chatInput.getAttribute('contenteditable')) {
+                    chatInput.blur();
+                    chatInput.setAttribute('focused', 'false');
+                } else {
+                    chatInput.blur();
+                }
+                toggleAutoTapTap(true);
+                mostrarNotificacionChat('¡Auto Tap-Tap reactivado! 🎉', 'success');
+            }
+        };
+
+        // Función para crear o actualizar el div de cuenta regresiva
+        const crearContadorRegresivo = () => {
+            if (!elementos.contadorRegresivo) {
+                elementos.contadorRegresivo = document.createElement('div');
+                elementos.contadorRegresivo.style.cssText = `
+                    position: absolute;
+                    bottom: 10px;
+                    right: 10px;
+                    background: rgba(255, 255, 255, 0.15);
+                    backdrop-filter: blur(5px);
+                    border-radius: 50%;
+                    width: 40px;
+                    height: 40px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 20px;
+                    font-weight: bold;
+                    color: white;
+                    opacity: 0;
+                    transition: opacity 0.3s ease, transform 0.3s ease;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+                `;
+                elementos.contenedor.appendChild(elementos.contadorRegresivo);
+            }
+            return elementos.contadorRegresivo;
+        };
+
+        // Función para iniciar la cuenta regresiva
+        const iniciarContadorRegresivo = (segundos) => {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+
+            const contadorRegresivo = crearContadorRegresivo();
+            let tiempoRestante = segundos;
+
+            contadorRegresivo.style.opacity = '1';
+            contadorRegresivo.style.transform = 'scale(1)';
+
+            const actualizarContador = () => {
+                if (tiempoRestante >= 0) {
+                    contadorRegresivo.textContent = tiempoRestante;
+                    contadorRegresivo.style.transform = 'scale(1.2)';
+                    // Animar de grande a pequeño
+                    setTimeout(() => {
+                        contadorRegresivo.style.transform = 'scale(1)';
+                    }, 100);
+                    tiempoRestante--;
+                } else {
+                    clearInterval(countdownInterval);
+                    contadorRegresivo.style.opacity = '0';
+                    setTimeout(() => {
+                        contadorRegresivo.style.display = 'none';
+                    }, 300);
+                }
+            };
+
+            actualizarContador();
+            countdownInterval = setInterval(actualizarContador, 1000);
+        };
 
         // Cuando el usuario interactúa con el chat
-        chatInput.addEventListener('focus', () => {
+        const onFocus = () => {
             if (state.activo && !state.apagadoManualmente) {
                 state.pausadoPorChat = true;
                 toggleAutoTapTap(true);
-                
-                // Mostrar notificación de pausa
-                mostrarNotificacionChat('Auto Tap-Tap pausado mientras escribes...', 'warning');
+                mostrarNotificacionChat('✍️ Auto Tap-Tap pausado mientras escribes...', 'warning');
             }
-        });
+        };
+
+        // Eventos para detectar cuando el usuario quiere escribir en el chat
+        chatInput.addEventListener('focus', onFocus);
+        chatInput.addEventListener('click', onFocus);
+
+        // Eventos adicionales para divs editables de TikTok Live
+        if (chatInput.getAttribute('contenteditable')) {
+            chatInput.addEventListener('keydown', () => {
+                if (!state.pausadoPorChat) {
+                    onFocus();
+                }
+            });
+        }
 
         // Cuando el usuario escribe en el chat
-        chatInput.addEventListener('input', () => {
+        const handleInput = () => {
             if (state.chatTimeout) {
                 clearTimeout(state.chatTimeout);
             }
             if (typingTimer) {
                 clearTimeout(typingTimer);
             }
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                if (elementos.contadorRegresivo) {
+                    elementos.contadorRegresivo.style.opacity = '0';
+                }
+            }
             
             if (state.pausadoPorChat) {
                 // Reiniciar el temporizador cada vez que el usuario escribe
                 typingTimer = setTimeout(() => {
                     if (!state.apagadoManualmente && state.pausadoPorChat) {
-                        state.chatTimeout = setTimeout(() => {
-                            if (!state.apagadoManualmente) {
-                                state.pausadoPorChat = false;
-                                toggleAutoTapTap(true);
-                                mostrarNotificacionChat('Auto Tap-Tap reactivado', 'success');
-                            }
-                        }, state.tiempoReactivacion * 1000);
-                        
-                        // Mostrar notificación de temporizador
+                        state.chatTimeout = setTimeout(reactivarAutoTapTap, state.tiempoReactivacion * 1000);
+                        iniciarContadorRegresivo(state.tiempoReactivacion);
                         mostrarNotificacionChat(`Reactivando en ${state.tiempoReactivacion} segundos...`, 'info');
                     }
-                }, 1000); // Esperar 1 segundo después de que el usuario deja de escribir
+                }, 1000);
             }
-        });
+        };
+
+        chatInput.addEventListener('input', handleInput);
+        // Para divs editables
+        if (chatInput.getAttribute('contenteditable')) {
+            chatInput.addEventListener('keyup', handleInput);
+            chatInput.addEventListener('paste', handleInput);
+        }
 
         // Cuando el usuario hace click fuera del chat
         document.addEventListener('click', (e) => {
@@ -487,18 +632,13 @@
                 if (typingTimer) {
                     clearTimeout(typingTimer);
                 }
+                if (countdownInterval) {
+                    clearInterval(countdownInterval);
+                }
                 
-                // Iniciar temporizador para reactivación
-                state.chatTimeout = setTimeout(() => {
-                    if (!state.apagadoManualmente) {
-                        state.pausadoPorChat = false;
-                        toggleAutoTapTap(true);
-                        mostrarNotificacionChat('Auto Tap-Tap reactivado', 'success');
-                    }
-                }, state.tiempoReactivacion * 1000);
-                
-                // Mostrar notificación de temporizador
-                mostrarNotificacionChat(`Reactivando en ${state.tiempoReactivacion} segundos...`, 'info');
+                state.chatTimeout = setTimeout(reactivarAutoTapTap, state.tiempoReactivacion * 1000);
+                iniciarContadorRegresivo(state.tiempoReactivacion);
+                mostrarNotificacionChat(`⏳ Reactivando en ${state.tiempoReactivacion} segundos...`, 'info');
             }
         });
     }
@@ -523,22 +663,25 @@
             document.body.appendChild(elementos.notificacionChat);
         }
 
-        // Establecer estilos según el tipo
+        // Establecer estilos según el tipo de notificación
         const estilos = {
             success: {
-                background: 'rgba(0, 255, 136, 0.95)',
-                color: '#000',
-                border: '1px solid #00ff88'
+                background: 'rgba(25, 148, 3, 0.95)',
+                color: '#fff',
+                border: '1px solid #42e004',
+                boxShadow: '0 2px 8px rgba(66, 224, 4, 0.2)'
             },
             warning: {
                 background: 'rgba(255, 0, 80, 0.95)',
                 color: '#fff',
-                border: '1px solid #ff0050'
+                border: '1px solid #ff0050',
+                boxShadow: '0 2px 8px rgba(255, 0, 80, 0.2)'
             },
             info: {
                 background: 'rgba(0, 0, 0, 0.95)',
                 color: '#fff',
-                border: '1px solid #666'
+                border: '1px solid #666',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
             }
         };
 
@@ -590,7 +733,9 @@
         
         // Guardar intervalo seleccionado
         elementos.selector.addEventListener('change', () => {
-            chrome.storage.local.set({ intervalo: elementos.selector.value });
+            safeStorageOperation(() => {
+                chrome.storage.local.set({ intervalo: elementos.selector.value });
+            });
         });
 
         // Guardar tiempo de reactivación
@@ -607,11 +752,13 @@
             
             // Actualizar estado y storage
             state.tiempoReactivacion = tiempo;
-            chrome.storage.local.set({ tiempoReactivacion: tiempo }, () => {
-                // Notificar al popup
-                chrome.runtime.sendMessage({ 
-                    action: 'tiempoReactivacionChanged', 
-                    tiempo: tiempo 
+            safeStorageOperation(() => {
+                chrome.storage.local.set({ tiempoReactivacion: tiempo }, () => {
+                    // Notificar al popup usando la función segura
+                    safeRuntimeMessage({ 
+                        action: 'tiempoReactivacionChanged', 
+                        tiempo: tiempo 
+                    });
                 });
             });
         });
@@ -637,56 +784,108 @@
             }
         });
         
-        // Mensajes del popup
-        chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-            if (request.action === 'toggle') {
-                toggleAutoTapTap();
-            } else if (request.action === 'getStatus') {
-                sendResponse({ 
-                    activo: state.activo, 
-                    contador: state.contador 
-                });
-            } else if (request.action === 'updateReactivacionTime') {
-                state.tiempoReactivacion = request.tiempo;
-            }
-        });
-        
-        // Limpiar al salir
-        window.addEventListener('beforeunload', () => {
-            if (state.intervalo) clearInterval(state.intervalo);
-        });
+        // Register message listener on initial setup
+        setupMessageListener();
     }
-    
-    // Cargar configuración guardada
-    function cargarConfiguracion() {
-        chrome.storage.local.get(['position', 'intervalo'], result => {
-            if (result.position) {
-                state.xOffset = result.position.x;
-                state.yOffset = result.position.y;
-                elementos.contenedor.style.transform = `translate3d(${state.xOffset}px, ${state.yOffset}px, 0)`;
+
+    // Configuración global del receptor de mensajes
+    let messageListener = null;
+    function setupMessageListener() {
+        try {
+            // Eliminar el receptor anterior si existe
+            if (messageListener) {
+                chrome.runtime.onMessage.removeListener(messageListener);
             }
-            
-            elementos.selector.value = result.intervalo || config.defaultInterval;
-        });
-    }
-    
-    // Cargar configuración guardada
-    function cargarConfiguracion() {
-        chrome.storage.local.get(['position', 'intervalo', 'tiempoReactivacion'], result => {
-            if (result.position) {
-                state.xOffset = result.position.x;
-                state.yOffset = result.position.y;
-                elementos.contenedor.style.transform = `translate3d(${state.xOffset}px, ${state.yOffset}px, 0)`;
-            }
-            
-            elementos.selector.value = result.intervalo || config.defaultInterval;
-            state.tiempoReactivacion = result.tiempoReactivacion || 5;
-        });
+
+            messageListener = (request, sender, sendResponse) => {
+                try {
+                    if (request.action === 'toggle') {
+                        toggleAutoTapTap();
+                    } else if (request.action === 'updateInterval') {
+                        const nuevoIntervalo = request.intervalo;
+                        if (state.activo && nuevoIntervalo !== parseInt(elementos.selector.value)) {
+                            clearInterval(state.intervalo);
+                            state.intervalo = setInterval(presionarL, nuevoIntervalo);
+                        }
+                    } else if (request.action === 'resetCounter') {
+                        state.contador = 0;
+                        actualizarContador();
+                    } else if (request.action === 'setPosition') {
+                        const { x, y } = request.position;
+                        state.xOffset = x;
+                        state.yOffset = y;
+                        elementos.contenedor.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+                    } else if (request.action === 'updateTapTaps') {
+                        state.contador = request.count;
+                        actualizarContador();
+                    } else if (request.action === 'started') {
+                        state.activo = true;
+                        elementos.boton.textContent = '❤️ Auto Tap-Tap: ON';
+                        elementos.boton.style.background = '#00ff88';
+                    } else if (request.action === 'stopped') {
+                        state.activo = false;
+                        elementos.boton.textContent = '❤️ Auto Tap-Tap: OFF';
+                        elementos.boton.style.background = '#ff0050';
+                    } else if (request.action === 'tiempoReactivacionChanged') {
+                        state.tiempoReactivacion = request.tiempo;
+                        elementos.reactivacionInput.value = request.tiempo;
+                    }
+                } catch (error) {
+                    console.error('Error en listener de mensaje:', error);
+                }
+            };
+
+            chrome.runtime.onMessage.addListener(messageListener);
+        } catch (error) {
+            console.error('Error al configurar listener de mensajes:', error);
+        }
     }
 
     // Inicializar
-    crearInterfaz();
-    configurarEventos();
-    cargarConfiguracion();
-    manejarInteraccionChat();
+    function init() {
+        // Crear interfaz
+        crearInterfaz();
+        
+        // Cargar estado desde storage
+        safeStorageOperation(() => {
+            chrome.storage.local.get([
+                'intervalo', 
+                'totalTapTaps', 
+                'position',
+                'tiempoReactivacion'
+            ], result => {
+                if (result.intervalo) {
+                    elementos.selector.value = result.intervalo;
+                    const intervalo = parseInt(result.intervalo);
+                    state.intervalo = setInterval(presionarL, intervalo);
+                }
+                
+                if (result.totalTapTaps) {
+                    state.contador = result.totalTapTaps;
+                    actualizarContador();
+                }
+                
+                if (result.position) {
+                    const { x, y } = result.position;
+                    state.xOffset = x;
+                    state.yOffset = y;
+                    elementos.contenedor.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+                }
+                
+                if (result.tiempoReactivacion) {
+                    state.tiempoReactivacion = result.tiempoReactivacion;
+                    elementos.reactivacionInput.value = result.tiempoReactivacion;
+                }
+            });
+        });
+        
+        // Configurar eventos
+        configurarEventos();
+        
+        // Manejar interacciones de chat
+        manejarInteraccionChat();
+    }
+
+    // Iniciar aplicación
+    init();
 })();

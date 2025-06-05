@@ -9,14 +9,14 @@
     "storage"
   ],
   "host_permissions": [
-    "https://www.tiktok.com/*"
+    "https://www.tiktok.com/*/live"
   ],
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
-      "matches": ["https://www.tiktok.com/*"],
+      "matches": ["https://www.tiktok.com/*/live"],
       "js": ["content.js"],
       "run_at": "document_end"
     }

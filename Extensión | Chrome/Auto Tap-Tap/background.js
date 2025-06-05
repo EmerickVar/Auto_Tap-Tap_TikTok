@@ -1,23 +1,23 @@
-// background.js - Service Worker con badge mejorado
+// background.js - Servicio trabajador con insignia mejorada
 let taptapsCount = 0;
 let badgeInterval = null;
 
 chrome.runtime.onInstalled.addListener(() => {
-    // Inicializar storage
+    // Inicializar almacenamiento
     chrome.storage.local.get(['totalTapTaps'], result => {
         if (!result.totalTapTaps) {
             chrome.storage.local.set({ totalTapTaps: 0 });
         }
     });
     
-    // Configurar badge inicial
+    // Configurar insignia inicial
     chrome.action.setBadgeBackgroundColor({ color: '#ff0050' });
 });
 
-// Función para actualizar el badge
+// Función para actualizar la insignia
 function updateBadge(count) {
     if (count > 0) {
-        // Formatear número para el badge
+        // Formatear número para la insignia
         let badgeText = count.toString();
         if (count > 999) {
             badgeText = Math.floor(count / 1000) + 'k';
@@ -32,7 +32,7 @@ function updateBadge(count) {
     }
 }
 
-// Función para animar el badge
+// Función para animar la insignia
 function animateBadge() {
     const colors = ['#ff0050', '#ff3366', '#ff0050'];
     let colorIndex = 0;
@@ -77,17 +77,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 });
 
-// Actualizar badge cuando se cambie de pestaña
+// Actualizar la insignia al cambiar entre pestañas
 chrome.tabs.onActivated.addListener(async (activeInfo) => {
     const tab = await chrome.tabs.get(activeInfo.tabId);
     
     if (tab.url && tab.url.includes('tiktok.com')) {
-        // Mostrar badge si estamos en TikTok
+        // Mostrar el contador en la insignia si estamos en TikTok
         chrome.storage.local.get(['totalTapTaps'], result => {
             updateBadge(result.totalTapTaps || 0);
         });
     } else {
-        // Ocultar badge si no estamos en TikTok
+        // Ocultar la insignia si no estamos en una pestaña de TikTok
         chrome.action.setBadgeText({ text: '' });
     }
 });

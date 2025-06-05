@@ -1,13 +1,13 @@
-// Script para ejecutar en la consola del navegador o como userscript
+// Script para ejecutar en la consola del navegador o como script de usuario
 (function() {
     'use strict';
     
-    // Variables globales
-    let intervalo = null;
-    let activo = false;
-    let contador = 0;
+    // Variables globales para el control del Auto Tap-Tap
+    let intervalo = null;    // Intervalo para los tap-taps
+    let activo = false;      // Estado actual del auto tap-tap
+    let contador = 0;        // Contador de tap-taps dados
     
-    // Función para presionar L
+    // Función para simular presionar la tecla L
     function presionarL() {
         const evento = new KeyboardEvent('keydown', {
             key: 'l',
@@ -38,16 +38,16 @@
         user-select: none;
     `;
     
-    // Variables para el drag
-    let isDragging = false;
-    let currentX;
-    let currentY;
-    let initialX;
-    let initialY;
-    let xOffset = 0;
-    let yOffset = 0;
+    // Variables para el arrastre de la ventana
+    let isDragging = false;  // Estado de arrastre
+    let currentX;           // Posición X actual
+    let currentY;           // Posición Y actual
+    let initialX;          // Posición X inicial
+    let initialY;          // Posición Y inicial
+    let xOffset = 0;       // Desplazamiento X guardado
+    let yOffset = 0;       // Desplazamiento Y guardado
     
-    // Funciones para hacer draggable
+    // Funciones para hacer la ventana arrastrable
     function dragStart(e) {
         if (e.type === "touchstart") {
             initialX = e.touches[0].clientX - xOffset;

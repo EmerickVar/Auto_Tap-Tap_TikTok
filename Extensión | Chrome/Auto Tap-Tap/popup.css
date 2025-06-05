@@ -285,8 +285,8 @@ h1::before {
     outline: none;
     border-color: #ff0050;
     box-shadow: 0 0 0 2px rgba(255, 0, 80, 0.1);
-    padding: 8px;
-    font-size: 14px;
+    padding: 6px 0;
+    font-size: 13px;
     color: #444;
 }
 
@@ -302,9 +302,8 @@ h1::before {
 
 /* Animaciones */
 @keyframes pulse {
-    0% { transform: scale(1); }
+    0%, 100% { transform: scale(1); }
     50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
 }
 
 /* Scrollbar */
