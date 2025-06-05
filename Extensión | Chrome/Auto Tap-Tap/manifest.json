@@ -6,11 +6,17 @@
   "author": "Emerick Echeverría Vargas",
   "permissions": [
     "activeTab",
-    "storage"
+    "storage",
+    "scripting"
   ],
   "host_permissions": [
-    "https://www.tiktok.com/*"
+    "https://www.tiktok.com/*",
+    "https://*.tiktok.com/*"
   ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src https://*.tiktok.com https://www.tiktok.com",
+    "sandbox": "sandbox allow-scripts allow-forms allow-popups allow-modals; script-src 'self' https://*.tiktok.com"
+  },
   "background": {
     "service_worker": "background.js"
   },
@@ -18,9 +24,14 @@
     {
       "matches": ["https://www.tiktok.com/@*/live", "https://www.tiktok.com/@*/live?*"],
       "js": ["content.js"],
-      "run_at": "document_end"
+      "run_at": "document_end",
+      "all_frames": true
     }
   ],
+  "web_accessible_resources": [{
+    "resources": ["*.js", "*.css"],
+    "matches": ["https://www.tiktok.com/*"]
+  }],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

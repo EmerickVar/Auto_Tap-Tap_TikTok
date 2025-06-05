@@ -120,22 +120,28 @@
     }
 
     function safeRuntimeMessage(message) {
-        try {
-            chrome.runtime.sendMessage(message, response => {
-                if (chrome.runtime.lastError) {
-                    console.warn('Error de comunicación:', chrome.runtime.lastError.message);
-                    if (chrome.runtime.lastError.message.includes('Extension context invalidated') ||
-                        chrome.runtime.lastError.message.includes('message port closed')) {
-                        reloadExtension();
+        return new Promise((resolve, reject) => {
+            try {
+                chrome.runtime.sendMessage(message, response => {
+                    if (chrome.runtime.lastError) {
+                        console.warn('Error de comunicación:', chrome.runtime.lastError.message);
+                        if (chrome.runtime.lastError.message.includes('Extension context invalidated') ||
+                            chrome.runtime.lastError.message.includes('message port closed')) {
+                            reloadExtension();
+                        }
+                        reject(chrome.runtime.lastError);
+                        return;
                     }
+                    resolve(response);
+                });
+            } catch (error) {
+                console.warn('Error al enviar mensaje:', error);
+                if (error.message.includes('Extension context invalidated')) {
+                    reloadExtension();
                 }
-            });
-        } catch (error) {
-            console.warn('Error al enviar mensaje:', error);
-            if (error.message.includes('Extension context invalidated')) {
-                reloadExtension();
+                reject(error);
             }
-        }
+        });
     }
 
     function presionarL() {
@@ -180,9 +186,18 @@
             state.apagadoManualmente = !state.activo;
         }
         
-        state.activo = !state.activo;
+        const nuevoEstado = !state.activo;
         
-        if (state.activo) {
+        // Limpiar intervalos existentes
+        if (state.intervalo) {
+            clearInterval(state.intervalo);
+            state.intervalo = null;
+        }
+        
+        // Actualizar estado
+        state.activo = nuevoEstado;
+        
+        if (nuevoEstado) {
             const intervalo = parseInt(elementos.selector.value);
             elementos.boton.textContent = '❤️ Auto Tap-Tap: ON';
             elementos.boton.style.background = '#00ff88';
@@ -190,10 +205,13 @@
             elementos.selector.style.opacity = '0.5';
             
             // Solo iniciar el intervalo si está activo manualmente
-            if (!fromChat) {
-                presionarL();
+            if (!fromChat && !state.pausadoPorChat) {
+                presionarL(); // Ejecutar inmediatamente
                 state.intervalo = setInterval(presionarL, intervalo);
-                safeRuntimeMessage({ action: 'started' });
+                
+                // Notificar al background
+                safeRuntimeMessage({ action: 'started' })
+                    .catch(error => console.warn('Error al notificar estado:', error));
             }
         } else {
             elementos.boton.textContent = '❤️ Auto Tap-Tap: OFF';
@@ -201,8 +219,9 @@
             elementos.selector.disabled = false;
             elementos.selector.style.opacity = '1';
             
-            clearInterval(state.intervalo);
-            safeRuntimeMessage({ action: 'stopped' });
+            // Notificar al background
+            safeRuntimeMessage({ action: 'stopped' })
+                .catch(error => console.warn('Error al notificar estado:', error));
         }
     }
     
@@ -407,6 +426,8 @@
         elementos.reactivacionInput.max = '60';
         elementos.reactivacionInput.required = true;
         elementos.reactivacionInput.value = state.tiempoReactivacion;
+        elementos.reactivacionInput.id = 'tiempo-reactivacion';
+        elementos.reactivacionInput.name = 'tiempo-reactivacion';
         elementos.reactivacionInput.style.cssText = `
             width: 60px;
             padding: 5px;
@@ -497,196 +518,134 @@
     function manejarInteraccionChat() {
         console.log('🔍 Iniciando búsqueda del chat...');
         
+        let chatInput = null;
+        const chatObserver = {
+            observer: null,
+            active: false
+        };
+
         // Función auxiliar para encontrar la caja de chat
         const buscarChatInput = () => {
-            // Buscamos primero el selector exacto que sabemos que funciona
-            const selectorPrincipal = 'div[contenteditable="plaintext-only"][maxlength="150"]';
-            let elemento = document.querySelector(selectorPrincipal);
-            
-            console.log('🔍 Buscando chat con selector principal:', selectorPrincipal);
-            if (elemento) {
-                console.log('✅ Chat encontrado con selector principal');
-                console.log('🎯 Elemento encontrado:', {
-                    tagName: elemento.tagName,
-                    className: elemento.className,
-                    attributes: Object.fromEntries(
-                        Array.from(elemento.attributes).map(attr => [attr.name, attr.value])
-                    )
-                });
-                return elemento;
-            }
-            
-            // Si no se encuentra, probamos con selectores de respaldo
-            const selectoresRespaldo = [
+            // Lista priorizada de selectores
+            const selectores = [
+                'div[contenteditable="plaintext-only"][maxlength="150"]',
                 'div[contenteditable="plaintext-only"][placeholder="Di algo bonito"]',
                 'div[contenteditable="plaintext-only"]',
                 'input[placeholder="Di algo bonito"]'
             ];
-            
-            console.log('⚠️ Selector principal no encontrado, probando selectores de respaldo:', selectoresRespaldo);
-            
-            for (const selector of selectoresRespaldo) {
-                elemento = document.querySelector(selector);
-                console.log(`🔍 Buscando: ${selector}`);
-                console.log(`📍 Resultado:`, elemento ? '✅ Encontrado' : '❌ No encontrado');
+
+            for (const selector of selectores) {
+                const elemento = document.querySelector(selector);
                 if (elemento) {
-                    console.log('🎯 Elemento encontrado (respaldo):', {
-                        tagName: elemento.tagName,
-                        className: elemento.className,
-                        attributes: Object.fromEntries(
-                            Array.from(elemento.attributes).map(attr => [attr.name, attr.value])
-                        )
-                    });
+                    console.log('✅ Chat encontrado con selector:', selector);
                     return elemento;
                 }
             }
-            
-            // Búsqueda alternativa por clase que contenga "chat-input"
-            console.log('🔄 Intentando búsqueda alternativa por clases...');
+
+            // Búsqueda alternativa
             const posiblesChatInputs = Array.from(document.querySelectorAll('div[contenteditable]'));
-            for (const elemento of posiblesChatInputs) {
-                console.log('🔍 Elemento contenteditable encontrado:', {
-                    className: elemento.className,
-                    attributes: Object.fromEntries(
-                        Array.from(elemento.attributes).map(attr => [attr.name, attr.value])
-                    )
-                });
-            }
-            
-            return null;
+            return posiblesChatInputs.find(el => el.getAttribute('contenteditable') === 'plaintext-only');
         };
 
-        // Observador para detectar cuando el chat se añade al DOM
-        const observer = new MutationObserver((mutations) => {
-            console.log('👁️ Observador DOM detectó cambios:', mutations.length, 'mutaciones');
-            const chatInput = buscarChatInput();
-            if (chatInput) {
-                console.log('🎉 Chat encontrado por el observador! Configurando eventos...');
-                observer.disconnect();
-                configurarEventosChat(chatInput);
+        // Limpiar observer existente
+        const limpiarObservador = () => {
+            if (chatObserver.observer) {
+                chatObserver.observer.disconnect();
+                chatObserver.active = false;
             }
-        });
+        };
 
-        console.log('🔄 Iniciando observador DOM...');
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
+        // Inicializar observer
+        const iniciarObservador = () => {
+            if (chatObserver.active) return;
 
-        // Intentar encontrar el chat inmediatamente
-        const chatInput = buscarChatInput();
+            limpiarObservador();
+            chatObserver.observer = new MutationObserver((mutations) => {
+                if (chatInput) return; // Ya encontramos el chat
+
+                chatInput = buscarChatInput();
+                if (chatInput) {
+                    console.log('🎉 Chat encontrado por el observador!');
+                    limpiarObservador();
+                    configurarEventosChat(chatInput);
+                }
+            });
+
+            chatObserver.observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+            chatObserver.active = true;
+        };
+
+        // Primera búsqueda
+        chatInput = buscarChatInput();
         if (chatInput) {
-            console.log('✨ Chat encontrado inmediatamente! Configurando eventos...');
+            console.log('✨ Chat encontrado inmediatamente!');
             configurarEventosChat(chatInput);
         } else {
-            console.log('⏳ Chat no encontrado inicialmente, esperando cambios en el DOM...');
+            console.log('⏳ Chat no encontrado inicialmente, iniciando observador...');
+            iniciarObservador();
         }
+
+        // Limpiar observer al desmontar
+        window.addEventListener('unload', limpiarObservador);
     }
 
     function configurarEventosChat(chatInput) {
-        console.log('🎯 Configurando eventos para el chat:', {
-            elemento: chatInput,
-            tipo: chatInput.tagName,
-            atributos: Object.fromEntries(
-                Array.from(chatInput.attributes).map(attr => [attr.name, attr.value])
-            )
-        });
-        
-        // Buscar el contenedor del chat de forma más robusta
-        const chatContainer = chatInput.closest([
-            'div[contenteditable="plaintext-only"]',
-            'div[contenteditable][maxlength="150"]',
-            'div[contenteditable][role="textbox"]',
-            chatInput.parentElement
-        ].find(selector => chatInput.closest(selector))) || chatInput.parentElement;
+        const timers = {
+            typing: null,
+            chat: null,
+            countdown: null
+        };
 
-        if (!chatContainer) return;
+        const cleanupTimers = () => {
+            Object.values(timers).forEach(timer => {
+                if (timer) {
+                    if (timer.hasOwnProperty('interval')) {
+                        clearInterval(timer.interval);
+                    } else {
+                        clearTimeout(timer);
+                    }
+                }
+            });
+            Object.keys(timers).forEach(key => timers[key] = null);
+        };
 
-        let typingTimer;
-        let countdownInterval;
-
-        // Función para reactivar el Auto Tap-Tap después de usar el chat
+        // Reactivar el Auto Tap-Tap
         const reactivarAutoTapTap = () => {
             if (!state.apagadoManualmente) {
                 state.pausadoPorChat = false;
-                if (countdownInterval) {
-                    clearInterval(countdownInterval);
-                }
-                // Para divs editables de TikTok Live, quitar el foco
+                cleanupTimers();
+
                 if (chatInput.getAttribute('contenteditable')) {
                     chatInput.blur();
                     chatInput.setAttribute('focused', 'false');
                 } else {
                     chatInput.blur();
                 }
+
                 toggleAutoTapTap(true);
                 mostrarNotificacionChat('¡Auto Tap-Tap reactivado! 🎉', 'success');
             }
         };
 
-        // Función para crear o actualizar el div de cuenta regresiva
-        const crearContadorRegresivo = () => {
-            if (!elementos.contadorRegresivo) {
-                elementos.contadorRegresivo = document.createElement('div');
-                elementos.contadorRegresivo.style.cssText = `
-                    position: absolute;
-                    bottom: 10px;
-                    right: 10px;
-                    background: rgba(255, 255, 255, 0.15);
-                    backdrop-filter: blur(5px);
-                    border-radius: 50%;
-                    width: 40px;
-                    height: 40px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 20px;
-                    font-weight: bold;
-                    color: white;
-                    opacity: 0;
-                    transition: opacity 0.3s ease, transform 0.3s ease;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-                `;
-                elementos.contenedor.appendChild(elementos.contadorRegresivo);
+        // Manejador para cuando el usuario está escribiendo
+        const handleInput = () => {
+            cleanupTimers();
+            
+            if (state.pausadoPorChat) {
+                timers.typing = setTimeout(() => {
+                    if (!state.apagadoManualmente && state.pausadoPorChat) {
+                        timers.chat = setTimeout(reactivarAutoTapTap, state.tiempoReactivacion * 1000);
+                        iniciarContadorRegresivo(state.tiempoReactivacion);
+                        mostrarNotificacionChat(`Reactivando en ${state.tiempoReactivacion} segundos...`, 'info');
+                    }
+                }, 1000);
             }
-            return elementos.contadorRegresivo;
         };
 
-        // Función para iniciar la cuenta regresiva
-        const iniciarContadorRegresivo = (segundos) => {
-            if (countdownInterval) {
-                clearInterval(countdownInterval);
-            }
-
-            const contadorRegresivo = crearContadorRegresivo();
-            let tiempoRestante = segundos;
-
-            contadorRegresivo.style.opacity = '1';
-            contadorRegresivo.style.transform = 'scale(1)';
-
-            const actualizarContador = () => {
-                if (tiempoRestante >= 0) {
-                    contadorRegresivo.textContent = tiempoRestante;
-                    contadorRegresivo.style.transform = 'scale(1.2)';
-                    // Animar de grande a pequeño
-                    setTimeout(() => {
-                        contadorRegresivo.style.transform = 'scale(1)';
-                    }, 100);
-                    tiempoRestante--;
-                } else {
-                    clearInterval(countdownInterval);
-                    contadorRegresivo.style.opacity = '0';
-                    setTimeout(() => {
-                        contadorRegresivo.style.display = 'none';
-                    }, 300);
-                }
-            };
-
-            actualizarContador();
-            countdownInterval = setInterval(actualizarContador, 1000);
-        };
-
-        // Cuando el usuario interactúa con el chat
+        // Pausar cuando el usuario interactúa con el chat
         const onFocus = () => {
             if (state.activo && !state.apagadoManualmente) {
                 state.pausadoPorChat = true;
@@ -695,70 +654,42 @@
             }
         };
 
-        // Eventos para detectar cuando el usuario quiere escribir en el chat
+        // Configurar eventos del chat
         chatInput.addEventListener('focus', onFocus);
         chatInput.addEventListener('click', onFocus);
+        chatInput.addEventListener('input', handleInput);
 
-        // Eventos adicionales para divs editables de TikTok Live
         if (chatInput.getAttribute('contenteditable')) {
             chatInput.addEventListener('keydown', () => {
-                if (!state.pausadoPorChat) {
-                    onFocus();
-                }
+                if (!state.pausadoPorChat) onFocus();
             });
-        }
-
-        // Cuando el usuario escribe en el chat
-        const handleInput = () => {
-            if (state.chatTimeout) {
-                clearTimeout(state.chatTimeout);
-            }
-            if (typingTimer) {
-                clearTimeout(typingTimer);
-            }
-            if (countdownInterval) {
-                clearInterval(countdownInterval);
-                if (elementos.contadorRegresivo) {
-                    elementos.contadorRegresivo.style.opacity = '0';
-                }
-            }
-            
-            if (state.pausadoPorChat) {
-                // Reiniciar el temporizador cada vez que el usuario escribe
-                typingTimer = setTimeout(() => {
-                    if (!state.apagadoManualmente && state.pausadoPorChat) {
-                        state.chatTimeout = setTimeout(reactivarAutoTapTap, state.tiempoReactivacion * 1000);
-                        iniciarContadorRegresivo(state.tiempoReactivacion);
-                        mostrarNotificacionChat(`Reactivando en ${state.tiempoReactivacion} segundos...`, 'info');
-                    }
-                }, 1000);
-            }
-        };
-
-        chatInput.addEventListener('input', handleInput);
-        // Para divs editables
-        if (chatInput.getAttribute('contenteditable')) {
             chatInput.addEventListener('keyup', handleInput);
             chatInput.addEventListener('paste', handleInput);
         }
 
-        // Cuando el usuario hace click fuera del chat
-        document.addEventListener('click', (e) => {
+        // Click fuera del chat
+        const handleClickOutside = (e) => {
+            const chatContainer = chatInput.closest([
+                'div[contenteditable="plaintext-only"]',
+                'div[contenteditable][maxlength="150"]',
+                'div[contenteditable][role="textbox"]',
+                chatInput.parentElement
+            ].find(selector => chatInput.closest(selector))) || chatInput.parentElement;
+
             if (!chatContainer.contains(e.target) && state.pausadoPorChat && !state.apagadoManualmente) {
-                if (state.chatTimeout) {
-                    clearTimeout(state.chatTimeout);
-                }
-                if (typingTimer) {
-                    clearTimeout(typingTimer);
-                }
-                if (countdownInterval) {
-                    clearInterval(countdownInterval);
-                }
-                
-                state.chatTimeout = setTimeout(reactivarAutoTapTap, state.tiempoReactivacion * 1000);
+                cleanupTimers();
+                timers.chat = setTimeout(reactivarAutoTapTap, state.tiempoReactivacion * 1000);
                 iniciarContadorRegresivo(state.tiempoReactivacion);
                 mostrarNotificacionChat(`⏳ Reactivando en ${state.tiempoReactivacion} segundos...`, 'info');
             }
+        };
+
+        document.addEventListener('click', handleClickOutside);
+
+        // Limpiar al desmontar
+        window.addEventListener('unload', () => {
+            cleanupTimers();
+            document.removeEventListener('click', handleClickOutside);
         });
     }
 
@@ -817,106 +748,110 @@
     
     // Configurar eventos
     function configurarEventos() {
-        // Toggle
-        elementos.boton.addEventListener('click', () => {
+        const events = [];
+        
+        // Helper para agregar eventos y facilitar limpieza
+        const addEvent = (element, type, handler, options = false) => {
+            element.addEventListener(type, handler, options);
+            events.push({ element, type, handler, options });
+        };
+
+        // Toggle principal
+        addEvent(elementos.boton, 'click', () => {
             state.apagadoManualmente = !state.activo;
             toggleAutoTapTap(false);
         });
-        
-        // Reset
-        elementos.botonReset.addEventListener('click', () => {
+
+        // Reset contador
+        addEvent(elementos.botonReset, 'click', () => {
             state.contador = 0;
             actualizarContador();
         });
+
+        // Efectos hover
+        addEvent(elementos.boton, 'mouseenter', () => 
+            elementos.boton.style.background = state.activo ? '#00ffaa' : '#ff3366');
         
-        // Hover effects
-        elementos.boton.addEventListener('mouseenter', () => {
-            elementos.boton.style.background = state.activo ? '#00ffaa' : '#ff3366';
-        });
-        
-        elementos.boton.addEventListener('mouseleave', () => {
-            elementos.boton.style.background = state.activo ? '#00ff88' : '#ff0050';
-        });
-        
-        // Minimizar
+        addEvent(elementos.boton, 'mouseleave', () => 
+            elementos.boton.style.background = state.activo ? '#00ff88' : '#ff0050');
+
+        // Minimizar/Maximizar
         let minimizado = false;
-        const elementosOcultables = [elementos.selector, elementos.contadorDiv, elementos.botonReset, elementos.configDiv, elementos.copyrightDiv];
-        
-        elementos.botonMinimizar.addEventListener('click', () => {
+        const elementosOcultables = [
+            elementos.selector, 
+            elementos.contadorDiv, 
+            elementos.botonReset, 
+            elementos.configDiv, 
+            elementos.copyrightDiv
+        ];
+
+        addEvent(elementos.botonMinimizar, 'click', () => {
             minimizado = !minimizado;
             elementos.botonMinimizar.textContent = minimizado ? '+' : '−';
             elementosOcultables.forEach(el => el.style.display = minimizado ? 'none' : 'block');
             elementos.contenedor.style.height = minimizado ? 'auto' : 'auto';
             elementos.barraArrastre.style.margin = '-15px -15px 10px -15px';
         });
-        
-        // Guardar intervalo seleccionado
-        elementos.selector.addEventListener('change', () => {
+
+        // Guardar configuraciones
+        addEvent(elementos.selector, 'change', () => {
             safeStorageOperation(() => {
                 chrome.storage.local.set({ intervalo: elementos.selector.value });
             });
         });
 
-        // Guardar tiempo de reactivación
-        elementos.reactivacionInput.addEventListener('input', () => {
+        addEvent(elementos.reactivacionInput, 'input', () => {
             let tiempo = parseInt(elementos.reactivacionInput.value);
-            
-            // Validar rango
-            if (tiempo < 10) tiempo = 10;
-            if (tiempo > 60) tiempo = 60;
-            if (isNaN(tiempo)) tiempo = 10;
-            
-            // Actualizar valor en input
+            tiempo = Math.max(10, Math.min(60, tiempo || 10));
             elementos.reactivacionInput.value = tiempo;
-            
-            // Actualizar estado y storage
             state.tiempoReactivacion = tiempo;
+            
             safeStorageOperation(() => {
-                chrome.storage.local.set({ tiempoReactivacion: tiempo }, () => {
-                    // Notificar al popup usando la función segura
-                    safeRuntimeMessage({ 
-                        action: 'tiempoReactivacionChanged', 
-                        tiempo: tiempo 
-                    });
-                });
+                chrome.storage.local.set({ tiempoReactivacion: tiempo });
             });
         });
-        
-        // Drag events
-        elementos.contenedor.addEventListener('mousedown', dragStart);
-        document.addEventListener('mouseup', dragEnd);
-        document.addEventListener('mousemove', drag);
-        elementos.contenedor.addEventListener('touchstart', dragStart, { passive: true });
-        elementos.contenedor.addEventListener('touchend', dragEnd, { passive: true });
-        elementos.contenedor.addEventListener('touchmove', drag, { passive: false }); // No puede ser pasivo porque usamos preventDefault()
-        
+
+        // Eventos de arrastre
+        const dragEvents = [
+            { el: elementos.contenedor, type: 'mousedown', fn: dragStart },
+            { el: document, type: 'mouseup', fn: dragEnd },
+            { el: document, type: 'mousemove', fn: drag },
+            { el: elementos.contenedor, type: 'touchstart', fn: dragStart, opt: { passive: true } },
+            { el: elementos.contenedor, type: 'touchend', fn: dragEnd, opt: { passive: true } },
+            { el: elementos.contenedor, type: 'touchmove', fn: drag, opt: { passive: false } }
+        ];
+
+        dragEvents.forEach(({ el, type, fn, opt = false }) => addEvent(el, type, fn, opt));
+
         // Prevenir drag en elementos interactivos
-        [elementos.boton, elementos.selector, elementos.botonReset, elementos.botonMinimizar].forEach(el => {
-            el.addEventListener('mousedown', e => e.stopPropagation());
-        });                    // Atajo de teclado
-        document.addEventListener('keydown', e => {
+        [elementos.boton, elementos.selector, elementos.botonReset, elementos.botonMinimizar]
+            .forEach(el => addEvent(el, 'mousedown', e => e.stopPropagation()));
+
+        // Atajo de teclado
+        addEvent(document, 'keydown', e => {
             if (e.altKey && e.key === 'l') {
                 toggleAutoTapTap();
                 e.preventDefault();
             }
         });
-        
-        // Register message listener on initial setup
+
+        // Configurar receptor de mensajes
         setupMessageListener();
 
-        // Verificar el estado de la extensión periódicamente
-        const checkExtensionStatus = () => {
-            try {
-                chrome.runtime.getURL('');
-            } catch (error) {
-                if (error.message.includes('Extension context invalidated')) {
-                    console.log('🔄 Reconectando extensión debido a contexto invalidado...');
-                    reloadExtension();
-                }
-            }
-        };
-        
-        setInterval(checkExtensionStatus, 5000);
+        // Verificación periódica del estado
+        let checkInterval = setInterval(checkExtensionStatus, 5000);
+
+        // Limpiar al desmontar
+        window.addEventListener('unload', () => {
+            // Limpiar todos los eventos registrados
+            events.forEach(({ element, type, handler, options }) => {
+                element.removeEventListener(type, handler, options);
+            });
+
+            // Limpiar intervalos
+            if (checkInterval) clearInterval(checkInterval);
+            if (state.intervalo) clearInterval(state.intervalo);
+        });
     }
 
     // Configuración global del receptor de mensajes
