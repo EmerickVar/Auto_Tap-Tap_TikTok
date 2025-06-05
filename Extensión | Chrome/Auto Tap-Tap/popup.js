@@ -11,6 +11,14 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     let updateInterval = null;
+
+    // Función de limpieza
+    const cleanup = () => {
+        if (updateInterval) {
+            clearInterval(updateInterval);
+            updateInterval = null;
+        }
+    };
     
     const updateUI = (activo, contador = 0) => {
         if (activo) {
@@ -132,8 +140,6 @@ document.addEventListener('DOMContentLoaded', () => {
     updatePopupStatus();
     updateInterval = setInterval(updatePopupStatus, 1000);
     
-    // Limpieza
-    window.addEventListener('unload', () => {
-        if (updateInterval) clearInterval(updateInterval);
-    });
+    // Registrar limpieza cuando la extensión se suspende
+    chrome.runtime.onSuspend.addListener(cleanup);
 });

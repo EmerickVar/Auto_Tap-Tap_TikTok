@@ -14,8 +14,8 @@
     "https://*.tiktok.com/*"
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; connect-src https://*.tiktok.com https://www.tiktok.com",
-    "sandbox": "sandbox allow-scripts allow-forms allow-popups allow-modals; script-src 'self' https://*.tiktok.com"
+    "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src https://*.tiktok.com https://www.tiktok.com",
+    "sandbox": "sandbox allow-scripts allow-forms allow-popups allow-modals; script-src 'self' 'wasm-unsafe-eval'; object-src 'none'"
   },
   "background": {
     "service_worker": "background.js"

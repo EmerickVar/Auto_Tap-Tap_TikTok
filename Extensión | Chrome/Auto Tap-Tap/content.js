@@ -144,6 +144,23 @@
         });
     }
 
+    // Función para manejar intervalos de forma segura
+    const safeInterval = {
+        intervals: new Map(),
+        create(callback, delay) {
+            const id = setInterval(callback, delay);
+            this.intervals.set(id, { callback, delay });
+            return id;
+        },
+        clear(id) {
+            clearInterval(id);
+            this.intervals.delete(id);
+        },
+        clearAll() {
+            this.intervals.forEach((_, id) => this.clear(id));
+        }
+    };
+
     function presionarL() {
         const evento = new KeyboardEvent('keydown', {
             key: 'l',
@@ -190,7 +207,7 @@
         
         // Limpiar intervalos existentes
         if (state.intervalo) {
-            clearInterval(state.intervalo);
+            safeInterval.clear(state.intervalo);
             state.intervalo = null;
         }
         
@@ -207,7 +224,7 @@
             // Solo iniciar el intervalo si está activo manualmente
             if (!fromChat && !state.pausadoPorChat) {
                 presionarL(); // Ejecutar inmediatamente
-                state.intervalo = setInterval(presionarL, intervalo);
+                state.intervalo = safeInterval.create(presionarL, intervalo);
                 
                 // Notificar al background
                 safeRuntimeMessage({ action: 'started' })
@@ -521,7 +538,13 @@
         let chatInput = null;
         const chatObserver = {
             observer: null,
-            active: false
+            active: false,
+            cleanup() {
+                if (this.observer) {
+                    this.observer.disconnect();
+                    this.active = false;
+                }
+            }
         };
 
         // Función auxiliar para encontrar la caja de chat
@@ -547,26 +570,18 @@
             return posiblesChatInputs.find(el => el.getAttribute('contenteditable') === 'plaintext-only');
         };
 
-        // Limpiar observer existente
-        const limpiarObservador = () => {
-            if (chatObserver.observer) {
-                chatObserver.observer.disconnect();
-                chatObserver.active = false;
-            }
-        };
-
         // Inicializar observer
         const iniciarObservador = () => {
             if (chatObserver.active) return;
 
-            limpiarObservador();
+            chatObserver.cleanup();
             chatObserver.observer = new MutationObserver((mutations) => {
                 if (chatInput) return; // Ya encontramos el chat
 
                 chatInput = buscarChatInput();
                 if (chatInput) {
                     console.log('🎉 Chat encontrado por el observador!');
-                    limpiarObservador();
+                    chatObserver.cleanup();
                     configurarEventosChat(chatInput);
                 }
             });
@@ -588,35 +603,32 @@
             iniciarObservador();
         }
 
-        // Limpiar observer al desmontar
-        window.addEventListener('unload', limpiarObservador);
+        // Registrar limpieza para cuando la extensión se desmonte
+        chrome.runtime.onSuspend.addListener(chatObserver.cleanup);
+        
+        return chatObserver; // Retornar para limpieza externa si es necesario
     }
 
     function configurarEventosChat(chatInput) {
         const timers = {
             typing: null,
             chat: null,
-            countdown: null
-        };
-
-        const cleanupTimers = () => {
-            Object.values(timers).forEach(timer => {
-                if (timer) {
-                    if (timer.hasOwnProperty('interval')) {
-                        clearInterval(timer.interval);
-                    } else {
+            countdown: null,
+            cleanupAll() {
+                Object.entries(this).forEach(([key, timer]) => {
+                    if (typeof timer === 'number') {
                         clearTimeout(timer);
+                        this[key] = null;
                     }
-                }
-            });
-            Object.keys(timers).forEach(key => timers[key] = null);
+                });
+            }
         };
 
         // Reactivar el Auto Tap-Tap
         const reactivarAutoTapTap = () => {
             if (!state.apagadoManualmente) {
                 state.pausadoPorChat = false;
-                cleanupTimers();
+                timers.cleanupAll();
 
                 if (chatInput.getAttribute('contenteditable')) {
                     chatInput.blur();
@@ -632,7 +644,7 @@
 
         // Manejador para cuando el usuario está escribiendo
         const handleInput = () => {
-            cleanupTimers();
+            timers.cleanupAll();
             
             if (state.pausadoPorChat) {
                 timers.typing = setTimeout(() => {
@@ -677,7 +689,7 @@
             ].find(selector => chatInput.closest(selector))) || chatInput.parentElement;
 
             if (!chatContainer.contains(e.target) && state.pausadoPorChat && !state.apagadoManualmente) {
-                cleanupTimers();
+                timers.cleanupAll();
                 timers.chat = setTimeout(reactivarAutoTapTap, state.tiempoReactivacion * 1000);
                 iniciarContadorRegresivo(state.tiempoReactivacion);
                 mostrarNotificacionChat(`⏳ Reactivando en ${state.tiempoReactivacion} segundos...`, 'info');
@@ -686,11 +698,16 @@
 
         document.addEventListener('click', handleClickOutside);
 
-        // Limpiar al desmontar
-        window.addEventListener('unload', () => {
-            cleanupTimers();
+        // Función de limpieza
+        const cleanup = () => {
+            timers.cleanupAll();
             document.removeEventListener('click', handleClickOutside);
-        });
+        };
+
+        // Registrar limpieza cuando la extensión se suspende
+        chrome.runtime.onSuspend.addListener(cleanup);
+        
+        return cleanup; // Retornar función de limpieza para uso externo
     }
 
     // Función para mostrar notificaciones del chat
@@ -841,8 +858,8 @@
         // Verificación periódica del estado
         let checkInterval = setInterval(checkExtensionStatus, 5000);
 
-        // Limpiar al desmontar
-        window.addEventListener('unload', () => {
+        // Función de limpieza
+        const cleanup = () => {
             // Limpiar todos los eventos registrados
             events.forEach(({ element, type, handler, options }) => {
                 element.removeEventListener(type, handler, options);
@@ -850,8 +867,37 @@
 
             // Limpiar intervalos
             if (checkInterval) clearInterval(checkInterval);
-            if (state.intervalo) clearInterval(state.intervalo);
-        });
+            if (state.intervalo) {
+                safeInterval.clear(state.intervalo);
+                state.intervalo = null;
+            }
+
+            // Limpiar timers del chat
+            if (state.chatTimeout) {
+                clearTimeout(state.chatTimeout);
+                state.chatTimeout = null;
+            }
+        };
+
+        // Registrar limpieza cuando la extensión se suspende
+        chrome.runtime.onSuspend.addListener(cleanup);
+        
+        return cleanup; // Retornar función de limpieza para uso externo
+    }
+
+    // Función para verificar el estado de la extensión
+    function checkExtensionStatus() {
+        try {
+            // Verificar si el contexto de la extensión está válido
+            chrome.runtime.getURL('');
+        } catch (error) {
+            if (error.message.includes('Extension context invalidated')) {
+                console.log('🔄 Reconectando extensión debido a contexto invalidado...');
+                reloadExtension();
+            }
+            return false;
+        }
+        return true;
     }
 
     // Configuración global del receptor de mensajes
