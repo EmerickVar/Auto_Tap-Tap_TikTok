@@ -122,7 +122,7 @@
     function safeRuntimeMessage(message) {
         return new Promise((resolve, reject) => {
             try {
-                chrome.runtime.sendMessage(message, response => {
+                const handleResponse = (response) => {
                     if (chrome.runtime.lastError) {
                         console.warn('Error de comunicación:', chrome.runtime.lastError.message);
                         if (chrome.runtime.lastError.message.includes('Extension context invalidated') ||
@@ -133,7 +133,13 @@
                         return;
                     }
                     resolve(response);
-                });
+                };
+
+                // Asegurarse de que la llamada esté envuelta en un try-catch
+                const sent = chrome.runtime.sendMessage(message, handleResponse);
+                if (!sent) {
+                    reject(new Error('No se pudo enviar el mensaje'));
+                }
             } catch (error) {
                 console.warn('Error al enviar mensaje:', error);
                 if (error.message.includes('Extension context invalidated')) {
@@ -910,56 +916,76 @@
             }
 
             messageListener = (request, sender, sendResponse) => {
-                try {
-                    if (request.action === 'getStatus') {
-                        // Enviar estado actual
-                        sendResponse({
-                            activo: state.activo,
-                            contador: state.contador,
-                            tiempoReactivacion: state.tiempoReactivacion,
-                            pausadoPorChat: state.pausadoPorChat
-                        });
-                        return true; // Mantener el canal de comunicación abierto
-                    }
+                // Usamos una promesa para manejar respuestas asíncronas
+                const handleRequest = async () => {
+                    try {
+                        if (request.action === 'getStatus') {
+                            return {
+                                activo: state.activo,
+                                contador: state.contador,
+                                tiempoReactivacion: state.tiempoReactivacion,
+                                pausadoPorChat: state.pausadoPorChat
+                            };
+                        }
 
-                    if (request.action === 'toggle') {
-                        toggleAutoTapTap();
-                        sendResponse({ success: true });
-                    } else if (request.action === 'updateInterval') {
-                        const nuevoIntervalo = request.intervalo;
-                        if (state.activo && nuevoIntervalo !== parseInt(elementos.selector.value)) {
-                            clearInterval(state.intervalo);
-                            state.intervalo = setInterval(presionarL, nuevoIntervalo);
+                        if (request.action === 'toggle') {
+                            toggleAutoTapTap();
+                            return { success: true };
+                        } 
+                        
+                        if (request.action === 'updateInterval') {
+                            const nuevoIntervalo = request.intervalo;
+                            if (state.activo && nuevoIntervalo !== parseInt(elementos.selector.value)) {
+                                clearInterval(state.intervalo);
+                                state.intervalo = setInterval(presionarL, nuevoIntervalo);
+                            }
+                            elementos.selector.value = nuevoIntervalo;
+                            return { success: true };
+                        } 
+                        
+                        if (request.action === 'updateTapTaps') {
+                            state.contador = request.count;
+                            actualizarContador();
+                            return { success: true };
+                        } 
+                        
+                        if (request.action === 'updateReactivationTime') {
+                            state.tiempoReactivacion = request.tiempo;
+                            if (elementos.reactivacionInput) {
+                                elementos.reactivacionInput.value = request.tiempo;
+                            }
+                            return { success: true };
                         }
-                        elementos.selector.value = nuevoIntervalo;
-                        sendResponse({ success: true });
-                    } else if (request.action === 'updateTapTaps') {
-                        state.contador = request.count;
-                        actualizarContador();
-                        sendResponse({ success: true });
-                    } else if (request.action === 'updateReactivationTime') {
-                        state.tiempoReactivacion = request.tiempo;
-                        if (elementos.reactivacionInput) {
-                            elementos.reactivacionInput.value = request.tiempo;
-                        }
-                        sendResponse({ success: true });
+
+                        return { error: 'Acción no reconocida' };
+                    } catch (error) {
+                        console.error('Error en listener de mensaje:', error);
+                        return { error: error.message };
                     }
-                    
-                    return true; // Mantener el canal de comunicación abierto
-                } catch (error) {
-                    console.error('Error en listener de mensaje:', error);
-                    sendResponse({ error: error.message });
-                    return true;
-                }
+                };
+
+                // Ejecutar el manejador y enviar la respuesta
+                handleRequest().then(response => {
+                    try {
+                        sendResponse(response);
+                    } catch (error) {
+                        console.warn('Error al enviar respuesta:', error);
+                    }
+                });
+
+                // Indicar que la respuesta será asíncrona
+                return true;
             };
 
             chrome.runtime.onMessage.addListener(messageListener);
             
-            // Verificar conexión periódicamente
-            setInterval(() => {
+            // Verificar conexión periódicamente con manejo mejorado de errores
+            const pingInterval = setInterval(() => {
                 chrome.runtime.sendMessage({ action: 'ping' }, response => {
                     if (chrome.runtime.lastError) {
+                        console.warn('Error en ping:', chrome.runtime.lastError);
                         reloadExtension();
+                        clearInterval(pingInterval);
                     }
                 });
             }, 5000);
