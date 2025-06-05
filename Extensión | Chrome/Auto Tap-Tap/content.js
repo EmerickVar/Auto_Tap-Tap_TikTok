@@ -665,6 +665,8 @@
     }
 
     function configurarEventosChat(chatInput) {
+        console.log('🔄 Configurando eventos del chat...');
+        
         const timers = {
             typing: null,
             chat: null,
@@ -681,6 +683,13 @@
 
         // Reactivar el Auto Tap-Tap
         const reactivarAutoTapTap = () => {
+            console.log('🎯 Intentando reactivar Auto Tap-Tap...');
+            console.log('Estado actual:', { 
+                apagadoManualmente: state.apagadoManualmente,
+                pausadoPorChat: state.pausadoPorChat,
+                activo: state.activo
+            });
+            
             if (!state.apagadoManualmente) {
                 state.pausadoPorChat = false;
                 timers.cleanupAll();
@@ -699,64 +708,82 @@
 
         // Manejador para cuando el usuario está escribiendo
         const handleInput = () => {
+            console.log('✍️ Usuario escribiendo en el chat...');
             timers.cleanupAll();
             
             if (state.pausadoPorChat) {
                 timers.typing = setTimeout(() => {
                     if (!state.apagadoManualmente && state.pausadoPorChat) {
                         timers.chat = setTimeout(reactivarAutoTapTap, state.tiempoReactivacion * 1000);
-                        iniciarContadorRegresivo(state.tiempoReactivacion);
-                        mostrarNotificacionChat(`Reactivando en ${state.tiempoReactivacion} segundos...`, 'info');
+                        mostrarNotificacionChat(`⏳ Reactivando en ${state.tiempoReactivacion} segundos...`, 'info');
                     }
                 }, 1000);
             }
         };
 
         // Pausar cuando el usuario interactúa con el chat
-        const onFocus = () => {
+        const onFocus = (e) => {
+            console.log('👆 Interacción detectada con el chat:', e.type);
             if (state.activo && !state.apagadoManualmente) {
+                console.log('🛑 Pausando Auto Tap-Tap por interacción con chat');
                 state.pausadoPorChat = true;
                 toggleAutoTapTap(true);
                 mostrarNotificacionChat('✍️ Auto Tap-Tap pausado mientras escribes...', 'warning');
             }
         };
 
-        // Configurar eventos del chat
-        chatInput.addEventListener('focus', onFocus);
-        chatInput.addEventListener('click', onFocus);
-        chatInput.addEventListener('input', handleInput);
+        // Configurar eventos del chat con captura
+        chatInput.addEventListener('focus', onFocus, true);
+        chatInput.addEventListener('click', onFocus, true);
+        chatInput.addEventListener('mousedown', onFocus, true);
+        chatInput.addEventListener('touchstart', onFocus, true);
+        chatInput.addEventListener('input', handleInput, true);
 
         if (chatInput.getAttribute('contenteditable')) {
-            chatInput.addEventListener('keydown', () => {
-                if (!state.pausadoPorChat) onFocus();
-            });
-            chatInput.addEventListener('keyup', handleInput);
-            chatInput.addEventListener('paste', handleInput);
+            chatInput.addEventListener('keydown', (e) => {
+                console.log('⌨️ Tecla presionada en chat');
+                if (!state.pausadoPorChat) onFocus(e);
+            }, true);
+            chatInput.addEventListener('keyup', handleInput, true);
+            chatInput.addEventListener('paste', handleInput, true);
         }
 
         // Click fuera del chat
         const handleClickOutside = (e) => {
+            // Encontrar el contenedor del chat de manera más robusta
             const chatContainer = chatInput.closest([
+                'div[class*="chat"]',
+                'div[class*="message"]',
+                'div[data-e2e*="chat"]',
+                'div[data-e2e*="message"]',
                 'div[contenteditable="plaintext-only"]',
                 'div[contenteditable][maxlength="150"]',
-                'div[contenteditable][role="textbox"]',
-                chatInput.parentElement
-            ].find(selector => chatInput.closest(selector))) || chatInput.parentElement;
+                'div[contenteditable][role="textbox"]'
+            ].join(',')) || chatInput.parentElement;
+
+            console.log('🔍 Click detectado:', {
+                target: e.target,
+                isOutside: !chatContainer.contains(e.target),
+                pausadoPorChat: state.pausadoPorChat,
+                apagadoManualmente: state.apagadoManualmente
+            });
 
             if (!chatContainer.contains(e.target) && state.pausadoPorChat && !state.apagadoManualmente) {
                 timers.cleanupAll();
                 timers.chat = setTimeout(reactivarAutoTapTap, state.tiempoReactivacion * 1000);
-                iniciarContadorRegresivo(state.tiempoReactivacion);
                 mostrarNotificacionChat(`⏳ Reactivando en ${state.tiempoReactivacion} segundos...`, 'info');
             }
         };
 
-        document.addEventListener('click', handleClickOutside);
+        document.addEventListener('click', handleClickOutside, true);
+        document.addEventListener('touchend', handleClickOutside, true);
 
         // Función de limpieza
         const cleanup = () => {
+            console.log('🧹 Limpiando eventos del chat');
             timers.cleanupAll();
-            document.removeEventListener('click', handleClickOutside);
+            document.removeEventListener('click', handleClickOutside, true);
+            document.removeEventListener('touchend', handleClickOutside, true);
         };
         
         // Guardar la función de limpieza
