@@ -73,7 +73,7 @@ h1::before {
 }
 
 .status-text.active {
-    color: #00a652;
+    color: #025016d1;
     background: #e6f7ed;
     animation: pulse 2s infinite;
 }
@@ -112,13 +112,13 @@ h1::before {
 }
 
 .toggle-button.stop {
-    background: #00ff88;
+    background: #025016d1;
 }
 
 .toggle-button.stop:hover:not(:disabled) {
-    background: #037c29;
+    background: #199403;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+    box-shadow: 0 4px 12px rgba(66, 224, 4, 0.3);
 }
 
 .toggle-button:disabled {
@@ -232,7 +232,7 @@ h1::before {
     color: #cc0040;
     text-decoration: underline;
 }
-}
+
 
 /* Configuración */
 .config-section {
@@ -285,9 +285,8 @@ h1::before {
     outline: none;
     border-color: #ff0050;
     box-shadow: 0 0 0 2px rgba(255, 0, 80, 0.1);
-}
-    padding: 6px 0;
-    font-size: 13px;
+    padding: 8px;
+    font-size: 14px;
     color: #444;
 }
 
@@ -303,8 +302,9 @@ h1::before {
 
 /* Animaciones */
 @keyframes pulse {
-    0%, 100% { transform: scale(1); }
+    0% { transform: scale(1); }
     50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
 }
 
 /* Scrollbar */

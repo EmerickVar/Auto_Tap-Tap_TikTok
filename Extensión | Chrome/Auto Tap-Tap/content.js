@@ -394,7 +394,14 @@
     function manejarInteraccionChat() {
         // Observador para detectar cuando el chat se añade al DOM
         const observer = new MutationObserver((mutations) => {
-            const chatInput = document.querySelector('.tiktok-ikuba6.e2lzvyu1');
+            // Buscar el chat usando varios selectores posibles para mayor robustez
+            const chatInput = document.querySelector([
+                'input[placeholder="Escribe algo bonito"]',
+                '.tiktok-ikuba6.e2lzvyu1',
+                'div[data-e2e="chat-input"] input',
+                'div[role="textbox"]'
+            ].join(','));
+            
             if (chatInput) {
                 observer.disconnect();
                 configurarEventosChat(chatInput);
@@ -407,21 +414,39 @@
         });
 
         // Intentar encontrar el chat inmediatamente también
-        const chatInput = document.querySelector('.tiktok-ikuba6.e2lzvyu1');
+        const chatInput = document.querySelector([
+            'input[placeholder="Escribe algo bonito"]',
+            '.tiktok-ikuba6.e2lzvyu1',
+            'div[data-e2e="chat-input"] input',
+            'div[role="textbox"]'
+        ].join(','));
+        
         if (chatInput) {
             configurarEventosChat(chatInput);
         }
     }
 
     function configurarEventosChat(chatInput) {
-        const chatContainer = chatInput.closest('.tiktok-1u9a62k.e2lzvyu4');
+        // Buscar el contenedor del chat de forma más robusta
+        const chatContainer = chatInput.closest([
+            '.tiktok-1u9a62k.e2lzvyu4',
+            'div[data-e2e="chat-room"]',
+            'div[data-e2e="chat-input"]',
+            chatInput.parentElement
+        ].find(selector => chatInput.closest(selector)));
+
         if (!chatContainer) return;
+
+        let typingTimer;
 
         // Cuando el usuario interactúa con el chat
         chatInput.addEventListener('focus', () => {
             if (state.activo && !state.apagadoManualmente) {
                 state.pausadoPorChat = true;
                 toggleAutoTapTap(true);
+                
+                // Mostrar notificación de pausa
+                mostrarNotificacionChat('Auto Tap-Tap pausado mientras escribes...', 'warning');
             }
         });
 
@@ -430,14 +455,26 @@
             if (state.chatTimeout) {
                 clearTimeout(state.chatTimeout);
             }
+            if (typingTimer) {
+                clearTimeout(typingTimer);
+            }
             
             if (state.pausadoPorChat) {
-                state.chatTimeout = setTimeout(() => {
-                    if (!state.apagadoManualmente) {
-                        state.pausadoPorChat = false;
-                        toggleAutoTapTap(true);
+                // Reiniciar el temporizador cada vez que el usuario escribe
+                typingTimer = setTimeout(() => {
+                    if (!state.apagadoManualmente && state.pausadoPorChat) {
+                        state.chatTimeout = setTimeout(() => {
+                            if (!state.apagadoManualmente) {
+                                state.pausadoPorChat = false;
+                                toggleAutoTapTap(true);
+                                mostrarNotificacionChat('Auto Tap-Tap reactivado', 'success');
+                            }
+                        }, state.tiempoReactivacion * 1000);
+                        
+                        // Mostrar notificación de temporizador
+                        mostrarNotificacionChat(`Reactivando en ${state.tiempoReactivacion} segundos...`, 'info');
                     }
-                }, state.tiempoReactivacion * 1000);
+                }, 1000); // Esperar 1 segundo después de que el usuario deja de escribir
             }
         });
 
@@ -447,12 +484,75 @@
                 if (state.chatTimeout) {
                     clearTimeout(state.chatTimeout);
                 }
-                state.pausadoPorChat = false;
-                toggleAutoTapTap(true);
+                if (typingTimer) {
+                    clearTimeout(typingTimer);
+                }
+                
+                // Iniciar temporizador para reactivación
+                state.chatTimeout = setTimeout(() => {
+                    if (!state.apagadoManualmente) {
+                        state.pausadoPorChat = false;
+                        toggleAutoTapTap(true);
+                        mostrarNotificacionChat('Auto Tap-Tap reactivado', 'success');
+                    }
+                }, state.tiempoReactivacion * 1000);
+                
+                // Mostrar notificación de temporizador
+                mostrarNotificacionChat(`Reactivando en ${state.tiempoReactivacion} segundos...`, 'info');
             }
         });
     }
 
+    // Función para mostrar notificaciones del chat
+    function mostrarNotificacionChat(mensaje, tipo = 'info') {
+        // Solo crear el contenedor si no existe
+        if (!elementos.notificacionChat) {
+            elementos.notificacionChat = document.createElement('div');
+            elementos.notificacionChat.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                padding: 10px 20px;
+                border-radius: 8px;
+                font-family: Arial, sans-serif;
+                font-size: 14px;
+                z-index: 999999;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            `;
+            document.body.appendChild(elementos.notificacionChat);
+        }
+
+        // Establecer estilos según el tipo
+        const estilos = {
+            success: {
+                background: 'rgba(0, 255, 136, 0.95)',
+                color: '#000',
+                border: '1px solid #00ff88'
+            },
+            warning: {
+                background: 'rgba(255, 0, 80, 0.95)',
+                color: '#fff',
+                border: '1px solid #ff0050'
+            },
+            info: {
+                background: 'rgba(0, 0, 0, 0.95)',
+                color: '#fff',
+                border: '1px solid #666'
+            }
+        };
+
+        // Aplicar estilos
+        Object.assign(elementos.notificacionChat.style, estilos[tipo]);
+        elementos.notificacionChat.textContent = mensaje;
+        elementos.notificacionChat.style.opacity = '1';
+
+        // Ocultar después de 3 segundos
+        setTimeout(() => {
+            elementos.notificacionChat.style.opacity = '0';
+        }, 3000);
+    }
+    
     // Configurar eventos
     function configurarEventos() {
         // Toggle
@@ -546,7 +646,7 @@
                     activo: state.activo, 
                     contador: state.contador 
                 });
-            } else if (request.action === 'updateReactivationTime') {
+            } else if (request.action === 'updateReactivacionTime') {
                 state.tiempoReactivacion = request.tiempo;
             }
         });
