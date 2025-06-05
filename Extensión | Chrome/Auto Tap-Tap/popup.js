@@ -1,19 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Referencias a elementos del DOM
     const elementos = {
-        toggleButton: document.getElementById('toggleButton'),          // Botón de activar/desactivar
-        statusText: document.getElementById('statusText'),             // Texto de estado
-        totalTapTaps: document.getElementById('totalTapTaps'),        // Total histórico de tap-taps
-        sessionTapTaps: document.getElementById('sessionTapTaps'),     // Tap-taps de la sesión actual
-        resetStats: document.getElementById('resetStats'),             // Botón de reiniciar estadísticas
-        openTikTok: document.getElementById('openTikTok'),            // Botón para abrir TikTok
-        chatReactivationTime: document.getElementById('chatReactivationTime') // Input de tiempo de reactivación
+        toggleButton: document.getElementById('toggleButton'),
+        statusText: document.getElementById('statusText'),
+        totalTapTaps: document.getElementById('totalTapTaps'),
+        sessionTapTaps: document.getElementById('sessionTapTaps'),
+        resetStats: document.getElementById('resetStats'),
+        openTikTok: document.getElementById('openTikTok'),
+        chatReactivationTime: document.getElementById('chatReactivationTime')
     };
     
-    // Variables de estado
-    let updateInterval = null; // Intervalo para actualizar el estado
+    let updateInterval = null;
     
-    // Funciones
     const updateUI = (activo, contador = 0) => {
         if (activo) {
             elementos.statusText.textContent = 'Activo';
@@ -33,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
             
-            if (!tab.url.includes('tiktok.com')) {
+            if (!tab || !tab.url || !tab.url.includes('tiktok.com')) {
                 elementos.statusText.textContent = '⚠️ Abre TikTok primero';
                 elementos.toggleButton.disabled = true;
                 elementos.openTikTok.style.display = 'block';
@@ -42,89 +40,99 @@ document.addEventListener('DOMContentLoaded', () => {
             
             elementos.openTikTok.style.display = 'none';
             
+            // Intentar obtener el estado actual
             chrome.tabs.sendMessage(tab.id, { action: 'getStatus' }, response => {
                 if (chrome.runtime.lastError) {
                     elementos.statusText.textContent = '🔄 Recarga la página de TikTok';
                     elementos.toggleButton.disabled = true;
                     elementos.sessionTapTaps.textContent = '0';
+                    
+                    // Recargar la página automáticamente después de 3 segundos
+                    setTimeout(() => {
+                        chrome.tabs.reload(tab.id);
+                    }, 3000);
                 } else if (response) {
                     updateUI(response.activo, response.contador);
                     elementos.toggleButton.disabled = false;
+                    
+                    // Actualizar tiempo de reactivación si existe
+                    if (response.tiempoReactivacion) {
+                        elementos.chatReactivationTime.value = response.tiempoReactivacion;
+                    }
                 }
+            });
+            
+            // Actualizar total de Tap-Taps
+            chrome.storage.local.get(['totalTapTaps'], result => {
+                elementos.totalTapTaps.textContent = result.totalTapTaps || 0;
             });
         } catch (error) {
             console.error('Error updating popup:', error);
         }
-        
-        // Actualizar total de Tap-Taps
-        chrome.storage.local.get(['totalTapTaps'], result => {
-            elementos.totalTapTaps.textContent = result.totalTapTaps || 0;
-        });
     };
     
     // Event Listeners
     elementos.toggleButton.addEventListener('click', async () => {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        chrome.tabs.sendMessage(tab.id, { action: 'toggle' });
-        setTimeout(updatePopupStatus, 100);
+        chrome.tabs.sendMessage(tab.id, { action: 'toggle' }, response => {
+            if (!chrome.runtime.lastError && response?.success) {
+                updatePopupStatus();
+            }
+        });
     });
     
-    elementos.resetStats.addEventListener('click', () => {
-        if (confirm('¿Estás seguro de que deseas reiniciar las estadísticas? Esta acción no se puede deshacer.')) {
-            chrome.storage.local.set({ totalTapTaps: 0 }, () => {
+    elementos.resetStats.addEventListener('click', async () => {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        chrome.storage.local.set({ totalTapTaps: 0 });
+        chrome.tabs.sendMessage(tab.id, { action: 'updateTapTaps', count: 0 }, response => {
+            if (!chrome.runtime.lastError && response?.success) {
                 elementos.totalTapTaps.textContent = '0';
-            });
-        }
+                elementos.sessionTapTaps.textContent = '0';
+            }
+        });
     });
     
     elementos.openTikTok.addEventListener('click', () => {
         chrome.tabs.create({ url: 'https://www.tiktok.com' });
-        window.close();
     });
     
-    // Manejar cambios en el tiempo de reactivación
-    elementos.chatReactivationTime.addEventListener('input', () => {
+    elementos.chatReactivationTime.addEventListener('change', () => {
         let tiempo = parseInt(elementos.chatReactivationTime.value);
-        
-        // Validar rango
-        if (tiempo < 10) tiempo = 10;
+        if (isNaN(tiempo) || tiempo < 10) tiempo = 10;
         if (tiempo > 60) tiempo = 60;
-        if (isNaN(tiempo)) tiempo = 10;
         
-        // Actualizar valor en input
         elementos.chatReactivationTime.value = tiempo;
         
-        // Guardar y sincronizar
-        chrome.storage.local.set({ tiempoReactivacion: tiempo });
-        chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
-            if (tab && tab.url.includes('tiktok.com')) {
-                chrome.tabs.sendMessage(tab.id, { 
-                    action: 'updateReactivationTime', 
-                    tiempo: tiempo 
-                });
-            }
+        chrome.storage.local.set({ tiempoReactivacion: tiempo }, () => {
+            const [tab] = chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
+                if (tab && tab.url.includes('tiktok.com')) {
+                    chrome.tabs.sendMessage(tab.id, { 
+                        action: 'updateReactivationTime', 
+                        tiempo: tiempo 
+                    });
+                }
+            });
         });
     });
-        
-        // Escuchar cambios desde content.js
-        chrome.runtime.onMessage.addListener((request) => {
-            if (request.action === 'tiempoReactivacionChanged') {
-                elementos.chatReactivationTime.value = request.tiempo;
-            }
-        });
-
+    
+    chrome.runtime.onMessage.addListener((request) => {
+        if (request.action === 'tiempoReactivacionChanged') {
+            elementos.chatReactivationTime.value = request.tiempo;
+        }
+    });
+    
     // Cargar tiempo de reactivación guardado
     chrome.storage.local.get(['tiempoReactivacion'], result => {
         if (result.tiempoReactivacion) {
             elementos.chatReactivationTime.value = result.tiempoReactivacion;
         }
     });
-
-    // Inicializar
+    
+    // Inicializar y actualizar periódicamente
     updatePopupStatus();
     updateInterval = setInterval(updatePopupStatus, 1000);
     
-    // Cleanup
+    // Limpieza
     window.addEventListener('unload', () => {
         if (updateInterval) clearInterval(updateInterval);
     });
