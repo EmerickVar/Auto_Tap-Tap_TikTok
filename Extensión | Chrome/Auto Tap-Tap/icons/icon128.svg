@@ -1,0 +1,58 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad128" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff0050;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#ff2255;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ff3366;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow128">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-opacity="0.3"/>
+    </filter>
+    <pattern id="pattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+      <circle cx="10" cy="10" r="1" fill="white" opacity="0.3"/>
+    </pattern>
+  </defs>
+  
+  <!-- Fondo con gradiente -->
+  <rect width="128" height="128" rx="24" fill="url(#grad128)" filter="url(#shadow128)"/>
+  
+  <!-- Patrón de fondo -->
+  <rect width="128" height="128" rx="24" fill="url(#pattern)"/>
+  
+  <!-- Grupo principal centrado -->
+  <g transform="translate(64, 58)">
+    <!-- Corazón grande -->
+    <path d="M0 -20C-5 -20 -10 -17.5 -13.75 -13.75C-17.5 -10 -20 -5 -20 0C-20 20 0 35 0 35C0 35 20 20 20 0C20 -5 17.5 -10 13.75 -13.75C10 -17.5 5 -20 0 -20Z" fill="white" opacity="0.95">
+      <animateTransform attributeName="transform" type="scale" values="1;1.15;1" dur="2s" repeatCount="indefinite"/>
+    </path>
+    
+    <!-- Símbolo de automatización (engranaje + play) -->
+    <g transform="translate(0, -2)">
+      <!-- Círculo interior -->
+      <circle cx="0" cy="0" r="8" fill="#ff0050" opacity="0.9"/>
+      <!-- Triángulo de play -->
+      <polygon points="-3,-4 -3,4 4,0" fill="white"/>
+    </g>
+    
+    <!-- Ondas de automatización -->
+    <circle cx="0" cy="0" r="25" fill="none" stroke="white" stroke-width="2" opacity="0.3">
+      <animate attributeName="r" values="25;35;25" dur="2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.3;0;0.3" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    
+    <circle cx="0" cy="0" r="25" fill="none" stroke="white" stroke-width="2" opacity="0.3">
+      <animate attributeName="r" values="25;35;25" dur="2s" begin="0.5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.3;0;0.3" dur="2s" begin="0.5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+  
+  <!-- Texto "AUTO TAP-TAP" -->
+  <text x="64" y="105" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="white">AUTO TAP-TAP</text>
+  
+  <!-- Pequeños corazones decorativos -->
+  <g opacity="0.5">
+    <path d="M20 25 L20 22 C20 20 18 20 18 22 C18 20 16 20 16 22 L16 25 Z" fill="white"/>
+    <path d="M108 30 L108 27 C108 25 106 25 106 27 C106 25 104 25 104 27 L104 30 Z" fill="white"/>
+    <path d="M25 95 L25 92 C25 90 23 90 23 92 C23 90 21 90 21 92 L21 95 Z" fill="white"/>
+  </g>
+</svg>

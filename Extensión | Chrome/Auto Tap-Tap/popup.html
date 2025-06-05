@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="popup.css">
+    <title>TikTok Auto Tap-Tap</title>
+</head>
+<body>
+    <div class="container">
+        <h1>TikTok Auto Tap-Tap</h1>
+        
+        <div class="status-section">
+            <div class="status-indicator">
+                <span class="status-label">Estado:</span>
+                <span id="statusText" class="status-text inactive">Inactivo</span>
+            </div>
+            <button id="toggleButton" class="toggle-button start">Iniciar</button>
+        </div>
+        
+        <div class="info-section">
+            <p class="info-text">
+                Presiona el botón para activar el auto Tap-Tap en TikTok
+            </p>
+        </div>
+        
+        <div class="stats-section">
+            <h3 class="stats-title">📊 Estadísticas</h3>
+            <div class="stat-item">
+                <span class="stat-label">Tap-Taps en esta sesión:</span>
+                <span id="sessionLikes" class="stat-value">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Total de Tap-Taps:</span>
+                <span id="totalLikes" class="stat-value">0</span>
+            </div>
+            <button id="resetStats" class="reset-button">Resetear estadísticas</button>
+        </div>
+        
+        <div class="shortcuts-section">
+            <h3 class="shortcuts-title">⌨️ Atajos de teclado</h3>
+            <div class="shortcut-item">
+                <span class="shortcut-key">Alt</span>
+                <span>+</span>
+                <span class="shortcut-key">L</span>
+                <span>Activar/Desactivar</span>
+            </div>
+        </div>
+        
+        <button id="openTikTok" class="open-tiktok-button">
+            Abrir TikTok
+        </button>
+    </div>
+    
+    <script src="popup.js"></script>
+</body>
+</html>
