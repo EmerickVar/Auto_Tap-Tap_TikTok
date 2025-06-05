@@ -32,7 +32,7 @@
             </div>
             <div class="stat-item">
                 <span class="stat-label">Total de Tap-Taps:</span>
-                <span id="totalLikes" class="stat-value">0</span>
+                <span id="totalTapTaps" class="stat-value">0</span>
             </div>
             <button id="resetStats" class="reset-button">Resetear estadísticas</button>
         </div>
@@ -46,10 +46,31 @@
                 <span>Activar/Desactivar</span>
             </div>
         </div>
+
+        <div class="config-section">
+            <h3 class="config-title">⚙️ Configuración del Chat</h3>
+            <div class="config-item">
+                <span class="config-label">Tiempo de espera para reactivación:</span>
+                <div class="config-input-group">
+                    <input type="number" id="chatReactivationTime" min="10" max="60" value="10" required class="config-input">
+                    <span class="config-unit">segundos</span>
+                </div>
+            </div>
+        </div>
         
         <button id="openTikTok" class="open-tiktok-button">
             Abrir TikTok
         </button>
+
+        <div class="copyright-section">
+            <hr>
+            <p class="copyright-text">
+                © 2025 <a href="https://newagecoding.org/" target="_blank">New Age Coding Organization</a>
+            </p>
+            <p class="developer-info">
+                Desarrollado por <a href="https://github.com/EmerickVar" target="_blank">@EmerickVar</a>
+            </p>
+        </div>
     </div>
     
     <script src="popup.js"></script>

@@ -6,7 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
         totalTapTaps: document.getElementById('totalTapTaps'),
         sessionLikes: document.getElementById('sessionLikes'),
         resetStats: document.getElementById('resetStats'),
-        openTikTok: document.getElementById('openTikTok')
+        openTikTok: document.getElementById('openTikTok'),
+        chatReactivationTime: document.getElementById('chatReactivationTime')
     };
     
     // Estado
@@ -81,6 +82,44 @@ document.addEventListener('DOMContentLoaded', () => {
         window.close();
     });
     
+    // Manejar cambios en el tiempo de reactivación
+    elementos.chatReactivationTime.addEventListener('input', () => {
+        let tiempo = parseInt(elementos.chatReactivationTime.value);
+        
+        // Validar rango
+        if (tiempo < 10) tiempo = 10;
+        if (tiempo > 60) tiempo = 60;
+        if (isNaN(tiempo)) tiempo = 10;
+        
+        // Actualizar valor en input
+        elementos.chatReactivationTime.value = tiempo;
+        
+        // Guardar y sincronizar
+        chrome.storage.local.set({ tiempoReactivacion: tiempo });
+        chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
+            if (tab && tab.url.includes('tiktok.com')) {
+                chrome.tabs.sendMessage(tab.id, { 
+                    action: 'updateReactivationTime', 
+                    tiempo: tiempo 
+                });
+            }
+        });
+    });
+        
+        // Escuchar cambios desde content.js
+        chrome.runtime.onMessage.addListener((request) => {
+            if (request.action === 'tiempoReactivacionChanged') {
+                elementos.chatReactivationTime.value = request.tiempo;
+            }
+        });
+
+    // Cargar tiempo de reactivación guardado
+    chrome.storage.local.get(['tiempoReactivacion'], result => {
+        if (result.tiempoReactivacion) {
+            elementos.chatReactivationTime.value = result.tiempoReactivacion;
+        }
+    });
+
     // Inicializar
     updatePopupStatus();
     updateInterval = setInterval(updatePopupStatus, 1000);

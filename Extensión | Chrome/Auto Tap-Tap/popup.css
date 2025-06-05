@@ -116,7 +116,7 @@ h1::before {
 }
 
 .toggle-button.stop:hover:not(:disabled) {
-    background: #00cc6a;
+    background: #037c29;
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
 }
@@ -199,6 +199,93 @@ h1::before {
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+/* Copyright */
+.copyright-section {
+    margin-top: 16px;
+    text-align: center;
+    padding-top: 12px;
+}
+
+.copyright-section hr {
+    border: none;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.1);
+    margin-bottom: 12px;
+}
+
+.copyright-text,
+.developer-info {
+    margin: 4px 0;
+    font-size: 12px;
+    color: #666;
+}
+
+.copyright-section a {
+    color: #ff0050;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.copyright-section a:hover {
+    color: #cc0040;
+    text-decoration: underline;
+}
+}
+
+/* Configuración */
+.config-section {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.config-title {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.config-item {
+    padding: 8px 0;
+}
+
+.config-label {
+    display: block;
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.config-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.config-input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+    width: 70px;
+}
+
+.config-unit {
+    color: #666;
+    font-size: 14px;
+}
+
+.config-input:focus {
+    outline: none;
+    border-color: #ff0050;
+    box-shadow: 0 0 0 2px rgba(255, 0, 80, 0.1);
+}
     padding: 6px 0;
     font-size: 13px;
     color: #444;

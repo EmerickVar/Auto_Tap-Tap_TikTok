@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TikTok Auto Tap-Tap - Generador de Iconos</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        h1 {
+            font-size: 48px;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #FF0050, #00F2EA);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 18px;
+        }
+        
+        .icons-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+        }
+        
+        .icon-card {
+            background: #111;
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .icon-card:hover {
+            border-color: #FF0050;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255, 0, 80, 0.3);
+        }
+        
+        .icon-card h2 {
+            color: #00F2EA;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        
+        .canvas-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+        
+        canvas {
+            display: block;
+        }
+        
+        .size-16 { width: 64px; height: 64px; image-rendering: pixelated; }
+        .size-48 { width: 96px; height: 96px; }
+        .size-96 { width: 96px; height: 96px; }
+        .size-128 { width: 128px; height: 128px; }
+        
+        button {
+            background: #FF0050;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: #00F2EA;
+            transform: translateY(-2px);
+        }
+        
+        .download-all {
+            background: linear-gradient(45deg, #FF0050, #00F2EA);
+            font-size: 20px;
+            padding: 20px 40px;
+            margin: 40px auto;
+            display: block;
+        }
+        
+        .status {
+            margin-top: 10px;
+            color: #00F2EA;
+            font-size: 14px;
+            min-height: 20px;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>TikTok Auto Tap-Tap</h1>
+        <p class="subtitle">Generador de Iconos</p>
+    </div>
+    
+    <div id="loading" class="loading">Cargando iconos...</div>
+    
+    <div class="icons-container" id="icons-container" style="display: none;">
+        <!-- Icon 16x16 -->
+        <div class="icon-card">
+            <h2>Icono 16×16</h2>
+            <div class="canvas-container">
+                <canvas id="canvas16" class="size-16" width="16" height="16"></canvas>
+            </div>
+            <button onclick="downloadIcon(16)">Descargar icon16.png</button>
+            <div class="status" id="status16"></div>
+        </div>
+        
+        <!-- Icon 48x48 -->
+        <div class="icon-card">
+            <h2>Icono 48×48</h2>
+            <div class="canvas-container">
+                <canvas id="canvas48" class="size-48" width="48" height="48"></canvas>
+            </div>
+            <button onclick="downloadIcon(48)">Descargar icon48.png</button>
+            <div class="status" id="status48"></div>
+        </div>
+        
+        <!-- Icon 96x96 -->
+        <div class="icon-card">
+            <h2>Icono 96×96</h2>
+            <div class="canvas-container">
+                <canvas id="canvas96" class="size-96" width="96" height="96"></canvas>
+            </div>
+                        <button onclick="downloadIcon(96)">Descargar icon96.png</button>
+            <div class="status" id="status96"></div>
+        </div>
+        
+        <!-- Icon 128x128 -->
+        <div class="icon-card">
+            <h2>Icono 128×128</h2>
+            <div class="canvas-container">
+                <canvas id="canvas128" class="size-128" width="128" height="128"></canvas>
+            </div>
+            <button onclick="downloadIcon(128)">Descargar icon128.png</button>
+            <div class="status" id="status128"></div>
+        </div>
+    </div>
+    
+    <button class="download-all" onclick="downloadAll()">Descargar Todos los Iconos</button>
+    <button class="download-all" onclick="downloadAsZip()">Descargar como ZIP</button>
+
+    <script>
+        // Define SVG icons for each size
+        const svgIcons = {
+            16: `<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <filter id="tiktok16">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="0.5" result="blur" />
+                    <feOffset in="blur" dx="0.5" dy="0.5" result="offsetblur" />
+                    </filter>
+                </defs>
+                <!-- Fondo negro -->
+                <rect width="16" height="16" rx="3" fill="#000000"/>
+                
+                <!-- Corazón con efecto TikTok -->
+                <!-- Sombra cyan -->
+                <path d="M8 12C8 12 3 9.5 3 6C3 4.5 4 3.5 5 3.5C6 3.5 7 4 8 5C9 4 10 3.5 11 3.5C12 3.5 13 4.5 13 6C13 9.5 8 12 8 12Z" 
+                        fill="#00F2EA" transform="translate(-0.5, -0.5)" opacity="0.8"/>
+                <!-- Sombra roja -->
+                <path d="M8 12C8 12 3 9.5 3 6C3 4.5 4 3.5 5 3.5C6 3.5 7 4 8 5C9 4 10 3.5 11 3.5C12 3.5 13 4.5 13 6C13 9.5 8 12 8 12Z" 
+                        fill="#FF0050" transform="translate(0.5, 0.5)" opacity="0.8"/>
+                <!-- Corazón principal blanco -->
+                <path d="M8 12C8 12 3 9.5 3 6C3 4.5 4 3.5 5 3.5C6 3.5 7 4 8 5C9 4 10 3.5 11 3.5C12 3.5 13 4.5 13 6C13 9.5 8 12 8 12Z" 
+                        fill="white">
+                        <animateTransform attributeName="transform" type="scale" values="1;1.025;1" dur="2s" repeatCount="indefinite"/>
+                </path>
+                </svg>`,
+            
+            48: `<svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                <!-- Fondo negro -->
+                <rect width="48" height="48" rx="10" fill="#000000"/>
+                
+                <!-- Grupo principal -->
+                <g transform="translate(24, 18)">
+                    <!-- Corazón con efecto TikTok -->
+                    <!-- Sombra cyan -->
+                    <path d="M0 -8C-2 -8 -4 -7 -5.5 -5.5C-7 -4 -8 -2 -8 0C-8 8 0 14 0 14C0 14 8 8 8 0C8 -2 7 -4 5.5 -5.5C4 -7 2 -8 0 -8Z" 
+                        fill="#00F2EA" transform="translate(-1.5, -1.5)" opacity="0.7"/>
+                    <!-- Sombra roja -->
+                    <path d="M0 -8C-2 -8 -4 -7 -5.5 -5.5C-7 -4 -8 -2 -8 0C-8 8 0 14 0 14C0 14 8 8 8 0C8 -2 7 -4 5.5 -5.5C4 -7 2 -8 0 -8Z" 
+                        fill="#FF0050" transform="translate(1.5, 1.5)" opacity="0.7"/>
+                    <!-- Corazón principal blanco -->
+                    <path d="M0 -8C-2 -8 -4 -7 -5.5 -5.5C-7 -4 -8 -2 -8 0C-8 8 0 14 0 14C0 14 8 8 8 0C8 -2 7 -4 5.5 -5.5C4 -7 2 -8 0 -8Z" 
+                        fill="white">
+                    <animateTransform attributeName="transform" type="scale" values="1;1.1;1" dur="2s" repeatCount="indefinite"/>
+                    </path>
+                    
+                    <!-- Símbolo de play -->
+                    <polygon points="-3,-1 -3,5 2,2" fill="#000000" opacity="0.8"/>
+                </g>
+                
+                <!-- Texto AUTO con efecto TikTok -->
+                <text x="5.175" y="40.15" font-family="Arial Black, sans-serif" font-size="5" font-weight="900" fill="#FF0050">AUTO TAP-TAP</text><!-- Texto Magenta-->
+                <text x="4.825" y="39.85" font-family="Arial Black, sans-serif" font-size="5" font-weight="900" fill="#00F2EA">AUTO TAP-TAP</text><!-- Texto Cyan-->
+                <text x="5" y="40" font-family="Arial Black, sans-serif" font-size="5" font-weight="900" fill="#FFFFFF">AUTO TAP-TAP</text><!-- Texto Blanco-->
+                </svg>`,
+            
+            96: `<svg width="96" height="96" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+                <!-- Fondo negro -->
+                <rect width="96" height="96" rx="18" fill="#000000"/>
+                
+                <!-- Patrón de fondo estilo TikTok -->
+                <defs>
+                    <pattern id="tiktokPattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <circle cx="10" cy="10" r="1" fill="#FF0050" opacity="0.2"/>
+                    <circle cx="0" cy="0" r="1" fill="#00F2EA" opacity="0.2"/>
+                    <circle cx="20" cy="20" r="1" fill="#00F2EA" opacity="0.2"/>
+                    </pattern>
+                </defs>
+                <rect width="96" height="96" rx="18" fill="url(#tiktokPattern)"/>
+                
+                <!-- Grupo principal -->
+                <g transform="translate(48, 35)">
+                    <!-- Corazón con efecto TikTok -->
+                    <!-- Sombra cyan -->
+                    <path d="M0 -16C-4 -16 -8 -14 -11 -11C-14 -8 -16 -4 -16 0C-16 16 0 28 0 28C0 28 16 16 16 0C16 -4 14 -8 11 -11C8 -14 4 -16 0 -16Z" 
+                        fill="#00F2EA" transform="translate(-2, -2)" opacity="0.6"/>
+                    <!-- Sombra roja -->
+                    <path d="M0 -16C-4 -16 -8 -14 -11 -11C-14 -8 -16 -4 -16 0C-16 16 0 28 0 28C0 28 16 16 16 0C16 -4 14 -8 11 -11C8 -14 4 -16 0 -16Z" 
+                        fill="#FF0050" transform="translate(2, 2)" opacity="0.6"/>
+                    <!-- Corazón principal blanco -->
+                    <path d="M0 -16C-4 -16 -8 -14 -11 -11C-14 -8 -16 -4 -16 0C-16 16 0 28 0 28C0 28 16 16 16 0C16 -4 14 -8 11 -11C8 -14 4 -16 0 -16Z" 
+                        fill="white">
+                    <animateTransform attributeName="transform" type="scale" values="1;1.1;1" dur="2s" repeatCount="indefinite"/>
+                    </path>
+                    
+                    <!-- Símbolo de automatización con estilo TikTok -->
+                    <g transform="translate(0, -2)">
+                    <circle cx="0" cy="0" r="6" fill="#000000"/>
+                    <polygon points="-2.5,-3 -2.5,3 3,0" fill="white"/>
+                    </g>
+                    
+                    <!-- Ondas estilo TikTok -->
+                    <circle cx="0" cy="0" r="25" fill="none" stroke="#FF0050" stroke-width="1.5" opacity="0.3">
+                    <animate attributeName="r" values="25;35;25" dur="2s" repeatCount="indefinite"/>
+                    <animate attributeName="opacity" values="0.3;0;0.3" dur="2s" repeatCount="indefinite"/>
+                    </circle>
+                    <circle cx="0" cy="0" r="25" fill="none" stroke="#00F2EA" stroke-width="1.5" opacity="0.3">
+                    <animate attributeName="r" values="25;35;25" dur="2s" begin="1s" repeatCount="indefinite"/>
+                    <animate attributeName="opacity" values="0.3;0;0.3" dur="2s" begin="1s" repeatCount="indefinite"/>
+                    </circle>
+                </g>
+                
+                <!-- Texto con efecto TikTok -->
+                <text x="5.25" y="80.25" font-family="Arial Black, sans-serif" font-size="11" font-weight="900" fill="#FF0050">AUTO TAP-TAP</text><!-- Texto Magenta-->
+                <text x="4.75" y="79.75" font-family="Arial Black, sans-serif" font-size="11" font-weight="900" fill="#00F2EA">AUTO TAP-TAP</text><!-- Texto Cyan-->
+                <text x="5" y="80" font-family="Arial Black, sans-serif" font-size="11" font-weight="900" fill="#FFFFFF">AUTO TAP-TAP</text><!-- Texto Blanco-->
+                </svg>`,
+            
+            128: `<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+                <!-- Fondo negro -->
+                <rect width="128" height="128" rx="24" fill="#000000"/>
+                
+                <!-- Efectos y patrones -->
+                <defs>
+                    <filter id="glow">
+                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                    <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                    </filter>
+                    
+                    <pattern id="tiktokGrid" x="0" y="0" width="32" height="32" patternUnits="userSpaceOnUse">
+                    <line x1="0" y1="16" x2="32" y2="16" stroke="#FF0050" stroke-width="0.5" opacity="0.1"/>
+                    <line x1="16" y1="0" x2="16" y2="32" stroke="#00F2EA" stroke-width="0.5" opacity="0.1"/>
+                    </pattern>
+                </defs>
+                
+                <!-- Patrón de fondo -->
+                <rect width="128" height="128" rx="24" fill="url(#tiktokGrid)"/>
+                
+                <!-- Grupo principal -->
+                <g transform="translate(64, 47.5)">
+                    <!-- Corazón con efecto TikTok glitch -->
+                    <!-- Capa cyan -->
+                    <path d="M0 -20C-5 -20 -10 -17.5 -13.75 -13.75C-17.5 -10 -20 -5 -20 0C-20 20 0 35 0 35C0 35 20 20 20 0C20 -5 17.5 -10 13.75 -13.75C10 -17.5 5 -20 0 -20Z" 
+                        fill="#00F2EA" transform="translate(-3, -3)" opacity="0.7" filter="url(#glow)"/>
+                    <!-- Capa roja -->
+                    <path d="M0 -20C-5 -20 -10 -17.5 -13.75 -13.75C-17.5 -10 -20 -5 -20 0C-20 20 0 35 0 35C0 35 20 20 20 0C20 -5 17.5 -10 13.75 -13.75C10 -17.5 5 -20 0 -20Z" 
+                        fill="#FF0050" transform="translate(3, 3)" opacity="0.7" filter="url(#glow)"/>
+                    <!-- Corazón principal blanco -->
+                    <path d="M0 -20C-5 -20 -10 -17.5 -13.75 -13.75C-17.5 -10 -20 -5 -20 0C-20 20 0 35 0 35C0 35 20 20 20 0C20 -5 17.5 -10 13.75 -13.75C10 -17.5 5 -20 0 -20Z" 
+                        fill="white">
+                    <animateTransform attributeName="transform" type="scale" values="1;1.15;1" dur="2s" repeatCount="indefinite"/>
+                    </path>
+                    
+                    <!-- Logo TikTok musical note / play button -->
+                    <g transform="translate(0, -2)">
+                    <circle cx="0" cy="0" r="8" fill="#000000"/>
+                    <polygon points="-3,-4 -3,4 4,0" fill="white"/>
+                    </g>
+                    
+                    <!-- Efectos de onda estilo TikTok -->
+                    <circle cx="0" cy="0" r="30" fill="none" stroke="#FF0050" stroke-width="2" opacity="0.4">
+                    <animate attributeName="r" values="30;45;30" dur="3s" repeatCount="indefinite"/>
+                    <animate attributeName="opacity" values="0.4;0;0.4" dur="3s" repeatCount="indefinite"/>
+                    </circle>
+                    <circle cx="0" cy="0" r="30" fill="none" stroke="#00F2EA" stroke-width="2" opacity="0.4">
+                    <animate attributeName="r" values="30;45;30" dur="3s" begin="1.5s" repeatCount="indefinite"/>
+                    <animate attributeName="opacity" values="0.4;0;0.4" dur="3s" begin="1.5s" repeatCount="indefinite"/>
+                    </circle>
+                </g>
+                
+                <!-- Texto con efecto glitch TikTok -->
+                <g transform="translate(64, 105)">
+                    <!-- Sombra magenta -->
+                    <text x="0.45" y="0.45" font-family="Arial Black, sans-serif" font-size="14" font-weight="900" text-anchor="middle" fill="#FF0050">AUTO TAP-TAP</text><!-- Texto Magenta-->
+                    <!-- Sombra cyan -->
+                    <text x="-0.45" y="-0.45" font-family="Arial Black, sans-serif" font-size="14" font-weight="900" text-anchor="middle" fill="#00F2EA">AUTO TAP-TAP</text><!-- Texto Cyan-->
+                    <!-- Texto principal -->
+                    <text x="0" y="0" font-family="Arial Black, sans-serif" font-size="14" font-weight="900" text-anchor="middle" fill="#FFFFFF">AUTO TAP-TAP</text><!-- Texto Blanco-->
+                </g>
+                </svg>`
+        };
+        
+        // Load all icons when page loads
+        window.onload = function() {
+            const sizes = [16, 48, 96, 128];
+            let loadedCount = 0;
+            
+            sizes.forEach(size => {
+                const canvas = document.getElementById(`canvas${size}`);
+                const ctx = canvas.getContext('2d');
+                
+                const img = new Image();
+                const svg = new Blob([svgIcons[size]], {type: 'image/svg+xml'});
+                const url = URL.createObjectURL(svg);
+                
+                img.onload = function() {
+                    ctx.drawImage(img, 0, 0);
+                    URL.revokeObjectURL(url);
+                    loadedCount++;
+                    
+                    if (loadedCount === sizes.length) {
+                        document.getElementById('loading').style.display = 'none';
+                        document.getElementById('icons-container').style.display = 'grid';
+                    }
+                };
+                img.src = url;
+            });
+        };
+        
+        // Download individual icon
+        function downloadIcon(size) {
+            const canvas = document.getElementById(`canvas${size}`);
+            const statusEl = document.getElementById(`status${size}`);
+            
+            canvas.toBlob(function(blob) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `icon${size}.png`;
+                a.click();
+                                URL.revokeObjectURL(url);
+                statusEl.textContent = '✓ ¡Descargado!';
+                setTimeout(() => {
+                    statusEl.textContent = '';
+                }, 3000);
+            });
+        }
+        
+        // Download all icons
+        function downloadAll() {
+            const sizes = [16, 48, 96, 128];
+            
+            sizes.forEach((size, index) => {
+                setTimeout(() => {
+                    downloadIcon(size);
+                }, index * 500);
+            });
+            
+            setTimeout(() => {
+                alert('¡Todos los iconos se descargaron exitosamente! 🎉');
+            }, sizes.length * 500 + 500);
+        }
+        
+        // Download as ZIP
+        function downloadAsZip() {
+            const zip = new JSZip();
+            const sizes = [16, 48, 96, 128];
+            let processedCount = 0;
+            
+            sizes.forEach(size => {
+                const canvas = document.getElementById(`canvas${size}`);
+                canvas.toBlob(function(blob) {
+                    zip.file(`icon${size}.png`, blob);
+                    processedCount++;
+                    
+                    if (processedCount === sizes.length) {
+                        zip.generateAsync({type: 'blob'}).then(function(content) {
+                            const url = URL.createObjectURL(content);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'tiktok-auto-taptap-icons.zip';
+                            a.click();
+                            URL.revokeObjectURL(url);
+                        });
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>
