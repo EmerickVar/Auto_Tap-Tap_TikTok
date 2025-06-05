@@ -254,14 +254,24 @@
     }
     
     function toggleAutoTapTap(fromChat = false) {
+        console.log('🔄 Toggle Auto Tap-Tap:', {
+            fromChat,
+            estadoActual: state.activo,
+            pausadoPorChat: state.pausadoPorChat,
+            apagadoManualmente: state.apagadoManualmente
+        });
+
+        // Solo actualizar apagadoManualmente cuando es una interacción directa del usuario con el botón
         if (!fromChat) {
-            state.apagadoManualmente = !state.activo;
+            // Solo cambiar apagadoManualmente cuando viene del botón
+            state.apagadoManualmente = true;
         }
         
         const nuevoEstado = !state.activo;
         
         // Limpiar intervalos existentes
         if (state.intervalo) {
+            console.log('🧹 Limpiando intervalo existente');
             safeInterval.clear(state.intervalo);
             state.intervalo = null;
         }
@@ -269,23 +279,32 @@
         // Actualizar estado
         state.activo = nuevoEstado;
         
-        if (nuevoEstado) {
+        if (nuevoEstado && !fromChat) {
+            // Solo activar si no viene del chat
+            console.log('✨ Activando Auto Tap-Tap');
             const intervalo = parseInt(elementos.selector.value);
             elementos.boton.textContent = '❤️ Auto Tap-Tap: ON';
             elementos.boton.style.background = '#00ff88';
             elementos.selector.disabled = true;
             elementos.selector.style.opacity = '0.5';
             
-            // Solo iniciar el intervalo si está activo manualmente
-            if (!fromChat && !state.pausadoPorChat) {
+            // Al activar manualmente, resetear el estado de apagado manual
+            state.apagadoManualmente = false;
+            
+            // Solo iniciar el intervalo si no está pausado por chat
+            if (!state.pausadoPorChat) {
+                console.log('🚀 Iniciando intervalo de tap-taps');
                 presionarL(); // Ejecutar inmediatamente
                 state.intervalo = safeInterval.create(presionarL, intervalo);
                 
                 // Notificar al background
                 safeRuntimeMessage({ action: 'started' })
                     .catch(error => console.warn('Error al notificar estado:', error));
+            } else {
+                console.log('⏸️ No se inicia intervalo - pausado por chat');
             }
         } else {
+            console.log('🛑 Desactivando Auto Tap-Tap');
             elementos.boton.textContent = '❤️ Auto Tap-Tap: OFF';
             elementos.boton.style.background = '#ff0050';
             elementos.selector.disabled = false;
@@ -295,6 +314,13 @@
             safeRuntimeMessage({ action: 'stopped' })
                 .catch(error => console.warn('Error al notificar estado:', error));
         }
+
+        console.log('Estado final:', {
+            activo: state.activo,
+            pausadoPorChat: state.pausadoPorChat,
+            apagadoManualmente: state.apagadoManualmente,
+            tieneIntervalo: !!state.intervalo
+        });
     }
     
     // Funciones de arrastre
@@ -681,6 +707,28 @@
             }
         };
 
+        // Variables para el manejo de inactividad
+        let inactivityTimer = null;
+        let lastActivity = Date.now();
+        
+        // Función para manejar la actividad del usuario
+        const handleActivity = () => {
+            lastActivity = Date.now();
+            
+            // Limpiar el timer existente de inactividad
+            if (inactivityTimer) {
+                clearTimeout(inactivityTimer);
+            }
+
+            // Si estamos pausados por chat y no hay texto, configurar nuevo timer
+            if (state.pausadoPorChat && !chatInput.textContent.trim()) {
+                inactivityTimer = setTimeout(() => {
+                    console.log('⏳ Inactividad detectada en chat vacío');
+                    iniciarCuentaRegresiva();
+                }, 2000); // 2 segundos de inactividad
+            }
+        };
+
         // Reactivar el Auto Tap-Tap
         const reactivarAutoTapTap = () => {
             console.log('🎯 Intentando reactivar Auto Tap-Tap...');
@@ -693,6 +741,11 @@
             if (!state.apagadoManualmente) {
                 state.pausadoPorChat = false;
                 timers.cleanupAll();
+                
+                if (inactivityTimer) {
+                    clearTimeout(inactivityTimer);
+                    inactivityTimer = null;
+                }
 
                 if (chatInput.getAttribute('contenteditable')) {
                     chatInput.blur();
@@ -706,46 +759,107 @@
             }
         };
 
-        // Manejador para cuando el usuario está escribiendo
+        // Manejador para cuando el usuario está escribiendo o deja de escribir
         const handleInput = () => {
-            console.log('✍️ Usuario escribiendo en el chat...');
+            console.log('✍️ Actividad en chat detectada');
             timers.cleanupAll();
+            handleActivity();
             
             if (state.pausadoPorChat) {
-                timers.typing = setTimeout(() => {
-                    if (!state.apagadoManualmente && state.pausadoPorChat) {
-                        timers.chat = setTimeout(reactivarAutoTapTap, state.tiempoReactivacion * 1000);
-                        mostrarNotificacionChat(`⏳ Reactivando en ${state.tiempoReactivacion} segundos...`, 'info');
+                if (chatInput.textContent.trim() !== '') {
+                    console.log('💭 Usuario escribiendo, cancelando reactivación');
+                    timers.cleanupAll();
+                    if (inactivityTimer) {
+                        clearTimeout(inactivityTimer);
+                        inactivityTimer = null;
                     }
-                }, 1000);
+                } else {
+                    console.log('📝 Chat vacío, esperando inactividad...');
+                    handleActivity();
+                }
+            }
+        };
+
+        // Función para iniciar la cuenta regresiva
+        const iniciarCuentaRegresiva = () => {
+            if (state.pausadoPorChat && !state.apagadoManualmente && !chatInput.textContent.trim()) {
+                console.log('🔄 Iniciando cuenta regresiva por inactividad en chat');
+                timers.cleanupAll();
+                
+                // Limpiar timer de inactividad existente
+                if (inactivityTimer) {
+                    clearTimeout(inactivityTimer);
+                    inactivityTimer = null;
+                }
+                
+                timers.chat = setTimeout(() => {
+                    mostrarNotificacionChat(`⏳ Reactivando en ${state.tiempoReactivacion} segundos...`, 'info');
+                    setTimeout(reactivarAutoTapTap, state.tiempoReactivacion * 1000);
+                }, 0);
             }
         };
 
         // Pausar cuando el usuario interactúa con el chat
         const onFocus = (e) => {
             console.log('👆 Interacción detectada con el chat:', e.type);
+            console.log('Estado actual:', {
+                activo: state.activo,
+                apagadoManualmente: state.apagadoManualmente,
+                pausadoPorChat: state.pausadoPorChat
+            });
+
             if (state.activo && !state.apagadoManualmente) {
                 console.log('🛑 Pausando Auto Tap-Tap por interacción con chat');
+                
+                // Asegurar que se marca como pausado por chat antes de toggle
                 state.pausadoPorChat = true;
+                
+                // Limpiar cualquier timer existente
+                timers.cleanupAll();
+                if (inactivityTimer) {
+                    clearTimeout(inactivityTimer);
+                    inactivityTimer = null;
+                }
+                
+                // Pausar el Auto Tap-Tap
                 toggleAutoTapTap(true);
+                
+                // Mostrar notificación
                 mostrarNotificacionChat('✍️ Auto Tap-Tap pausado mientras escribes...', 'warning');
+                
+                // Iniciar manejo de inactividad
+                handleActivity();
+                
+                // Prevenir la propagación del evento
+                e.stopPropagation();
             }
         };
 
-        // Configurar eventos del chat con captura
+        // Configurar eventos del chat
         chatInput.addEventListener('focus', onFocus, true);
         chatInput.addEventListener('click', onFocus, true);
         chatInput.addEventListener('mousedown', onFocus, true);
-        chatInput.addEventListener('touchstart', onFocus, true);
+        chatInput.addEventListener('touchstart', onFocus, { passive: true, capture: true });
         chatInput.addEventListener('input', handleInput, true);
 
+        // Eventos específicos para detectar inactividad
         if (chatInput.getAttribute('contenteditable')) {
             chatInput.addEventListener('keydown', (e) => {
-                console.log('⌨️ Tecla presionada en chat');
                 if (!state.pausadoPorChat) onFocus(e);
+                handleActivity();
             }, true);
-            chatInput.addEventListener('keyup', handleInput, true);
-            chatInput.addEventListener('paste', handleInput, true);
+            
+            chatInput.addEventListener('keyup', () => {
+                setTimeout(handleInput, 50);
+            }, true);
+            
+            chatInput.addEventListener('paste', () => {
+                setTimeout(handleInput, 50);
+            }, true);
+            
+            // Monitorear actividad del mouse
+            chatInput.addEventListener('mousemove', handleActivity, { passive: true });
+            chatInput.addEventListener('mouseenter', handleActivity, { passive: true });
         }
 
         // Click fuera del chat
@@ -857,7 +971,7 @@
 
         // Toggle principal
         addEvent(elementos.boton, 'click', () => {
-            state.apagadoManualmente = !state.activo;
+            state.apagadoManualmente = state.activo; // Solo cuando se apaga, no cuando se enciende
             toggleAutoTapTap(false);
         });
 
