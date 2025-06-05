@@ -126,38 +126,64 @@
             }, 1000); // 1 segundo de timeout
 
             try {
-                chrome.runtime.sendMessage(message, response => {
-                    clearTimeout(timeout);
+                // Envolver en un try-catch específico para manejar errores CORS
+                const sendMessage = () => {
+                    try {
+                        chrome.runtime.sendMessage(message, response => {
+                            clearTimeout(timeout);
 
-                    if (chrome.runtime.lastError) {
-                        const error = chrome.runtime.lastError;
-                        if (error.message.includes('Extension context invalidated') ||
-                            error.message.includes('message channel closed')) {
-                            reloadExtension();
+                            if (chrome.runtime.lastError) {
+                                const error = chrome.runtime.lastError;
+                                // Ignorar errores específicos de CORS
+                                if (error.message.includes('Extension context invalidated') ||
+                                    error.message.includes('message channel closed')) {
+                                    reloadExtension();
+                                }
+                                // Para otros errores, solo rechazar si no son relacionados con CORS
+                                if (!error.message.includes('CORS')) {
+                                    reject(error);
+                                } else {
+                                    // Para errores CORS, resolver con un objeto vacío
+                                    resolve({});
+                                }
+                                return;
+                            }
+
+                            if (!response) {
+                                resolve({}); // Resolver con objeto vacío si no hay respuesta
+                                return;
+                            }
+
+                            if (response.error) {
+                                reject(new Error(response.error));
+                                return;
+                            }
+
+                            resolve(response);
+                        });
+                    } catch (error) {
+                        // Ignorar errores específicos de CORS
+                        if (!error.message.includes('CORS')) {
+                            throw error;
                         }
-                        reject(error);
-                        return;
+                        resolve({}); // Resolver con objeto vacío para errores CORS
                     }
+                };
 
-                    if (!response) {
-                        reject(new Error('No se recibió respuesta'));
-                        return;
-                    }
-
-                    if (response.error) {
-                        reject(new Error(response.error));
-                        return;
-                    }
-
-                    resolve(response);
-                });
+                // Intentar enviar el mensaje
+                sendMessage();
             } catch (error) {
                 clearTimeout(timeout);
                 console.warn('Error al enviar mensaje:', error);
                 if (error.message.includes('Extension context invalidated')) {
                     reloadExtension();
                 }
-                reject(error);
+                // Solo rechazar si no es un error CORS
+                if (!error.message.includes('CORS')) {
+                    reject(error);
+                } else {
+                    resolve({}); // Resolver con objeto vacío para errores CORS
+                }
             }
         });
     }
@@ -201,9 +227,10 @@
                 action: 'updateTapTaps', 
                 count: state.contador 
             }).catch(error => {
-                // Solo registrar errores que no sean de contexto invalidado
+                // Solo registrar errores que no sean de CORS o contexto invalidado
                 if (!error.message.includes('Extension context invalidated') && 
-                    !error.message.includes('message channel closed')) {
+                    !error.message.includes('message channel closed') &&
+                    !error.message.includes('CORS')) {
                     console.warn('Error al actualizar contador:', error);
                 }
             });
