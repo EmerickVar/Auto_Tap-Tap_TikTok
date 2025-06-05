@@ -86,6 +86,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             chrome.action.setBadgeText({ text: 'ON' });
             chrome.action.setBadgeBackgroundColor({ color: '#00ff88' });
             animateBadge();
+            sendResponse({ success: true });
             break;
             
         case 'stopped':
@@ -95,19 +96,23 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             if (badgeInterval) {
                 clearInterval(badgeInterval);
             }
+            sendResponse({ success: true });
             break;
             
-        case 'updateCounter':
+        case 'updateTapTaps':
             extensionState.contador = request.count;
             updateBadge(request.count);
+            sendResponse({ success: true });
             break;
             
         case 'ping':
             sendResponse({ success: true });
             break;
+
+        default:
+            sendResponse({ error: 'Acción no reconocida' });
+            break;
     }
-    
-    return true;
 });
 
 // Sincronizar estado periódicamente

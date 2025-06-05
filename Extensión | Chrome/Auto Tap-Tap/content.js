@@ -121,26 +121,38 @@
 
     function safeRuntimeMessage(message) {
         return new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                reject(new Error('Timeout al enviar mensaje'));
+            }, 1000); // 1 segundo de timeout
+
             try {
-                const handleResponse = (response) => {
+                chrome.runtime.sendMessage(message, response => {
+                    clearTimeout(timeout);
+
                     if (chrome.runtime.lastError) {
-                        console.warn('Error de comunicación:', chrome.runtime.lastError.message);
-                        if (chrome.runtime.lastError.message.includes('Extension context invalidated') ||
-                            chrome.runtime.lastError.message.includes('message port closed')) {
+                        const error = chrome.runtime.lastError;
+                        if (error.message.includes('Extension context invalidated') ||
+                            error.message.includes('message channel closed')) {
                             reloadExtension();
                         }
-                        reject(chrome.runtime.lastError);
+                        reject(error);
                         return;
                     }
-                    resolve(response);
-                };
 
-                // Asegurarse de que la llamada esté envuelta en un try-catch
-                const sent = chrome.runtime.sendMessage(message, handleResponse);
-                if (!sent) {
-                    reject(new Error('No se pudo enviar el mensaje'));
-                }
+                    if (!response) {
+                        reject(new Error('No se recibió respuesta'));
+                        return;
+                    }
+
+                    if (response.error) {
+                        reject(new Error(response.error));
+                        return;
+                    }
+
+                    resolve(response);
+                });
             } catch (error) {
+                clearTimeout(timeout);
                 console.warn('Error al enviar mensaje:', error);
                 if (error.message.includes('Extension context invalidated')) {
                     reloadExtension();
@@ -179,13 +191,23 @@
         document.dispatchEvent(evento);
         state.contador++;
         actualizarContador();
-        guardarEstadisticas();
         
-        // Actualizar badge usando la función segura
-        safeRuntimeMessage({ 
-            action: 'updateTapTaps', 
-            count: state.contador 
-        });
+        // Usar una función separada para actualizar el badge para evitar bloquear la funcionalidad principal
+        setTimeout(() => {
+            guardarEstadisticas();
+            
+            // Actualizar badge usando la función segura
+            safeRuntimeMessage({ 
+                action: 'updateTapTaps', 
+                count: state.contador 
+            }).catch(error => {
+                // Solo registrar errores que no sean de contexto invalidado
+                if (!error.message.includes('Extension context invalidated') && 
+                    !error.message.includes('message channel closed')) {
+                    console.warn('Error al actualizar contador:', error);
+                }
+            });
+        }, 0);
     }
     
     function actualizarContador() {
