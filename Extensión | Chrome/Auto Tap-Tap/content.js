@@ -499,8 +499,10 @@
         // PASO 1: Gestión del estado "apagado manualmente"
         // Solo actualizar cuando es una interacción directa del usuario con el botón
         if (!fromChat) {
-            // Marcar como apagado manual solo cuando viene del botón del usuario
-            state.apagadoManualmente = true;
+            // Marcar como apagado manual solo cuando el usuario APAGA el sistema
+            // Si está activo y va a desactivarse = apagado manual
+            // Si está inactivo y va a activarse = NO es apagado manual
+            state.apagadoManualmente = state.activo; // true solo cuando se apaga manualmente
         }
         
         // PASO 2: Determinar el nuevo estado (invertir estado actual)
@@ -1233,7 +1235,7 @@
                 }
                 
                 // Pausar el Auto Tap-Tap
-                toggleAutoTapTap(true);
+                toggleAutoTapTap(false);
                 
                 // Mostrar notificación
                 mostrarNotificacionChat('✍️ Auto Tap-Tap pausado mientras escribes...', 'warning');
