@@ -1,325 +1,571 @@
-/* Reset y base */
+/* ==================================================================================
+   ARCHIVO: popup.css
+   EXTENSIÓN: Auto Tap-Tap TikTok - Chrome Extension
+   DESCRIPCIÓN: Hoja de estilos principal para la interfaz de usuario del popup de la extensión.
+                Define todos los estilos visuales, animaciones, layout responsivo y temas
+                para crear una experiencia de usuario moderna y funcional.
+   
+   ARQUITECTURA VISUAL:
+   - Sistema de diseño basado en componentes modulares
+   - Palette de colores consistente con marca TikTok (#ff0050)
+   - Layout responsivo optimizado para ventana popup (320px)
+   - Efectos de hover y transiciones suaves para mejor UX
+   - Iconografía y tipografía del sistema operativo
+   
+   COMPONENTES PRINCIPALES:
+   1. Header con branding y título principal
+   2. Sección de estado con indicadores visuales
+   3. Controles de toggle con estados activo/inactivo
+   4. Panel de estadísticas con contadores en tiempo real
+   5. Sección de configuración con inputs personalizables
+   6. Panel de atajos de teclado informativos
+   7. Footer con información de copyright y desarrollador
+   
+   AUTOR: Emerick Echeverría Vargas (@EmerickVar) - New Age Coding Organization
+   VERSIÓN: 1.0.0
+   FECHA: Junio 2025
+   ================================================================================== */
+
+/* ================================================================================
+   🎨 SECCIÓN 1: RESET Y CONFIGURACIÓN BASE
+   ================================================================================
+   Establece la base fundamental para todos los elementos del popup.
+   Elimina márgenes/padding por defecto y configura box-sizing universal.
+   ================================================================================ */
+
+/* RESET UNIVERSAL
+   Resetea todos los elementos a un estado limpio y predecible */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+    margin: 0;                    /* Elimina márgenes externos por defecto */
+    padding: 0;                   /* Elimina espaciado interno por defecto */
+    box-sizing: border-box;       /* Incluye padding y border en el cálculo total de width/height */
 }
 
+/* CONFIGURACIÓN DEL CUERPO PRINCIPAL
+   Define las propiedades base del contenedor principal del popup */
 body {
-    width: 320px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #f0f2f5;
+    width: 320px;                 /* Ancho fijo optimizado para popup de extensión Chrome */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; /* Stack de fuentes del sistema operativo para máxima legibilidad */
+    background: #f0f2f5;          /* Color de fondo neutro (gris muy claro) que simula interfaz nativa */
 }
 
+/* CONTENEDOR PRINCIPAL
+   Wrapper que proporciona espaciado interno consistente */
 .container {
-    padding: 16px;
+    padding: 16px;                /* Espaciado interno uniforme de 16px en todos los lados */
 }
 
-/* Header */
+/* ================================================================================
+   📋 SECCIÓN 2: HEADER Y BRANDING
+   ================================================================================
+   Estilización del título principal con emoji de corazón para crear identidad
+   visual amigable y reconocible de la extensión.
+   ================================================================================ */
+
+/* TÍTULO PRINCIPAL DEL POPUP
+   Header que incluye branding visual y nombre de la extensión */
 h1 {
-    font-size: 20px;
-    color: #1a1a1a;
-    margin-bottom: 16px;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
+    font-size: 20px;              /* Tamaño de fuente prominente para jerarquía visual */
+    color: #1a1a1a;               /* Negro casi puro para máximo contraste y legibilidad */
+    margin-bottom: 16px;          /* Separación inferior para crear espacio respirable */
+    text-align: center;           /* Centrado horizontal para balance visual */
+    display: flex;                /* Flexbox para alineación de elementos internos */
+    align-items: center;          /* Alineación vertical centrada de emoji + texto */
+    justify-content: center;      /* Alineación horizontal centrada */
+    gap: 8px;                     /* Espaciado entre emoji y texto */
 }
 
+/* EMOJI DE CORAZÓN ANTES DEL TÍTULO
+   Pseudo-elemento que agrega identidad visual emocional */
 h1::before {
-    content: '❤️';
-    font-size: 24px;
+    content: '❤️';                /* Emoji de corazón que representa los "tap-taps" de TikTok */
+    font-size: 24px;              /* Tamaño ligeramente mayor que el texto para énfasis */
 }
 
-/* Secciones */
+/* ================================================================================
+   🏢 SECCIÓN 3: CONTENEDORES Y SECCIONES
+   ================================================================================
+   Define el estilo base para todas las cajas de contenido principales.
+   Utiliza cards con sombras sutiles para crear jerarquía visual clara.
+   ================================================================================ */
+
+/* SECCIONES PRINCIPALES CON ESTILO CARD
+   Contenedores principales que agrupan funcionalidades relacionadas */
 .status-section,
 .stats-section,
 .shortcuts-section {
-    background: white;
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: white;            /* Fondo blanco para contraste con el body gris */
+    border-radius: 12px;          /* Bordes redondeados modernos (12px para suavidad) */
+    padding: 16px;                /* Espaciado interno consistente */
+    margin-bottom: 16px;          /* Separación entre secciones */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Sombra sutil para efecto de elevación */
 }
 
+/* SECCIÓN DE INFORMACIÓN CON ESTILO DESTACADO
+   Card especial con fondo amarillo claro para información importante */
 .info-section {
-    background: #fff9e6;
-    border-radius: 8px;
-    padding: 12px;
-    margin-bottom: 16px;
-    border: 1px solid #ffe6b3;
+    background: #fff9e6;          /* Fondo amarillo muy claro para llamar atención */
+    border-radius: 8px;           /* Bordes menos redondeados para diferenciación */
+    padding: 12px;                /* Padding menor para contenido más compacto */
+    margin-bottom: 16px;          /* Consistencia con otras secciones */
+    border: 1px solid #ffe6b3;    /* Borde amarillo más intenso para definición */
 }
 
-/* Status */
+/* ================================================================================
+   📊 SECCIÓN 4: INDICADORES DE ESTADO
+   ================================================================================
+   Sistema de indicadores visuales que muestran el estado actual de la extensión
+   (activa/inactiva) con animaciones y colores diferenciados.
+   ================================================================================ */
+
+/* CONTENEDOR DEL INDICADOR DE ESTADO
+   Layout que organiza label y estado actual en línea horizontal */
 .status-indicator {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
+    display: flex;                /* Flexbox para layout horizontal */
+    align-items: center;          /* Alineación vertical centrada */
+    justify-content: space-between; /* Distribuye label a la izquierda, estado a la derecha */
+    margin-bottom: 16px;          /* Separación inferior antes de los botones */
 }
 
+/* ETIQUETA DEL ESTADO
+   Texto descriptivo que identifica qué representa el indicador */
 .status-label {
-    font-size: 14px;
-    color: #666;
-    font-weight: 500;
+    font-size: 14px;              /* Tamaño medio para texto secundario */
+    color: #666;                  /* Gris medio para jerarquía visual */
+    font-weight: 500;             /* Peso medio para legibilidad sin ser demasiado bold */
 }
 
+/* TEXTO DEL ESTADO ACTUAL
+   Badge que muestra visualmente el estado con colores y forma */
 .status-text {
-    font-size: 16px;
-    font-weight: bold;
-    padding: 4px 12px;
-    border-radius: 20px;
+    font-size: 16px;              /* Tamaño ligeramente mayor para importancia */
+    font-weight: bold;            /* Negrita para énfasis */
+    padding: 4px 12px;            /* Padding horizontal mayor para forma de píldora */
+    border-radius: 20px;          /* Bordes muy redondeados para efecto pill/badge */
 }
 
+/* ESTADO ACTIVO (EXTENSIÓN FUNCIONANDO)
+   Estilo verde con animación para indicar funcionamiento activo */
 .status-text.active {
-    color: #025016d1;
-    background: #e6f7ed;
-    animation: pulse 2s infinite;
+    color: #025016d1;             /* Verde oscuro para texto (alta legibilidad) */
+    background: #e6f7ed;          /* Fondo verde muy claro para contraste suave */
+    animation: pulse 2s infinite; /* Animación de pulso continua para llamar atención */
 }
 
+/* ESTADO INACTIVO (EXTENSIÓN DETENIDA)
+   Estilo rojo para indicar que la extensión no está funcionando */
 .status-text.inactive {
-    color: #ff4458;
-    background: #ffe6e9;
+    color: #ff4458;               /* Rojo intenso para texto de alerta */
+    background: #ffe6e9;          /* Fondo rojo muy claro para suavizar el impacto visual */
 }
 
-/* Botones */
+/* ================================================================================
+   🎛️ SECCIÓN 5: SISTEMA DE BOTONES
+   ================================================================================
+   Estilización completa del sistema de botones incluyendo estados hover,
+   disabled, y diferentes tipos (toggle, reset, navegación).
+   ================================================================================ */
+
+/* ESTILOS BASE PARA TODOS LOS BOTONES
+   Propiedades compartidas por todos los tipos de botones */
 .toggle-button,
 .reset-button,
 .open-tiktok-button {
-    width: 100%;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    width: 100%;                  /* Ancho completo para consistencia visual */
+    border: none;                 /* Sin bordes por defecto para diseño limpio */
+    border-radius: 8px;           /* Bordes redondeados moderados */
+    font-size: 16px;              /* Tamaño de fuente legible para labels */
+    font-weight: bold;            /* Negrita para mejorar legibilidad y presencia */
+    cursor: pointer;              /* Cursor pointer para indicar interactividad */
+    transition: all 0.3s ease;    /* Transición suave para todos los cambios de estado */
 }
 
+/* BOTÓN TOGGLE PRINCIPAL
+   Botón principal para iniciar/detener la automatización */
 .toggle-button {
-    padding: 12px;
-    color: white;
+    padding: 12px;                /* Padding generoso para área de clic cómoda */
+    color: white;                 /* Texto blanco para contraste con fondos coloridos */
 }
 
+/* BOTÓN DE INICIO (INICIAR AUTOMATIZACIÓN)
+   Estilo rojo siguiendo la paleta de colores de TikTok */
 .toggle-button.start {
-    background: #ff0050;
+    background: #ff0050;          /* Rojo principal de TikTok para acción primaria */
 }
 
+/* EFECTO HOVER DEL BOTÓN DE INICIO
+   Interacción visual cuando el usuario pasa el mouse (excepto si está disabled) */
 .toggle-button.start:hover:not(:disabled) {
-    background: #ff3366;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(255, 0, 80, 0.3);
+    background: #ff3366;          /* Rojo más claro para feedback visual */
+    transform: translateY(-1px);  /* Ligero movimiento hacia arriba para efecto de elevación */
+    box-shadow: 0 4px 12px rgba(255, 0, 80, 0.3); /* Sombra roja difusa para profundidad */
 }
 
+/* BOTÓN DE DETENER (PARAR AUTOMATIZACIÓN)
+   Estilo verde para indicar acción de pausa/detención */
 .toggle-button.stop {
-    background: #025016d1;
+    background: #025016d1;        /* Verde oscuro con transparencia para seriedad */
 }
 
+/* EFECTO HOVER DEL BOTÓN DE DETENER
+   Feedback visual para acción de detención */
 .toggle-button.stop:hover:not(:disabled) {
-    background: #199403;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(66, 224, 4, 0.3);
+    background: #199403;          /* Verde más brillante para confirmación visual */
+    transform: translateY(-1px);  /* Consistencia con animación de botón start */
+    box-shadow: 0 4px 12px rgba(66, 224, 4, 0.3); /* Sombra verde para profundidad */
 }
 
+/* ESTADO DESHABILITADO DE BOTONES TOGGLE
+   Estilo para cuando los botones no pueden ser activados */
 .toggle-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+    opacity: 0.5;                 /* Transparencia para indicar inactividad */
+    cursor: not-allowed;          /* Cursor que indica acción no permitida */
 }
 
+/* BOTÓN DE RESET/REINICIO
+   Botón secundario para resetear contadores y configuraciones */
 .reset-button {
-    padding: 8px;
-    margin-top: 12px;
-    border: 1px solid #ddd;
-    background: white;
-    font-size: 14px;
-    color: #666;
+    padding: 8px;                 /* Padding menor para jerarquía visual secundaria */
+    margin-top: 12px;             /* Separación superior del elemento anterior */
+    border: 1px solid #ddd;       /* Borde sutil para definición sin peso visual */
+    background: white;            /* Fondo neutro para acción secundaria */
+    font-size: 14px;              /* Tamaño menor para jerarquía */
+    color: #666;                  /* Color de texto secundario */
 }
 
+/* EFECTO HOVER DEL BOTÓN DE RESET
+   Feedback sutil para acción secundaria */
 .reset-button:hover {
-    background: #f5f5f5;
-    border-color: #ccc;
+    background: #f5f5f5;          /* Gris muy claro para feedback mínimo */
+    border-color: #ccc;           /* Borde ligeramente más oscuro */
 }
 
+/* BOTÓN DE ABRIR TIKTOK
+   Botón para navegación directa a TikTok (oculto por defecto) */
 .open-tiktok-button {
-    padding: 12px;
-    margin-top: 16px;
-    background: #000;
-    color: white;
-    display: none;
+    padding: 12px;                /* Padding estándar para importancia media */
+    margin-top: 16px;             /* Separación superior generosa */
+    background: #000;             /* Fondo negro para contraste fuerte */
+    color: white;                 /* Texto blanco para legibilidad */
+    display: none;                /* Oculto por defecto, se muestra condicionalmente */
 }
 
+/* EFECTO HOVER DEL BOTÓN DE TIKTOK
+   Feedback para acción de navegación */
 .open-tiktok-button:hover {
-    background: #333;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    background: #333;             /* Gris oscuro para feedback */
+    transform: translateY(-1px);  /* Consistencia con otros botones principales */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); /* Sombra negra para profundidad */
 }
 
-/* Estadísticas */
+/* ================================================================================
+   📈 SECCIÓN 6: PANEL DE ESTADÍSTICAS
+   ================================================================================
+   Estilización del sistema de estadísticas que muestra contadores en tiempo real
+   de tap-taps realizados y métricas de uso de la extensión.
+   ================================================================================ */
+
+/* TÍTULOS DE SECCIONES DE STATS Y SHORTCUTS
+   Headers para organizar visualmente las secciones de contenido */
 .stats-title,
 .shortcuts-title {
-    font-size: 14px;
-    color: #666;
-    margin-bottom: 12px;
-    font-weight: 600;
+    font-size: 14px;              /* Tamaño consistente para headers de sección */
+    color: #666;                  /* Color secundario para jerarquía */
+    margin-bottom: 12px;          /* Separación antes del contenido */
+    font-weight: 600;             /* Semi-bold para definición sin sobrepeso */
 }
 
+/* ELEMENTO INDIVIDUAL DE ESTADÍSTICA
+   Layout para cada métrica mostrada en el panel de estadísticas */
 .stat-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 0;
-    border-bottom: 1px solid #f0f0f0;
+    display: flex;                /* Flexbox para distribución horizontal */
+    justify-content: space-between; /* Label a la izquierda, valor a la derecha */
+    align-items: center;          /* Alineación vertical centrada */
+    padding: 8px 0;               /* Padding vertical para espaciado respiratorio */
+    border-bottom: 1px solid #f0f0f0; /* Línea divisoria sutil entre items */
 }
 
+/* ÚLTIMO ELEMENTO DE ESTADÍSTICA
+   Removeríamos la línea divisoria del último elemento para limpieza visual */
 .stat-item:last-child {
-    border-bottom: none;
+    border-bottom: none;          /* Sin borde inferior en el último elemento */
 }
 
+/* ETIQUETA DE ESTADÍSTICA
+   Texto descriptivo que identifica qué métrica se está mostrando */
 .stat-label {
-    font-size: 14px;
-    color: #666;
+    font-size: 14px;              /* Tamaño estándar para texto descriptivo */
+    color: #666;                  /* Color secundario para jerarquía visual */
 }
 
+/* VALOR NUMÉRICO DE ESTADÍSTICA
+   Número grande y colorido que muestra el valor actual de la métrica */
 .stat-value {
-    font-size: 18px;
-    font-weight: bold;
-    color: #ff0050;
+    font-size: 18px;              /* Tamaño grande para énfasis en el dato */
+    font-weight: bold;            /* Negrita para importancia visual */
+    color: #ff0050;               /* Color rojo de TikTok para coherencia de marca */
 }
 
-/* Info */
+/* ================================================================================
+   ℹ️ SECCIÓN 7: PANEL DE INFORMACIÓN
+   ================================================================================
+   Estilización para mensajes informativos y de ayuda al usuario.
+   ================================================================================ */
+
+/* TEXTO INFORMATIVO
+   Estilo para mensajes de ayuda o información contextual */
 .info-text {
-    font-size: 12px;
-    color: #cc8800;
-    text-align: center;
-    line-height: 1.5;
+    font-size: 12px;              /* Tamaño pequeño para información secundaria */
+    color: #cc8800;               /* Amarillo oscuro para información de advertencia/nota */
+    text-align: center;           /* Centrado para balance visual */
+    line-height: 1.5;             /* Interlineado cómodo para legibilidad */
 }
 
-/* Atajos */
+/* ================================================================================
+   ⌨️ SECCIÓN 8: PANEL DE ATAJOS DE TECLADO
+   ================================================================================
+   Estilización del panel que muestra los atajos de teclado disponibles.
+   ================================================================================ */
+
+/* ELEMENTO DE ATAJO DE TECLADO
+   Layout para mostrar tecla y descripción de cada atajo */
 .shortcut-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    display: flex;                /* Flexbox para alineación horizontal */
+    align-items: center;          /* Alineación vertical centrada */
+    gap: 8px;                     /* Espaciado entre tecla y descripción */
 }
 
-/* Copyright */
+/* ================================================================================
+   📝 SECCIÓN 9: FOOTER Y COPYRIGHT
+   ================================================================================
+   Estilización del área de copyright, información del desarrollador y enlaces.
+   ================================================================================ */
+
+/* SECCIÓN DE COPYRIGHT COMPLETA
+   Contenedor para toda la información de copyright y desarrollador */
 .copyright-section {
-    margin-top: 16px;
-    text-align: center;
-    padding-top: 12px;
+    margin-top: 16px;             /* Separación superior del contenido principal */
+    text-align: center;           /* Centrado para balance visual */
+    padding-top: 12px;            /* Padding superior para respiración */
 }
 
+/* LÍNEA DIVISORIA ANTES DEL COPYRIGHT
+   Separador visual antes de la información de copyright */
 .copyright-section hr {
-    border: none;
-    height: 1px;
-    background: rgba(0, 0, 0, 0.1);
-    margin-bottom: 12px;
+    border: none;                 /* Sin borde por defecto */
+    height: 1px;                  /* Altura mínima para línea fina */
+    background: rgba(0, 0, 0, 0.1); /* Negro semitransparente para sutileza */
+    margin-bottom: 12px;          /* Separación después de la línea */
 }
 
+/* TEXTO DE COPYRIGHT Y DESARROLLADOR
+   Estilo para toda la información de copyright y créditos */
 .copyright-text,
 .developer-info {
-    margin: 4px 0;
-    font-size: 12px;
-    color: #666;
+    margin: 4px 0;                /* Margen vertical mínimo entre líneas */
+    font-size: 12px;              /* Tamaño pequeño para información secundaria */
+    color: #666;                  /* Color secundario para reducir peso visual */
 }
 
+/* ENLACES EN LA SECCIÓN DE COPYRIGHT
+   Estilización de enlaces (como GitHub del desarrollador) */
 .copyright-section a {
-    color: #ff0050;
-    text-decoration: none;
-    transition: color 0.2s ease;
+    color: #ff0050;               /* Color rojo de TikTok para coherencia de marca */
+    text-decoration: none;        /* Sin subrayado por defecto para limpieza */
+    transition: color 0.2s ease;  /* Transición suave para cambio de color */
 }
 
+/* EFECTO HOVER EN ENLACES DE COPYRIGHT
+   Feedback visual cuando el usuario pasa el mouse sobre enlaces */
 .copyright-section a:hover {
-    color: #cc0040;
-    text-decoration: underline;
+    color: #cc0040;               /* Rojo más oscuro para feedback */
+    text-decoration: underline;   /* Subrayado en hover para confirmación de interactividad */
 }
 
+/* ================================================================================
+   ⚙️ SECCIÓN 10: PANEL DE CONFIGURACIÓN
+   ================================================================================
+   Estilización del sistema de configuración con inputs personalizables
+   para intervalos de tiempo y otros parámetros.
+   ================================================================================ */
 
-/* Configuración */
+/* SECCIÓN DE CONFIGURACIÓN
+   Contenedor principal para todos los controles de configuración */
 .config-section {
-    background: white;
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: white;            /* Fondo blanco consistente con otras secciones */
+    border-radius: 12px;          /* Bordes redondeados para coherencia visual */
+    padding: 16px;                /* Padding estándar para consistencia */
+    margin-bottom: 16px;          /* Separación inferior estándar */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Sombra consistente con otras cards */
 }
 
+/* TÍTULO DE LA SECCIÓN DE CONFIGURACIÓN
+   Header para la sección de configuración */
 .config-title {
-    font-size: 14px;
-    color: #666;
-    margin-bottom: 12px;
-    font-weight: 600;
+    font-size: 14px;              /* Tamaño consistente con otros títulos de sección */
+    color: #666;                  /* Color secundario para jerarquía */
+    margin-bottom: 12px;          /* Separación antes del contenido */
+    font-weight: 600;             /* Semi-bold para definición */
 }
 
+/* ELEMENTO INDIVIDUAL DE CONFIGURACIÓN
+   Contenedor para cada opción configurable */
 .config-item {
-    padding: 8px 0;
+    padding: 8px 0;               /* Padding vertical para espaciado */
 }
 
+/* ETIQUETA DE CONFIGURACIÓN
+   Label que describe cada opción configurable */
 .config-label {
-    display: block;
-    font-size: 14px;
-    color: #666;
-    margin-bottom: 8px;
+    display: block;               /* Display block para ocupar línea completa */
+    font-size: 14px;              /* Tamaño estándar para labels */
+    color: #666;                  /* Color secundario para jerarquía */
+    margin-bottom: 8px;           /* Separación antes del input */
 }
 
+/* GRUPO DE INPUT DE CONFIGURACIÓN
+   Container que agrupa input y unidad de medida */
 .config-input-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    display: flex;                /* Flexbox para alineación horizontal */
+    align-items: center;          /* Alineación vertical centrada */
+    gap: 8px;                     /* Espaciado entre input y unidad */
 }
 
+/* INPUT DE CONFIGURACIÓN
+   Campo de entrada para valores numéricos de configuración
+   NOTA: Se usa width: 70px con padding/border para control específico del tamaño */
 .config-input {
-    flex: 1;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 14px;
-    width: 70px;
+    flex: 1;                      /* Toma el espacio disponible */
+    padding: 8px;                 /* Padding interno para comodidad de uso */
+    border: 1px solid #ddd;       /* Borde sutil para definición */
+    border-radius: 5px;           /* Bordes ligeramente redondeados */
+    font-size: 14px;              /* Tamaño de fuente legible */
+    width: 70px;                  /* Ancho específico para campos numéricos */
 }
 
+/* UNIDAD DE MEDIDA DE CONFIGURACIÓN
+   Texto que indica la unidad (ms, segundos, etc.) */
 .config-unit {
-    color: #666;
-    font-size: 14px;
+    color: #666;                  /* Color secundario para información contextual */
+    font-size: 14px;              /* Tamaño consistente con labels */
 }
 
+/* ESTADO FOCUS DE INPUTS DE CONFIGURACIÓN
+   Estilo cuando el usuario está interactuando con el input */
 .config-input:focus {
-    outline: none;
-    border-color: #ff0050;
-    box-shadow: 0 0 0 2px rgba(255, 0, 80, 0.1);
-    padding: 6px 0;
-    font-size: 13px;
-    color: #444;
+    outline: none;                /* Removemos el outline por defecto del navegador */
+    border-color: #ff0050;        /* Borde rojo de TikTok para feedback */
+    box-shadow: 0 0 0 2px rgba(255, 0, 80, 0.1); /* Sombra sutil para énfasis */
+    padding: 6px 0;               /* Padding ajustado en estado focus */
+    font-size: 13px;              /* Tamaño ligeramente menor en focus */
+    color: #444;                  /* Color de texto más oscuro para legibilidad */
 }
 
+/* TECLA DE ATAJO VISUAL
+   Representación visual de teclas de teclado en el panel de atajos */
 .shortcut-key {
-    background: #f0f0f0;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-family: monospace;
-    font-size: 12px;
-    color: #333;
-    border: 1px solid #ddd;
+    background: #f0f0f0;          /* Fondo gris claro simulando tecla física */
+    padding: 2px 6px;             /* Padding mínimo para forma compacta */
+    border-radius: 4px;           /* Bordes redondeados sutiles */
+    font-family: monospace;       /* Fuente monoespaciada para teclas */
+    font-size: 12px;              /* Tamaño pequeño para representación de tecla */
+    color: #333;                  /* Color oscuro para contraste */
+    border: 1px solid #ddd;       /* Borde para simular tecla física elevada */
 }
 
-/* Animaciones */
+/* ================================================================================
+   🎬 SECCIÓN 11: ANIMACIONES Y EFECTOS
+   ================================================================================
+   Definición de keyframes y animaciones para mejorar la experiencia de usuario.
+   ================================================================================ */
+
+/* ANIMACIÓN DE PULSO PARA ESTADO ACTIVO
+   Keyframes que crean efecto de pulso continuo para llamar atención */
 @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
+    0%, 100% { 
+        transform: scale(1);       /* Tamaño normal al inicio y final */
+    }
+    50% { 
+        transform: scale(1.05);    /* Ligeramente más grande en el medio */
+    }
 }
 
-/* Scrollbar */
+/* ================================================================================
+   📜 SECCIÓN 12: PERSONALIZACIÓN DE SCROLLBAR
+   ================================================================================
+   Estilización de la barra de desplazamiento para mantener coherencia visual.
+   ================================================================================ */
+
+/* ANCHO DE LA BARRA DE DESPLAZAMIENTO
+   Define el grosor de la scrollbar */
 ::-webkit-scrollbar {
-    width: 6px;
+    width: 6px;                   /* Barra delgada para diseño moderno */
 }
 
+/* PISTA DE LA BARRA DE DESPLAZAMIENTO
+   Fondo sobre el cual se mueve el thumb de la scrollbar */
 ::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: #f1f1f1;          /* Fondo gris muy claro */
 }
 
+/* THUMB DE LA BARRA DE DESPLAZAMIENTO
+   Parte móvil de la scrollbar que el usuario arrastra */
 ::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 3px;
+    background: #888;             /* Gris medio para visibilidad */
+    border-radius: 3px;           /* Bordes redondeados para suavidad */
 }
 
+/* EFECTO HOVER EN THUMB DE SCROLLBAR
+   Feedback visual cuando el usuario pasa el mouse sobre la scrollbar */
 ::-webkit-scrollbar-thumb:hover {
-    background: #555;
+    background: #555;             /* Gris más oscuro para feedback */
 }
+
+/* ================================================================================
+   📋 RESUMEN DE FUNCIONALIDADES DEL ARCHIVO
+   ================================================================================
+   
+   Este archivo popup.css proporciona:
+   
+   1. 🎨 SISTEMA DE DISEÑO COMPLETO:
+      - Paleta de colores coherente con TikTok (#ff0050, verdes, grises)
+      - Tipografía del sistema operativo para integración nativa
+      - Espaciado consistente (8px, 12px, 16px base)
+      - Bordes redondeados progresivos (4px-20px según importancia)
+   
+   2. 🏗️ ARQUITECTURA MODULAR:
+      - Secciones claramente definidas con cards elevadas
+      - Sistema de grillas flexbox responsivo
+      - Jerarquía visual clara con tamaños y colores
+      - Componentes reutilizables (.section, .button, .input)
+   
+   3. ⚡ INTERACTIVIDAD AVANZADA:
+      - Efectos hover con transforms y shadows
+      - Transiciones suaves (0.3s ease)
+      - Animaciones de estado (pulse para activo)
+      - Feedback visual en todos los elementos interactivos
+   
+   4. 📱 EXPERIENCIA DE USUARIO:
+      - Layout optimizado para popup 320px width
+      - Scrollbar personalizada y discreta
+      - Estados disabled claros y accesibles
+      - Iconografía emocional (❤️ para tap-taps)
+   
+   5. 🔧 CONFIGURABILIDAD:
+      - Inputs estilizados para configuración personalizada
+      - Sistema de unidades visuales (ms, segundos)
+      - Grupos de configuración organizados lógicamente
+      - Validación visual con focus states
+   
+   6. 📊 VISUALIZACIÓN DE DATOS:
+      - Panel de estadísticas con valores destacados
+      - Indicadores de estado con colores semánticos
+      - Badges informativos con formas pill
+      - Contadores en tiempo real estilizados
+   
+   COMPATIBILIDAD: Chrome Extension Popup, Manifest V3
+   RESPONSIVIDAD: Optimizado para 320px fixed width
+   ACCESIBILIDAD: Contrastes de color WCAG, focus states claros
+   PERFORMANCE: CSS puro sin dependencias, transiciones optimizadas
+   
+   ================================================================================== */

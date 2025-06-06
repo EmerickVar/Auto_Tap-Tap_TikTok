@@ -1,78 +1,411 @@
+<!--
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                                                          🎭 POPUP.HTML - INTERFAZ DE EXTENSIÓN CHROME                                                                 ║
+║                                                      Documentación completa en español mexicano                                                                        ║
+╠══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                                                                                                          ║
+║  📋 DESCRIPCIÓN GENERAL:                                                                                                                                                ║
+║      Este archivo HTML define la interfaz de usuario del popup de la extensión "TikTok Auto Tap-Tap".                                                               ║
+║      Se muestra cuando el usuario hace clic en el ícono de la extensión en la barra de herramientas del navegador.                                                  ║
+║      Actúa como punto de control principal para toda la funcionalidad de automatización de la extensión.                                                            ║
+║                                                                                                                                                                          ║
+║  🏗️ ARQUITECTURA DEL POPUP:                                                                                                                                             ║
+║      1. ESTRUCTURA SEMÁNTICA: Utiliza HTML5 semántico con jerarquía lógica de elementos                                                                               ║
+║      2. SISTEMA DE IDs: Identificadores únicos para manipulación JavaScript precisa                                                                                   ║
+║      3. CLASES MODULARES: Sistema CSS organizado por componentes para mantenibilidad                                                                                  ║
+║      4. LAYOUT RESPONSIVO: Optimizado para ventana popup de 320px con adaptabilidad                                                                                   ║
+║      5. ACCESIBILIDAD: Elementos semánticos y ARIA para herramientas de asistencia                                                                                    ║
+║      6. INTEGRACIÓN JS: Conexión directa con popup.js para funcionalidad dinámica                                                                                     ║
+║                                                                                                                                                                          ║
+║  🎯 COMPONENTES PRINCIPALES:                                                                                                                                             ║
+║      • 🏷️ HEADER: Título principal con branding de la extensión                                                                                                        ║
+║      • 🚦 ESTADO: Indicador visual del estado actual + botón toggle principal                                                                                          ║
+║      • ℹ️ INFORMACIÓN: Panel con instrucciones claras para el usuario                                                                                                   ║
+║      • 📊 ESTADÍSTICAS: Dashboard con métricas de uso (sesión + total)                                                                                                 ║
+║      • ⌨️ ATAJOS: Referencia de comandos de teclado disponibles                                                                                                         ║
+║      • ⚙️ CONFIGURACIÓN: Panel de settings personalizables del sistema                                                                                                  ║
+║      • 🔗 NAVEGACIÓN: Botón de acceso directo a TikTok                                                                                                                  ║
+║      • 📄 CRÉDITOS: Información de copyright y desarrollador                                                                                                            ║
+║                                                                                                                                                                          ║
+║  🔄 FLUJO DE INTERACCIÓN:                                                                                                                                               ║
+║      1. 🚀 CARGA INICIAL: Usuario hace clic en ícono → HTML se renderiza                                                                                               ║
+║      2. 📜 SCRIPT EJECUTA: popup.js se carga → Inicializa estado dinámico                                                                                              ║
+║      3. 🔄 SINCRONIZACIÓN: Estados se recuperan de storage → UI se actualiza                                                                                           ║
+║      4. 👆 INTERACCIÓN: Usuario interactúa con controles → Eventos procesados                                                                                          ║
+║      5. 📡 COMUNICACIÓN: Mensajes a content/background → Cambios aplicados                                                                                             ║
+║      6. 🎨 ACTUALIZACIÓN: Estados cambian → UI refleja nuevos valores                                                                                                   ║
+║                                                                                                                                                                          ║
+║  🎭 FUNCIONALIDADES INTERACTIVAS:                                                                                                                                       ║
+║      • ▶️ TOGGLE PRINCIPAL: Activar/Desactivar automatización completa                                                                                                 ║
+║      • 🗑️ RESET STATS: Limpiar estadísticas con confirmación de seguridad                                                                                              ║
+║      • ⚙️ CONFIG CHAT: Personalizar tiempo de reactivación del chat                                                                                                     ║
+║      • 🔗 ENLACES EXTERNOS: Acceso a sitio web y perfil del desarrollador                                                                                               ║
+║      • 🎬 ABRIR TIKTOK: Navegación directa a la plataforma objetivo                                                                                                     ║
+║                                                                                                                                                                          ║
+║  📦 DEPENDENCIAS TÉCNICAS:                                                                                                                                              ║
+║      • 🎨 popup.css: Sistema completo de estilos, animaciones y layout                                                                                                 ║
+║      • 📜 popup.js: Lógica de interacción y comunicación con otros scripts                                                                                             ║
+║      • 🔌 Chrome APIs: Sistema de mensajería y almacenamiento de extensiones                                                                                           ║
+║      • 🌐 HTML5/CSS3: Estándares modernos para funcionalidad avanzada                                                                                                  ║
+║                                                                                                                                                                          ║
+║  🛡️ CONSIDERACIONES DE SEGURIDAD:                                                                                                                                       ║
+║      • 🔒 CSP COMPLIANCE: Compatible con Content Security Policy de Manifest V3                                                                                       ║
+║      • 🚫 NO INLINE JS: Todo JavaScript está en archivos externos                                                                                                      ║
+║      • 🔗 TARGET BLANK: Enlaces externos abren en nuevas pestañas                                                                                                      ║
+║      • ✅ VALIDACIÓN: Inputs con validación HTML5 integrada                                                                                                             ║
+║                                                                                                                                                                          ║
+║  👨‍💻 INFORMACIÓN DEL DESARROLLADOR:                                                                                                                                    ║
+║      • AUTOR: Emerick Echeverría Vargas (@EmerickVar)                                                                                                                  ║
+║      • ORGANIZACIÓN: New Age Coding Organization                                                                                                                       ║
+║      • VERSIÓN: 1.0.0 (Junio 2025)                                                                                                                                     ║
+║      • COMPATIBILIDAD: Chrome Extension Manifest V3, HTML5, CSS3, ES6+                                                                                                ║
+║      • REPOSITORIO: GitHub.com/EmerickVar                                                                                                                              ║
+║                                                                                                                                                                          ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+-->
+
+<!-- 
+================================================================================
+🌐 DECLARACIÓN DOCTYPE Y ELEMENTO HTML RAÍZ
+================================================================================
+Establece el tipo de documento y la configuración de idioma principal
+================================================================================
+-->
+
+<!-- DECLARACIÓN ESTÁNDAR HTML5
+     Especifica que este documento utiliza la especificación HTML5 más reciente -->
 <!DOCTYPE html>
+
+<!-- ELEMENTO HTML RAÍZ CON CONFIGURACIÓN DE IDIOMA
+     lang="es": Especifica español como idioma principal para:
+     - Motores de búsqueda y accesibilidad
+     - Lectores de pantalla y herramientas de asistencia
+     - Correctores ortográficos del navegador
+     - Traducción automática contextual -->
 <html lang="es">
+
+<!-- 
+================================================================================
+📋 SECCIÓN HEAD - METADATOS Y CONFIGURACIÓN DEL DOCUMENTO
+================================================================================
+Contiene todos los metadatos, configuraciones y enlaces a recursos externos
+necesarios para el funcionamiento correcto del popup de la extensión
+================================================================================
+-->
 <head>
+    <!-- CODIFICACIÓN DE CARACTERES UTF-8
+         Asegura compatibilidad completa con caracteres especiales, acentos,
+         emojis y caracteres internacionales en español mexicano -->
     <meta charset="UTF-8">
+    
+    <!-- CONFIGURACIÓN DE VIEWPORT PARA RESPONSIVIDAD
+         width=device-width: Ajusta el ancho al dispositivo
+         initial-scale=1.0: Establece zoom inicial al 100%
+         Crítico para popup de extensión en diferentes resoluciones de pantalla -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- ENLACE A HOJA DE ESTILOS PRINCIPAL
+         Conecta con popup.css que contiene todos los estilos visuales,
+         animaciones, layout responsivo y sistema de diseño de la extensión -->
     <link rel="stylesheet" href="popup.css">
+    
+    <!-- TÍTULO DE LA VENTANA/PESTAÑA
+         Aparece en la barra de título del navegador y en herramientas de desarrollo
+         Importante para identificación cuando se abren múltiples popups -->
     <title>TikTok Auto Tap-Tap</title>
 </head>
+
+<!-- 
+================================================================================
+🎪 CUERPO DEL DOCUMENTO - INTERFAZ VISUAL DEL POPUP
+================================================================================
+Contiene toda la estructura visual e interactiva de la extensión
+================================================================================
+-->
 <body>
+    <!-- 
+        📦 CONTENEDOR PRINCIPAL DE LA INTERFAZ
+        - Clase "container": Elemento raíz que envuelve todos los componentes
+        - Permite aplicar estilos globales y controlar el layout general
+        - Facilita el centrado y espaciado consistente de elementos
+        - Actúa como scope principal para la organización CSS
+    -->
     <div class="container">
+        
+        <!-- 
+            🏷️ TÍTULO PRINCIPAL DE LA EXTENSIÓN
+            - Elemento h1 semántico para jerarquía correcta del documento
+            - Branding principal visible para el usuario
+            - Establece identidad visual y contexto de la aplicación
+        -->
         <h1>TikTok Auto Tap-Tap</h1>
         
+        <!-- 
+        ================================================================================
+        📊 SECCIÓN DE ESTADO Y CONTROL PRINCIPAL
+        ================================================================================
+        Área crítica que muestra el estado actual del sistema y permite control directo
+        ================================================================================
+        -->
         <div class="status-section">
+            
+            <!-- 
+                🚦 INDICADOR VISUAL DE ESTADO
+                - Muestra el estado actual del sistema (Activo/Inactivo)
+                - Proporciona feedback visual inmediato al usuario
+                - Se actualiza dinámicamente desde popup.js
+            -->
             <div class="status-indicator">
                 <span class="status-label">Estado:</span>
+                <!-- TEXTO DE ESTADO DINÁMICO
+                     ID "statusText": Referencia para manipulación JavaScript
+                     Clases "status-text inactive": Estado inicial inactivo
+                     Valor se actualiza en tiempo real según estado del sistema -->
                 <span id="statusText" class="status-text inactive">Inactivo</span>
             </div>
+            
+            <!-- 
+                🎛️ BOTÓN DE CONTROL PRINCIPAL (TOGGLE)
+                - ID "toggleButton": Referencia única para eventos JavaScript
+                - Clases "toggle-button start": Estilo y estado inicial
+                - Funcionalidad principal: Activar/Desactivar automatización
+                - Se comunica con content.js a través de popup.js
+            -->
             <button id="toggleButton" class="toggle-button start">Iniciar</button>
         </div>
         
+        <!-- 
+        ================================================================================
+        ℹ️ SECCIÓN INFORMATIVA
+        ================================================================================
+        Proporciona instrucciones claras y contexto de uso para el usuario
+        ================================================================================
+        -->
         <div class="info-section">
+            <!-- 
+                📝 TEXTO INSTRUCTIVO PRINCIPAL
+                - Clase "info-text": Estilo específico para información al usuario
+                - Mensaje claro y directo sobre cómo usar la extensión
+                - Reduce curva de aprendizaje y mejora UX
+            -->
             <p class="info-text">
                 Presiona el botón para activar el auto Tap-Tap en TikTok
             </p>
         </div>
         
+        <!-- 
+        ================================================================================
+        📊 SECCIÓN DE ESTADÍSTICAS DE USO
+        ================================================================================
+        Dashboard con métricas de rendimiento y estadísticas de uso en tiempo real
+        ================================================================================
+        -->
         <div class="stats-section">
+            <!-- 
+                📈 TÍTULO DE LA SECCIÓN DE ESTADÍSTICAS
+                - Elemento h3 para jerarquía semántica correcta
+                - Emoji visual para identificación rápida de sección
+                - Clase "stats-title": Estilo específico para títulos de sección
+            -->
             <h3 class="stats-title">📊 Estadísticas</h3>
+            
+            <!-- 
+                🔢 CONTADOR DE TAP-TAPS DE SESIÓN ACTUAL
+                - Clase "stat-item": Container estándar para elementos estadísticos
+                - Muestra actividad desde que se activó la extensión
+                - Se resetea al reiniciar el navegador o desactivar extensión
+            -->
             <div class="stat-item">
                 <span class="stat-label">Tap-Taps en esta sesión:</span>
+                <!-- VALOR DINÁMICO DE SESIÓN
+                     ID "sessionTapTaps": Referencia para actualización JavaScript
+                     Valor inicial "0", se incrementa con cada tap automático -->
                 <span id="sessionTapTaps" class="stat-value">0</span>
             </div>
+            
+            <!-- 
+                📊 CONTADOR TOTAL ACUMULATIVO
+                - Estadística persistente almacenada en chrome.storage
+                - Se mantiene entre sesiones y reinicios del navegador
+                - Proporciona métrica de uso a largo plazo
+            -->
             <div class="stat-item">
                 <span class="stat-label">Total de Tap-Taps:</span>
+                <!-- VALOR DINÁMICO TOTAL
+                     ID "totalTapTaps": Referencia para actualización JavaScript
+                     Valor persiste en almacenamiento local de la extensión -->
                 <span id="totalTapTaps" class="stat-value">0</span>
             </div>
+            
+            <!-- 
+                🗑️ BOTÓN DE RESET DE ESTADÍSTICAS
+                - ID "resetStats": Referencia única para evento JavaScript
+                - Clase "reset-button": Estilo específico para acciones destructivas
+                - Funcionalidad: Reinicia contadores a cero con confirmación
+                - Importante para testing y limpieza de datos
+            -->
             <button id="resetStats" class="reset-button">Resetear estadísticas</button>
         </div>
         
+        <!-- 
+        ================================================================================
+        ⌨️ SECCIÓN DE ATAJOS DE TECLADO
+        ================================================================================
+        Información de accesos rápidos disponibles para power users
+        ================================================================================
+        -->
         <div class="shortcuts-section">
+            <!-- 
+                ⌨️ TÍTULO DE ATAJOS DE TECLADO
+                - Proporciona referencia rápida de comandos disponibles
+                - Mejora eficiencia de usuarios experimentados
+                - Reduce dependencia del mouse para operaciones frecuentes
+            -->
             <h3 class="shortcuts-title">⌨️ Atajos de teclado</h3>
+            
+            <!-- 
+                🔘 COMBINACIÓN DE TECLAS PRINCIPAL
+                - Clase "shortcut-item": Container para cada atajo individual
+                - Muestra visualmente la combinación Alt + L
+                - Permite toggle rápido sin abrir popup
+            -->
             <div class="shortcut-item">
+                <!-- TECLA MODIFICADORA -->
                 <span class="shortcut-key">Alt</span>
                 <span>+</span>
+                <!-- TECLA PRINCIPAL -->
                 <span class="shortcut-key">L</span>
+                <!-- DESCRIPCIÓN DE LA ACCIÓN -->
                 <span>Activar/Desactivar</span>
             </div>
         </div>
 
+        <!-- 
+        ================================================================================
+        ⚙️ SECCIÓN DE CONFIGURACIÓN DEL SISTEMA
+        ================================================================================
+        Panel de settings personalizables para adaptar comportamiento de la extensión
+        ================================================================================
+        -->
         <div class="config-section">
+            <!-- 
+                ⚙️ TÍTULO DE CONFIGURACIÓN
+                - Identifica área de settings modificables por el usuario
+                - Emoji visual para reconocimiento rápido de funcionalidad
+            -->
             <h3 class="config-title">⚙️ Configuración del Chat</h3>
+            
+            <!-- 
+                🕐 CONFIGURACIÓN DE TIMING DEL CHAT
+                - Clase "config-item": Container estándar para elementos de configuración
+                - Permite personalizar comportamiento de reactivación del chat
+                - Crítico para evitar detección como bot en TikTok
+            -->
             <div class="config-item">
+                <!-- ETIQUETA DESCRIPTIVA -->
                 <span class="config-label">Tiempo de espera para reactivación:</span>
+                
+                <!-- 
+                    🎚️ GRUPO DE INPUT NUMÉRICO
+                    - Clase "config-input-group": Container para input y unidades
+                    - Organiza visualmente input + label de unidades
+                -->
                 <div class="config-input-group">
+                    <!-- 
+                        📊 INPUT NUMÉRICO DE CONFIGURACIÓN
+                        - ID "chatReactivationTime": Referencia para JavaScript
+                        - type="number": Valida entrada numérica automáticamente
+                        - min="10": Valor mínimo permitido (10 segundos)
+                        - max="60": Valor máximo permitido (60 segundos)
+                        - value="10": Valor por defecto inicial
+                        - required: Campo obligatorio para validación
+                        - Clase "config-input": Estilo específico para inputs de configuración
+                    -->
                     <input type="number" id="chatReactivationTime" min="10" max="60" value="10" required class="config-input">
+                    <!-- UNIDAD DE MEDIDA -->
                     <span class="config-unit">segundos</span>
                 </div>
             </div>
         </div>
         
+        <!-- 
+        ================================================================================
+        🔗 BOTÓN DE ACCESO DIRECTO A TIKTOK
+        ================================================================================
+        Navegación rápida hacia la plataforma objetivo
+        ================================================================================
+        -->
+        <!-- 
+            🎬 BOTÓN DE APERTURA DE TIKTOK
+            - ID "openTikTok": Referencia única para evento JavaScript
+            - Clase "open-tiktok-button": Estilo específico para navegación externa
+            - Funcionalidad: Abre nueva pestaña con TikTok.com
+            - Conveniencia para usuarios que quieren acceso rápido
+        -->
         <button id="openTikTok" class="open-tiktok-button">
             Abrir TikTok
         </button>
 
+        <!-- 
+        ================================================================================
+        📄 SECCIÓN DE COPYRIGHT Y CRÉDITOS
+        ================================================================================
+        Información legal, autoría y enlaces al desarrollador
+        ================================================================================
+        -->
         <div class="copyright-section">
+            <!-- 
+                📏 LÍNEA DIVISORIA VISUAL
+                - Elemento hr para separación semántica de contenido
+                - Crea división visual clara entre funcionalidad y créditos
+            -->
             <hr>
+            
+            <!-- 
+                ©️ INFORMACIÓN DE COPYRIGHT
+                - Clase "copyright-text": Estilo específico para información legal
+                - target="_blank": Abre enlace en nueva pestaña
+                - Enlace a organización desarrolladora para credibilidad
+            -->
             <p class="copyright-text">
                 © 2025 <a href="https://newagecoding.org/" target="_blank">New Age Coding Organization</a>
             </p>
+            
+            <!-- 
+                👨‍💻 INFORMACIÓN DEL DESARROLLADOR
+                - Clase "developer-info": Estilo específico para créditos de autoría
+                - Enlace directo al perfil GitHub del desarrollador
+                - Facilita contacto y revisión de otros proyectos
+            -->
             <p class="developer-info">
                 Desarrollado por <a href="https://github.com/EmerickVar" target="_blank">@EmerickVar</a>
             </p>
         </div>
     </div>
     
+    <!-- 
+    ================================================================================
+    🚀 SCRIPT DE FUNCIONALIDAD DINÁMICA
+    ================================================================================
+    Conexión con la lógica JavaScript que maneja toda la interactividad
+    ================================================================================
+    -->
+    <!-- 
+        📜 ENLACE AL SCRIPT PRINCIPAL DE POPUP
+        - Carga popup.js que contiene toda la lógica de interacción
+        - Maneja eventos de botones, comunicación con content script
+        - Actualiza estados dinámicos y sincroniza con chrome.storage
+        - Se ejecuta después de que el DOM esté completamente cargado
+        - Crítico para funcionamiento de todos los elementos interactivos
+    -->
     <script src="popup.js"></script>
 </body>
+
+<!-- 
+================================================================================
+🏁 CIERRE DEL DOCUMENTO HTML
+================================================================================
+Finalización correcta de la estructura del documento
+================================================================================
+-->
 </html>

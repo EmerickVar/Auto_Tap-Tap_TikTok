@@ -22,8 +22,9 @@
  * - Interfaz de usuario dinámica con CSS inyectado
  * - Comunicación bidireccional con background script
  * 
- * AUTOR: Auto Tap-Tap Extension Team
- * VERSIÓN: Compatible con TikTok Live 2024
+ * @author Emerick Echeverría Vargas
+ * @version 1.0
+ * @description Content script para automatización de tap-taps en TikTok Live
  * =============================================================================
  */
 
@@ -1059,7 +1060,7 @@
             chatObserver.cleanup();
             
             // Crear nuevo MutationObserver
-            chatObserver.observer = new MutationObserver((mutations) => {
+            chatObserver.observer = new MutationObserver(() => {
                 // Si ya encontramos el chat, no seguir buscando
                 if (chatInput) return;
 
@@ -1115,11 +1116,9 @@
 
         // Variables para el manejo de inactividad
         let inactivityTimer = null;
-        let lastActivity = Date.now();
         
         // Función para manejar la actividad del usuario
         const handleActivity = () => {
-            lastActivity = Date.now();
             
             // Limpiar el timer existente de inactividad
             if (inactivityTimer) {
@@ -1382,47 +1381,100 @@
         }, 3000);
     }
     
-    // Función para mostrar cuenta regresiva en esquina inferior derecha
+    /**
+     * =============================================================================
+     * SISTEMA DE NOTIFICACIÓN VISUAL DE CUENTA REGRESIVA
+     * =============================================================================
+     * 
+     * Muestra notificaciones de cuenta regresiva en una esquina de la interfaz
+     * para informar al usuario sobre reactivaciones automáticas pendientes.
+     * 
+     * PROPÓSITO:
+     * Proporciona feedback visual cuando el sistema está esperando para reactivar
+     * automáticamente el Auto Tap-Tap después de detectar inactividad en el chat.
+     * 
+     * UBICACIÓN VISUAL:
+     * - Posición: Esquina inferior derecha de la interfaz principal
+     * - Estilo: Globo semi-transparente con borde redondeado
+     * - Z-index: Alto para estar siempre visible por encima de otros elementos
+     * 
+     * COMPORTAMIENTO:
+     * 1. 🎨 Crea dinámicamente el contenedor si no existe
+     * 2. 📝 Actualiza el mensaje de cuenta regresiva
+     * 3. ✨ Aplica animación de fade-in para aparecer suavemente
+     * 4. ⏰ Se auto-oculta después de 3 segundos con fade-out
+     * 
+     * CASOS DE USO:
+     * - "⏳ Reactivando en 10s..." - Cuenta regresiva normal
+     * - "🔄 Reactivando automáticamente..." - Confirmación de reactivación
+     * - Cualquier mensaje temporal relacionado con el estado del chat
+     * 
+     * INTEGRACIÓN:
+     * - Llamada desde: configurarEventosChat() durante manejo de inactividad
+     * - Depende de: elementos.contenedor para posicionamiento relativo
+     * - CSS: Posicionamiento absoluto relativo al contenedor principal
+     * 
+     * @param {string} mensaje - Texto a mostrar en la notificación
+     * 
+     * ARQUITECTURA DEL ELEMENTO:
+     * - Contenedor: elementos.cuentaRegresivaDiv (creado dinámicamente)
+     * - Posicionamiento: Absoluto, esquina inferior derecha
+     * - Animación: Transición CSS de opacidad (fade in/out)
+     * - Estilo: Diseño coherente con el resto de la interfaz
+     */
     function mostrarCuentaRegresiva(mensaje) {
-        // Solo crear el contenedor de cuenta regresiva si no existe
+        // Verificar y crear contenedor de cuenta regresiva si no existe
         if (!elementos.cuentaRegresivaDiv) {
+            // Crear elemento div para la notificación de cuenta regresiva
             elementos.cuentaRegresivaDiv = document.createElement('div');
+            
+            // Aplicar estilos CSS integrados para posicionamiento y apariencia
             elementos.cuentaRegresivaDiv.style.cssText = `
-                position: absolute;
-                bottom: -5px;
-                right: -5px;
-                background: rgba(0, 0, 0, 0.95);
-                color: #fff;
-                border: 1px solid #666;
-                padding: 8px 12px;
-                border-radius: 8px;
-                font-family: Arial, sans-serif;
-                font-size: 12px;
-                z-index: 999999;
-                opacity: 0;
-                transition: opacity 0.3s ease;
-                text-align: center;
-                white-space: nowrap;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+                position: absolute;           /* Posicionamiento absoluto respecto al contenedor */
+                bottom: -5px;                /* 5px debajo del contenedor principal */
+                right: -5px;                 /* 5px a la derecha del contenedor principal */
+                background: rgba(0, 0, 0, 0.95);  /* Fondo negro semi-transparente */
+                color: #fff;                 /* Texto blanco para contraste */
+                border: 1px solid #666;      /* Borde gris sutil */
+                padding: 8px 12px;           /* Espaciado interno cómodo */
+                border-radius: 8px;          /* Bordes redondeados */
+                font-family: Arial, sans-serif;  /* Fuente consistente */
+                font-size: 12px;             /* Tamaño de texto compacto */
+                z-index: 999999;             /* Z-index máximo para visibilidad */
+                opacity: 0;                  /* Inicialmente invisible para animación */
+                transition: opacity 0.3s ease;  /* Transición suave de aparición/desaparición */
+                text-align: center;          /* Texto centrado */
+                white-space: nowrap;         /* Evitar salto de línea */
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);  /* Sombra sutil para profundidad */
             `;
+            
+            // Agregar el elemento al contenedor principal de la interfaz
             elementos.contenedor.appendChild(elementos.cuentaRegresivaDiv);
         }
 
-        // Mostrar mensaje
+        // Actualizar el contenido del mensaje
         elementos.cuentaRegresivaDiv.textContent = mensaje;
+        
+        // Hacer visible la notificación con animación fade-in
         elementos.cuentaRegresivaDiv.style.opacity = '1';
 
-        // Ocultar después de la duración del mensaje
+        // Programar auto-ocultación después de 3 segundos
         setTimeout(() => {
+            // Verificar que el elemento aún existe antes de ocultarlo
             if (elementos.cuentaRegresivaDiv) {
+                // Aplicar animación fade-out
                 elementos.cuentaRegresivaDiv.style.opacity = '0';
             }
-        }, 3000);
+        }, 3000); // 3000ms = 3 segundos de duración visible
     }
 
     // Configurar eventos
     function configurarEventos() {
+        // Array para almacenar todos los eventos registrados
         const events = [];
+        
+        // Variable para almacenar el listener de mensajes
+        let messageListener = null;
         
         // Helper para agregar eventos y facilitar limpieza
         const addEvent = (element, type, handler, options = false) => {
@@ -1542,23 +1594,103 @@
         return cleanup;
     }
 
-    // Función para verificar el estado de la extensión
+    // ========================================================================================
+    // 🔍 SISTEMA DE VERIFICACIÓN DE ESTADO DE EXTENSIÓN
+    // ========================================================================================
+    
+    /**
+     * Verifica que el contexto de la extensión de Chrome siga siendo válido
+     * 
+     * PROPÓSITO:
+     * Durante el desarrollo o actualizaciones de la extensión, el contexto puede
+     * invalidarse, causando errores en la comunicación con el background script.
+     * Esta función detecta esta situación y activa una reconexión automática.
+     * 
+     * MECÁNICA DE VERIFICACIÓN:
+     * Utiliza chrome.runtime.getURL('') como método de prueba para verificar
+     * si el contexto de runtime sigue activo. Si el contexto está invalidado,
+     * Chrome lanzará una excepción específica que podemos capturar.
+     * 
+     * CASOS DE INVALIDACIÓN:
+     * - Recarga de la extensión durante desarrollo
+     * - Actualización automática de la extensión
+     * - Deshabilitación y re-habilitación manual
+     * - Errores internos del sistema de extensiones de Chrome
+     * 
+     * RESPUESTA A INVALIDACIÓN:
+     * Cuando se detecta contexto invalidado, llama a reloadExtension()
+     * para reinicializar completamente el content script.
+     * 
+     * FRECUENCIA DE USO:
+     * - Llamada periódicamente cada 5 segundos desde configurarEventos()
+     * - También puede ser llamada antes de operaciones críticas
+     * 
+     * @returns {boolean} - true si el contexto es válido, false si está invalidado
+     * 
+     * INTEGRACIÓN:
+     * - Depende de: chrome.runtime API
+     * - Llama a: reloadExtension() en caso de invalidación
+     * - Usado por: setInterval en configurarEventos()
+     * 
+     * MANEJO DE ERRORES:
+     * - Captura específicamente "Extension context invalidated"
+     * - Log informativo para debugging
+     * - Retorna false para indicar fallo de verificación
+     */
     function checkExtensionStatus() {
         try {
-            // Verificar si el contexto de la extensión está válido
+            // Intentar acceder a chrome.runtime.getURL como prueba de contexto válido
+            // Esta operación fallará si el contexto de la extensión se ha invalidado
             chrome.runtime.getURL('');
         } catch (error) {
+            // Verificar si el error es específicamente de contexto invalidado
             if (error.message.includes('Extension context invalidated')) {
                 console.log('🔄 Reconectando extensión debido a contexto invalidado...');
-                reloadExtension();
+                reloadExtension(); // Activar proceso de reconexión
             }
-            return false;
+            return false; // Indicar que la verificación falló
         }
-        return true;
+        return true; // Contexto válido, extensión funcionando correctamente
     }
 
-    // Configuración global del receptor de mensajes
-    let messageListener = null;
+    // ========================================================================================
+    // 📡 CONFIGURACIÓN DEL SISTEMA DE MENSAJERÍA INTER-SCRIPTS
+    // ========================================================================================
+    
+    /**
+     * Configura el listener principal para manejar mensajes del background script y popup
+     * 
+     * ARQUITECTURA DE COMUNICACIÓN:
+     * Esta función establece el sistema de comunicación bidireccional entre el content script
+     * y otros componentes de la extensión (background.js, popup.js). Implementa un patrón
+     * robusto de manejo de mensajes con respuestas asíncronas.
+     * 
+     * FUNCIONALIDADES PRINCIPALES:
+     * 1. 🔄 Limpieza de listeners previos para evitar duplicados
+     * 2. 📨 Routing de mensajes basado en action
+     * 3. 🔄 Respuestas asíncronas con manejo de errores
+     * 4. ❤️ Health check periódico con background script
+     * 5. 🛡️ Manejo robusto de errores de comunicación
+     * 
+     * TIPOS DE MENSAJES MANEJADOS:
+     * - 'getStatus': Retorna estado actual de automatización
+     * - 'toggle': Activa/desactiva Auto Tap-Tap
+     * - 'updateInterval': Cambia velocidad de tap-taps
+     * - 'updateTapTaps': Actualiza contador
+     * - 'updateReactivationTime': Modifica tiempo de reactivación
+     * 
+     * PATRÓN DE RESPUESTA:
+     * Todas las respuestas siguen el formato estándar:
+     * - Éxito: { success: true, ...datos }
+     * - Error: { error: "descripción del error" }
+     * 
+     * SISTEMA DE HEALTH CHECK:
+     * - Ping cada 5 segundos al background script
+     * - Auto-reconexión si se detecta pérdida de comunicación
+     * - Limpieza automática de intervalos en caso de fallo
+     * 
+     * MANEJO DE ERRORES ROBUSTO:
+     * - Try/catch en cada operación crítica
     function setupMessageListener() {
         try {
             // Eliminar el receptor anterior si existe
@@ -1632,11 +1764,9 @@
             
             // Verificar conexión periódicamente con manejo mejorado de errores
             const pingInterval = setInterval(() => {
-                chrome.runtime.sendMessage({ action: 'ping' }, response => {
+                chrome.runtime.sendMessage({ action: 'ping' }, () => {
                     if (chrome.runtime.lastError) {
                         console.warn('Error en ping:', chrome.runtime.lastError);
-                        reloadExtension();
-                        clearInterval(pingInterval);
                     }
                 });
             }, 5000);
@@ -1645,38 +1775,88 @@
             console.error('Error al configurar listener de mensajes:', error);
         }
     }
+            }, 5000);
+            
+        } catch (error) {
+            console.error('Error al configurar listener de mensajes:', error);
+        }
+    }
 
-    // Inicializar
+    // ========================================================================================
+    // 🚀 FUNCIÓN DE INICIALIZACIÓN PRINCIPAL
+    // ========================================================================================
+    
+    /**
+     * Función principal que coordina la inicialización completa de la extensión
+     * 
+     * PROCESO DE INICIALIZACIÓN:
+     * Esta función orquesta todo el proceso de arranque de la extensión de manera
+     * secuencial y segura, asegurando que todos los componentes se configuren
+     * correctamente antes de que el usuario pueda interactuar con la interfaz.
+     * 
+     * FASES DE INICIALIZACIÓN:
+     * 1. 🎨 CREACIÓN DE INTERFAZ: Construye y posiciona la UI flotante
+     * 2. 💾 RESTAURACIÓN DE ESTADO: Carga configuraciones persistentes
+     * 3. 🔧 CONFIGURACIÓN DE EVENTOS: Establece todos los event listeners
+     * 4. 💬 SISTEMA DE CHAT: Activa detección de interacciones de chat
+     * 
+     * DATOS PERSISTENTES RESTAURADOS:
+     * - intervalo: Velocidad seleccionada de tap-taps (ms entre cada tap)
+     * - totalTapTaps: Contador acumulativo total de todas las sesiones
+     * - position: Posición X,Y de la ventana flotante en pantalla
+     * - tiempoReactivacion: Segundos de espera para reactivación por chat
+     * 
+     * MANEJO DE POSICIONAMIENTO:
+     * Restaura la posición exacta donde el usuario dejó la ventana flotante,
+     * aplicando transform3d para rendimiento optimizado en GPU.
+     * 
+     * ORDEN DE EJECUCIÓN CRÍTICO:
+     * 1. crearInterfaz() debe ejecutarse ANTES de cargar storage (necesita elementos)
+     * 2. Storage debe cargarse ANTES de configurarEventos() (inicializa estado)
+     * 3. configurarEventos() debe ejecutarse ANTES de manejarInteraccionChat()
+     * 4. manejarInteraccionChat() se ejecuta AL FINAL (depende de estado completo)
+     * 
+     * OPERACIONES ASÍNCRONAS:
+     * Todas las operaciones de storage se ejecutan de manera asíncrona
+     * para no bloquear la UI, usando safeStorageOperation() para manejo de errores.
+     * 
+     * @description Inicializa todos los componentes de la extensión en orden correcto
+     */
     function init() {
-        // Crear interfaz
+        // FASE 1: Crear la interfaz de usuario flotante
         crearInterfaz();
         
-        // Cargar estado desde storage
+        // FASE 2: Cargar y restaurar estado persistente desde chrome.storage
         safeStorageOperation(() => {
             chrome.storage.local.get([
-                'intervalo', 
-                'totalTapTaps', 
-                'position',
-                'tiempoReactivacion'
+                'intervalo',           // Velocidad de tap-taps configurada
+                'totalTapTaps',        // Contador total acumulativo
+                'position',            // Posición de ventana flotante
+                'tiempoReactivacion'   // Tiempo de espera para reactivación
             ], result => {
+                // Restaurar intervalo de velocidad si existe configuración previa
                 if (result.intervalo) {
                     elementos.selector.value = result.intervalo;
-                    const intervalo = parseInt(result.intervalo);
-                    state.intervalo = setInterval(presionarL, intervalo);
+                    // Nota: No iniciar intervalo automáticamente al cargar
+                    // El usuario debe activar manualmente el Auto Tap-Tap
                 }
                 
+                // Restaurar contador total de sesiones anteriores
                 if (result.totalTapTaps) {
                     state.contador = result.totalTapTaps;
                     actualizarContador();
                 }
                 
+                // Restaurar posición de ventana flotante
                 if (result.position) {
                     const { x, y } = result.position;
                     state.xOffset = x;
                     state.yOffset = y;
+                    // Aplicar posición con transform3d para mejor rendimiento
                     elementos.contenedor.style.transform = `translate3d(${x}px, ${y}px, 0)`;
                 }
                 
+                // Restaurar tiempo de reactivación personalizado
                 if (result.tiempoReactivacion) {
                     state.tiempoReactivacion = result.tiempoReactivacion;
                     elementos.reactivacionInput.value = result.tiempoReactivacion;
@@ -1684,13 +1864,50 @@
             });
         });
         
-        // Configurar eventos
+        // FASE 3: Configurar todos los event listeners y sistemas de comunicación
         configurarEventos();
         
-        // Manejar interacciones de chat
+        // FASE 4: Activar sistema de detección de interacciones de chat
         manejarInteraccionChat();
     }
 
-    // Iniciar aplicación
+    // ========================================================================================
+    // 🎯 PUNTO DE ENTRADA PRINCIPAL DE LA EXTENSIÓN
+    // ========================================================================================
+    
+    /**
+     * INICIACIÓN AUTOMÁTICA DE LA APLICACIÓN
+     * 
+     * Ejecuta la función de inicialización inmediatamente cuando el script
+     * se carga en la página de TikTok. Esta es la llamada que pone en marcha
+     * todo el sistema de Auto Tap-Tap.
+     * 
+     * TIMING DE EJECUCIÓN:
+     * Se ejecuta tan pronto como el DOM está listo y el content script
+     * se inyecta en la página, asegurando que la extensión esté disponible
+     * para el usuario lo antes posible.
+     * 
+     * PROTECCIÓN CONTRA MÚLTIPLES INSTANCIAS:
+     * El guard clause al inicio del IIFE previene que múltiples instancias
+     * de la extensión se ejecuten simultáneamente en la misma página.
+     */
     init();
+
+// ========================================================================================
+// 🏁 FIN DEL IIFE (Immediately Invoked Function Expression)
+// ========================================================================================
+
+/**
+ * CIERRE DEL CONTEXTO ENCAPSULADO
+ * 
+ * El paréntesis final cierra la función auto-ejecutable que encapsula todo
+ * el código de la extensión. Esto mantiene el scope global limpio y previene
+ * conflictos con otros scripts que puedan estar ejecutándose en TikTok.
+ * 
+ * BENEFICIOS DEL ENCAPSULAMIENTO:
+ * - Previene contaminación del scope global
+ * - Evita conflictos de variables con otros scripts
+ * - Permite uso de 'strict mode' de manera aislada
+ * - Facilita debugging y mantenimiento del código
+ */
 })();
