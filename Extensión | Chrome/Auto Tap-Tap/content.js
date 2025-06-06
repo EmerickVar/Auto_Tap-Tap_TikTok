@@ -1,53 +1,142 @@
+/**
+ * =============================================================================
+ * AUTO TAP-TAP TIKTOK - CONTENT SCRIPT PRINCIPAL
+ * =============================================================================
+ * 
+ * Este script de contenido se inyecta en las páginas de TikTok Live para 
+ * automatizar los tap-taps (corazones) durante las transmisiones en vivo.
+ * 
+ * FUNCIONALIDADES PRINCIPALES:
+ * - Automatización de tap-taps con intervalos configurables
+ * - Interfaz de usuario flotante y arrastrable
+ * - Sistema de pausa automática cuando se usa el chat
+ * - Reactivación automática después de inactividad en el chat
+ * - Notificaciones en tiempo real del estado
+ * - Contador de tap-taps realizados
+ * - Configuración persistente de ajustes
+ * 
+ * COMPONENTES ARQUITECTÓNICOS:
+ * - Gestión de estado centralizada
+ * - Sistema de almacenamiento seguro con Chrome API
+ * - Detección automática de interacción con chat
+ * - Interfaz de usuario dinámica con CSS inyectado
+ * - Comunicación bidireccional con background script
+ * 
+ * AUTOR: Auto Tap-Tap Extension Team
+ * VERSIÓN: Compatible con TikTok Live 2024
+ * =============================================================================
+ */
+
+// filepath: /Users/emerickvar/Documents/GitHub/Auto_Tap-Tap_TikTok/Extensión | Chrome/Auto Tap-Tap/content.js
+
+/**
+ * FUNCIÓN PRINCIPAL AUTO-EJECUTABLE (IIFE - Immediately Invoked Function Expression)
+ * 
+ * Encapsula todo el código de la extensión para evitar contaminación del scope global
+ * y conflictos con otros scripts que puedan estar ejecutándose en la página.
+ */
 (function() {
-    'use strict';
+    'use strict'; // Habilita el modo estricto para mejor detección de errores
     
-    // Evitar múltiples inyecciones
+    /**
+     * PROTECCIÓN CONTRA MÚLTIPLES INYECCIONES
+     * 
+     * Verifica si la extensión ya ha sido inyectada anteriormente en esta página.
+     * Esto previene la creación de múltiples instancias que podrían causar conflictos.
+     */
     if (document.getElementById('tiktok-auto-taptap')) return;
     
-    // Validar que estamos en un Live de TikTok
+    /**
+     * VALIDACIÓN DE CONTEXTO - VERIFICAR QUE ESTEMOS EN UN LIVE DE TIKTOK
+     * 
+     * La extensión solo debe funcionar en páginas de transmisiones en vivo de TikTok.
+     * Si no estamos en una URL que contenga '/live', terminamos la ejecución.
+     */
     if (!window.location.pathname.includes('/live')) {
         console.log('❌ No estamos en un Live de TikTok. La extensión solo funciona en Lives.');
         return;
     }
 
-    // Estado de la aplicación
+    /**
+     * =============================================================================
+     * ESTADO CENTRAL DE LA APLICACIÓN
+     * =============================================================================
+     * 
+     * Objeto principal que mantiene todo el estado de la extensión.
+     * Centralizar el estado facilita el debugging y el mantenimiento del código.
+     */
     const state = {
-        intervalo: null, // Intervalo para los tap-taps
-        activo: false,  // Estado actual del auto tap-tap
-        contador: 0,    // Contador de tap-taps en la sesión actual
-        isDragging: false,         // Estado de arrastre de la ventana
-        currentX: 0,             // Posición X actual
-        currentY: 0,             // Posición Y actual
-        initialX: 0,             // Posición X inicial del arrastre
-        initialY: 0,             // Posición Y inicial del arrastre
-        xOffset: 0,              // Desplazamiento X guardado
-        yOffset: 0,              // Desplazamiento Y guardado
-        chatTimeout: null,       // Temporizador para reactivación del chat
-        tiempoReactivacion: 10,  // Tiempo en segundos para reactivar después del chat
-        pausadoPorChat: false,   // Indica si está pausado por uso del chat
-        apagadoManualmente: false // Indica si fue apagado manualmente por el usuario
+        // CONTROL DE AUTOMATIZACIÓN
+        intervalo: null,        // Referencia al setInterval que ejecuta los tap-taps automáticos
+        activo: false,          // Bandera que indica si el auto tap-tap está actualmente funcionando
+        contador: 0,            // Número total de tap-taps enviados en la sesión actual
+        
+        // CONTROL DE INTERFAZ ARRASTRABLE
+        isDragging: false,      // Bandera que indica si el usuario está arrastrando la ventana flotante
+        currentX: 0,           // Posición X actual del mouse durante el arrastre
+        currentY: 0,           // Posición Y actual del mouse durante el arrastre  
+        initialX: 0,           // Posición X inicial cuando comenzó el arrastre
+        initialY: 0,           // Posición Y inicial cuando comenzó el arrastre
+        xOffset: 0,            // Desplazamiento X acumulado de la ventana flotante
+        yOffset: 0,            // Desplazamiento Y acumulado de la ventana flotante
+        
+        // SISTEMA DE REACTIVACIÓN AUTOMÁTICA POR CHAT
+        chatTimeout: null,      // Referencia al setTimeout para reactivar después de usar el chat
+        tiempoReactivacion: 10, // Tiempo en segundos que espera antes de reactivar automáticamente
+        pausadoPorChat: false,  // Indica si el sistema se pausó automáticamente por detectar uso del chat
+        apagadoManualmente: false // Indica si el usuario apagó manualmente (no reactivar automáticamente)
     };
     
-    // Configuración de intervalos
+    /**
+     * =============================================================================
+     * CONFIGURACIÓN DE INTERVALOS Y VELOCIDADES
+     * =============================================================================
+     * 
+     * Define las opciones de velocidad disponibles para el usuario.
+     * Cada intervalo representa la pausa entre tap-taps consecutivos.
+     */
     const config = {
+        // Array de opciones de velocidad con sus respectivos valores y descripciones
         intervalos: [
-            { valor: 200, texto: '200 milisegundos | [Muy rápido]' },
-            { valor: 250, texto: '250 milisegundos | [Rápido]' },
-            { valor: 500, texto: '500 milisegundos | [Normal]' },
-            { valor: 1000, texto: '1  segundo      | [Lento]' }
+            { valor: 200, texto: '200 milisegundos | [Muy rápido]' },  // 5 tap-taps por segundo
+            { valor: 250, texto: '250 milisegundos | [Rápido]' },      // 4 tap-taps por segundo
+            { valor: 500, texto: '500 milisegundos | [Normal]' },      // 2 tap-taps por segundo
+            { valor: 1000, texto: '1  segundo      | [Lento]' }        // 1 tap-tap por segundo
         ],
-        defaultInterval: 200 // Intervalo predeterminado en milisegundos
+        defaultInterval: 200 // Intervalo predeterminado en milisegundos (velocidad más rápida)
     };
     
-    // Elementos DOM
+    /**
+     * =============================================================================
+     * CONTENEDOR PARA REFERENCIAS A ELEMENTOS DOM
+     * =============================================================================
+     * 
+     * Objeto que almacenará todas las referencias a elementos DOM creados dinámicamente.
+     * Esto facilita el acceso y manipulación de la interfaz de usuario.
+     */
     const elementos = {};
     
-    // Funciones principales para el manejo de almacenamiento y extensión
+    /**
+     * =============================================================================
+     * FUNCIONES DE GESTIÓN SEGURA DE ALMACENAMIENTO Y EXTENSIÓN
+     * =============================================================================
+     */
+    
+    /**
+     * WRAPPER PARA OPERACIONES SEGURAS DE ALMACENAMIENTO
+     * 
+     * Envuelve operaciones que podrían fallar si el contexto de la extensión
+     * se invalida (por ejemplo, cuando la extensión se recarga o actualiza).
+     * 
+     * @param {Function} operation - Función que realiza la operación de almacenamiento
+     * @returns {Promise|any} - Resultado de la operación o error controlado
+     */
     function safeStorageOperation(operation) {
         try {
             return operation();
         } catch (error) {
             console.warn('Error en operación de almacenamiento:', error);
+            // Si el contexto de la extensión se invalidó, intentar reconectar
             if (error.message.includes('Extension context invalidated')) {
                 reloadExtension();
             }
@@ -55,17 +144,41 @@
         }
     }
 
+    /**
+     * SISTEMA DE RECONEXIÓN AUTOMÁTICA DE LA EXTENSIÓN
+     * 
+     * Cuando el contexto de la extensión se invalida (por recarga, actualización, etc.),
+     * esta función intenta restaurar automáticamente el funcionamiento de la extensión
+     * sin que el usuario pierda su sesión o configuración actual.
+     * 
+     * PROCESO DE RECONEXIÓN:
+     * 1. Limpia todos los timers y estados anteriores
+     * 2. Realiza múltiples intentos de reconexión con delays progresivos
+     * 3. Verifica la validez del contexto de Chrome extension APIs
+     * 4. Restaura el estado anterior si estaba activo
+     * 5. Reconfigura todos los event listeners
+     * 6. Sincroniza la configuración desde el almacenamiento
+     * 7. Si todos los intentos fallan, recarga la página como último recurso
+     */
     function reloadExtension() {
         console.log('🔄 Reconectando extensión...');
         
-        // Limpiar timers y estado anterior
-        if (state.intervalo) clearInterval(state.intervalo);
-        if (state.chatTimeout) clearTimeout(state.chatTimeout);
+        // PASO 1: Limpiar estado anterior para evitar conflictos
+        if (state.intervalo) clearInterval(state.intervalo);    // Detener tap-taps automáticos
+        if (state.chatTimeout) clearTimeout(state.chatTimeout); // Cancelar reactivación pendiente
         
+        // PASO 2: Configurar sistema de reintentos con backoff progresivo
         let intentosReconexion = 0;
         const maxIntentos = 3;
         
+        /**
+         * FUNCIÓN INTERNA DE REINTENTO
+         * 
+         * Implementa el algoritmo de reconexión con múltiples intentos
+         * y delays progresivos para evitar sobrecargar el sistema.
+         */
         const intentarReconexion = () => {
+            // Si alcanzamos el máximo de intentos, recargar página como último recurso
             if (intentosReconexion >= maxIntentos) {
                 console.warn('❌ Máximo de intentos de reconexión alcanzado, recargando página...');
                 window.location.reload();
@@ -76,15 +189,15 @@
             console.log(`🔄 Intento de reconexión ${intentosReconexion}/${maxIntentos}...`);
             
             try {
-                // Verificar si el contexto de la extensión está válido
-                chrome.runtime.getURL('');
+                // PASO 3: Verificar que el contexto de la extensión esté válido
+                chrome.runtime.getURL(''); // Operación simple para verificar contexto
                 
-                // Restaurar el estado anterior si estaba activo
+                // PASO 4: Restaurar estado anterior si estaba funcionando
                 if (state.activo) {
                     const intervalo = parseInt(elementos.selector.value);
                     state.intervalo = setInterval(presionarL, intervalo);
                     
-                    // Notificar al background sobre el estado actual
+                    // Notificar al background script sobre el estado actual
                     safeRuntimeMessage({ 
                         action: 'started',
                         contador: state.contador
@@ -93,13 +206,14 @@
                     safeRuntimeMessage({ action: 'stopped' });
                 }
                 
-                // Reconfigurar los listeners
+                // PASO 5: Reconfigurar los event listeners
                 setupMessageListener();
                 
-                // Sincronizar estado con storage
+                // PASO 6: Sincronizar configuración desde almacenamiento
                 chrome.storage.local.get(['tiempoReactivacion'], result => {
                     if (result.tiempoReactivacion) {
                         state.tiempoReactivacion = result.tiempoReactivacion;
+                        // Actualizar la interfaz si existe
                         if (elementos.reactivacionInput) {
                             elementos.reactivacionInput.value = result.tiempoReactivacion;
                         }
@@ -110,36 +224,63 @@
                 
             } catch (error) {
                 console.warn(`❌ Error en intento ${intentosReconexion}:`, error);
-                // Esperar un poco más en cada intento
+                // PASO 7: Esperar progresivamente más tiempo en cada intento fallido
+                // Intento 1: 1 segundo, Intento 2: 2 segundos, Intento 3: 3 segundos
                 setTimeout(intentarReconexion, 1000 * intentosReconexion);
             }
         };
         
-        // Iniciar el proceso de reconexión
+        // INICIAR EL PROCESO DE RECONEXIÓN
         intentarReconexion();
     }
 
+    /**
+     * SISTEMA DE COMUNICACIÓN SEGURA CON BACKGROUND SCRIPT
+     * 
+     * Envía mensajes al background script de forma segura, manejando todos los posibles
+     * errores que pueden ocurrir durante la comunicación entre content script y background.
+     * 
+     * PROBLEMAS MANEJADOS:
+     * - Timeouts de comunicación (máximo 1 segundo de espera)
+     * - Contexto de extensión invalidado (por recarga/actualización)
+     * - Canales de mensaje cerrados inesperadamente
+     * - Errores CORS que pueden ocurrir en ciertos contextos
+     * - Respuestas vacías o malformadas
+     * 
+     * @param {Object} message - Mensaje a enviar al background script
+     * @returns {Promise} - Promesa que resuelve con la respuesta o se rechaza con error
+     */
     function safeRuntimeMessage(message) {
         return new Promise((resolve, reject) => {
+            // TIMEOUT DE SEGURIDAD: Si el mensaje no se envía en 1 segundo, cancelar
             const timeout = setTimeout(() => {
                 reject(new Error('Timeout al enviar mensaje'));
-            }, 1000); // 1 segundo de timeout
+            }, 1000);
 
             try {
-                // Envolver en un try-catch específico para manejar errores CORS
+                /**
+                 * FUNCIÓN INTERNA PARA ENVÍO SEGURO DE MENSAJES
+                 * 
+                 * Maneja el envío real del mensaje con múltiples capas de protección
+                 * contra errores que pueden ocurrir durante la comunicación.
+                 */
                 const sendMessage = () => {
                     try {
                         chrome.runtime.sendMessage(message, response => {
-                            clearTimeout(timeout);
+                            clearTimeout(timeout); // Cancelar timeout si llegó respuesta
 
+                            // MANEJO DE ERRORES DE RUNTIME DE CHROME
                             if (chrome.runtime.lastError) {
                                 const error = chrome.runtime.lastError;
-                                // Ignorar errores específicos de CORS
+                                
+                                // Errores críticos que requieren reconexión automática
                                 if (error.message.includes('Extension context invalidated') ||
                                     error.message.includes('message channel closed')) {
                                     reloadExtension();
                                 }
-                                // Para otros errores, solo rechazar si no son relacionados con CORS
+                                
+                                // Para otros errores, solo rechazar si no son errores CORS
+                                // Los errores CORS son comunes y no críticos en este contexto
                                 if (!error.message.includes('CORS')) {
                                     reject(error);
                                 } else {
@@ -188,41 +329,103 @@
         });
     }
 
-    // Función para manejar intervalos de forma segura
+    /**
+     * =============================================================================
+     * GESTIÓN SEGURA DE INTERVALOS
+     * =============================================================================
+     * 
+     * Objeto que proporciona métodos para crear y gestionar intervalos de forma segura,
+     * manteniendo un registro de todos los intervalos activos para poder limpiarlos
+     * correctamente y evitar memory leaks.
+     */
     const safeInterval = {
+        // Map que almacena referencias a todos los intervalos activos
         intervals: new Map(),
+        
+        /**
+         * CREAR INTERVALO SEGURO
+         * 
+         * Crea un nuevo intervalo y lo registra en el Map para seguimiento.
+         * 
+         * @param {Function} callback - Función a ejecutar en cada intervalo
+         * @param {number} delay - Tiempo en milisegundos entre ejecuciones
+         * @returns {number} - ID del intervalo creado
+         */
         create(callback, delay) {
             const id = setInterval(callback, delay);
             this.intervals.set(id, { callback, delay });
             return id;
         },
+        
+        /**
+         * LIMPIAR INTERVALO ESPECÍFICO
+         * 
+         * Limpia un intervalo específico y lo elimina del registro.
+         * 
+         * @param {number} id - ID del intervalo a limpiar
+         */
         clear(id) {
             clearInterval(id);
             this.intervals.delete(id);
         },
+        
+        /**
+         * LIMPIAR TODOS LOS INTERVALOS
+         * 
+         * Función de emergencia para limpiar todos los intervalos registrados.
+         * Útil para evitar memory leaks durante reconexiones o errores.
+         */
         clearAll() {
             this.intervals.forEach((_, id) => this.clear(id));
         }
     };
 
+    /**
+     * =============================================================================
+     * FUNCIÓN PRINCIPAL DE AUTOMATIZACIÓN - SIMULACIÓN DE TAP-TAP
+     * =============================================================================
+     * 
+     * Esta es la función core que simula el gesto de tap-tap (presionar la tecla 'L')
+     * que TikTok Live usa para mostrar corazones en pantalla durante las transmisiones.
+     * 
+     * FUNCIONAMIENTO:
+     * 1. Crea un evento de teclado sintético que simula presionar la tecla 'L'
+     * 2. Incrementa el contador de tap-taps realizados en la sesión
+     * 3. Actualiza la interfaz de usuario con el nuevo contador
+     * 4. Guarda las estadísticas en el almacenamiento local
+     * 5. Notifica al background script para actualizar el badge
+     * 
+     * NOTA TÉCNICA:
+     * TikTok Live está configurado para detectar la tecla 'L' como trigger para
+     * mostrar corazones/tap-taps durante las transmisiones en vivo.
+     */
     function presionarL() {
+        // PASO 1: Crear evento sintético de teclado para simular presión de tecla 'L'
         const evento = new KeyboardEvent('keydown', {
-            key: 'l',
-            code: 'KeyL',
-            keyCode: 76,
-            which: 76,
-            bubbles: true,
-            cancelable: true
+            key: 'l',           // Letra que se está "presionando"
+            code: 'KeyL',       // Código físico de la tecla
+            keyCode: 76,        // Código numérico legacy (para compatibilidad)
+            which: 76,          // Código alternativo legacy (para compatibilidad)
+            bubbles: true,      // El evento debe burbujear por el DOM
+            cancelable: true    // El evento puede ser cancelado
         });
+        
+        // PASO 2: Disparar el evento en el documento para que TikTok lo detecte
         document.dispatchEvent(evento);
+        
+        // PASO 3: Incrementar contador de tap-taps realizados
         state.contador++;
+        
+        // PASO 4: Actualizar la interfaz de usuario inmediatamente
         actualizarContador();
         
-        // Usar una función separada para actualizar el badge para evitar bloquear la funcionalidad principal
+        // PASO 5: Realizar operaciones de persistencia de forma asíncrona 
+        // para no bloquear la ejecución del siguiente tap-tap
         setTimeout(() => {
+            // Guardar estadísticas en almacenamiento local
             guardarEstadisticas();
             
-            // Actualizar badge usando la función segura
+            // Actualizar badge del icono de extensión usando comunicación segura
             safeRuntimeMessage({ 
                 action: 'updateTapTaps', 
                 count: state.contador 
@@ -234,15 +437,27 @@
                     console.warn('Error al actualizar contador:', error);
                 }
             });
-        }, 0);
+        }, 0); // setTimeout con 0ms para ejecutar en el siguiente ciclo del event loop
     }
     
+    /**
+     * ACTUALIZAR CONTADOR EN LA INTERFAZ
+     * 
+     * Función simple que actualiza el display visual del contador de tap-taps
+     * en la interfaz de usuario flotante.
+     */
     function actualizarContador() {
         if (elementos.contador) {
             elementos.contador.textContent = state.contador;
         }
     }
     
+    /**
+     * GUARDAR ESTADÍSTICAS EN ALMACENAMIENTO PERSISTENTE
+     * 
+     * Función que guarda el progreso del usuario en el almacenamiento local
+     * de Chrome para mantener las estadísticas entre sesiones.
+     */
     function guardarEstadisticas() {
         safeStorageOperation(() => {
             chrome.storage.local.get(['totalTapTaps'], result => {
@@ -253,6 +468,25 @@
         });
     }
     
+    /**
+     * =============================================================================
+     * FUNCIÓN PRINCIPAL DE CONTROL - ALTERNAR AUTO TAP-TAP
+     * =============================================================================
+     * 
+     * Esta es la función central que controla el encendido/apagado del sistema
+     * de automatización. Maneja tanto interacciones manuales del usuario como
+     * activaciones/desactivaciones automáticas del sistema de chat.
+     * 
+     * PARÁMETROS:
+     * @param {boolean} fromChat - Indica si el toggle viene del sistema de chat
+     *                            o de una interacción manual del usuario
+     * 
+     * LÓGICA DE FUNCIONAMIENTO:
+     * - Interacciones manuales (fromChat=false): El usuario controla directamente
+     * - Interacciones de chat (fromChat=true): Sistema automático por uso del chat
+     * - Gestiona el estado de "apagado manual" vs "pausa automática por chat"
+     * - Actualiza la interfaz visual y los intervalos de automatización
+     */
     function toggleAutoTapTap(fromChat = false) {
         console.log('🔄 Toggle Auto Tap-Tap:', {
             fromChat,
@@ -261,26 +495,29 @@
             apagadoManualmente: state.apagadoManualmente
         });
 
-        // Solo actualizar apagadoManualmente cuando es una interacción directa del usuario con el botón
+        // PASO 1: Gestión del estado "apagado manualmente"
+        // Solo actualizar cuando es una interacción directa del usuario con el botón
         if (!fromChat) {
-            // Solo cambiar apagadoManualmente cuando viene del botón
+            // Marcar como apagado manual solo cuando viene del botón del usuario
             state.apagadoManualmente = true;
         }
         
+        // PASO 2: Determinar el nuevo estado (invertir estado actual)
         const nuevoEstado = !state.activo;
         
-        // Limpiar intervalos existentes
+        // PASO 3: Limpiar intervalos existentes para evitar duplicados
         if (state.intervalo) {
             console.log('🧹 Limpiando intervalo existente');
             safeInterval.clear(state.intervalo);
             state.intervalo = null;
         }
         
-        // Actualizar estado
+        // PASO 4: Actualizar estado central
         state.activo = nuevoEstado;
         
+        // PASO 5A: LÓGICA DE ACTIVACIÓN
         if (nuevoEstado && !fromChat) {
-            // Solo activar si no viene del chat
+            // Solo activar si no viene del sistema de chat
             console.log('✨ Activando Auto Tap-Tap');
             const intervalo = parseInt(elementos.selector.value);
             elementos.boton.textContent = '❤️ Auto Tap-Tap: ON';
@@ -294,27 +531,29 @@
             // Solo iniciar el intervalo si no está pausado por chat
             if (!state.pausadoPorChat) {
                 console.log('🚀 Iniciando intervalo de tap-taps');
-                presionarL(); // Ejecutar inmediatamente
+                presionarL(); // Ejecutar el primer tap-tap inmediatamente
                 state.intervalo = safeInterval.create(presionarL, intervalo);
                 
-                // Notificar al background
+                // Notificar al background script sobre el estado activo
                 safeRuntimeMessage({ action: 'started' })
                     .catch(error => console.warn('Error al notificar estado:', error));
             } else {
                 console.log('⏸️ No se inicia intervalo - pausado por chat');
             }
         } else {
+            // PASO 5B: LÓGICA DE DESACTIVACIÓN
             console.log('🛑 Desactivando Auto Tap-Tap');
             elementos.boton.textContent = '❤️ Auto Tap-Tap: OFF';
             elementos.boton.style.background = '#ff0050';
             elementos.selector.disabled = false;
             elementos.selector.style.opacity = '1';
             
-            // Notificar al background
+            // Notificar al background script sobre el estado inactivo
             safeRuntimeMessage({ action: 'stopped' })
                 .catch(error => console.warn('Error al notificar estado:', error));
         }
 
+        // PASO 6: Log del estado final para debugging
         console.log('Estado final:', {
             activo: state.activo,
             pausadoPorChat: state.pausadoPorChat,
@@ -323,24 +562,51 @@
         });
     }
     
-    // Funciones de arrastre
+    /**
+     * =============================================================================
+     * FUNCIONES DE ARRASTRE PARA INTERFAZ MÓVIL
+     * =============================================================================
+     * 
+     * Sistema que permite al usuario arrastrar la ventana flotante por la pantalla
+     * tanto con mouse como con touch (dispositivos móviles).
+     */
+    
+    /**
+     * INICIAR ARRASTRE
+     * 
+     * Función que se ejecuta cuando el usuario inicia el gesto de arrastre.
+     * Compatible con mouse y touch events.
+     * 
+     * @param {Event} e - Evento de mouse o touch
+     */
     function dragStart(e) {
+        // Obtener coordenadas del evento (mouse o touch)
         const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
         const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
         
+        // Calcular la posición inicial del arrastre
         state.initialX = clientX - state.xOffset;
         state.initialY = clientY - state.yOffset;
         
+        // Solo permitir arrastre si se toca el contenedor o la barra de arrastre
         if (e.target === elementos.contenedor || e.target === elementos.barraArrastre) {
             state.isDragging = true;
         }
     }
     
+    /**
+     * FINALIZAR ARRASTRE
+     * 
+     * Función que se ejecuta cuando el usuario termina el gesto de arrastre.
+     * Guarda la posición final en el almacenamiento para recordarla entre sesiones.
+     */
     function dragEnd() {
+        // Actualizar las coordenadas finales
         state.initialX = state.currentX;
         state.initialY = state.currentY;
         state.isDragging = false;
         
+        // Guardar la posición actual en el almacenamiento persistente
         safeStorageOperation(() => {
             chrome.storage.local.set({ 
                 position: { x: state.xOffset, y: state.yOffset } 
@@ -348,29 +614,53 @@
         });
     }
     
+    /**
+     * PROCESAR MOVIMIENTO DE ARRASTRE
+     * 
+     * Función que se ejecuta continuamente mientras el usuario arrastra la ventana.
+     * Actualiza la posición de la ventana flotante en tiempo real.
+     * 
+     * @param {Event} e - Evento de movimiento (mouse o touch)
+     */
     function drag(e) {
+        // Solo procesar si estamos en modo arrastre
         if (!state.isDragging) return;
         
         // Solo llamar preventDefault para eventos touch cuando sea necesario
+        // para evitar interferir con el scroll normal de la página
         if (e.type === 'touchmove') {
-            // Prevenir el scroll solo si estamos arrastrando
-            e.preventDefault();
+            e.preventDefault(); // Prevenir el scroll durante el arrastre
         }
         
+        // Obtener coordenadas actuales del evento (mouse o touch)
         const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
         const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
         
+        // Calcular nueva posición basada en el movimiento del mouse/dedo
         state.currentX = clientX - state.initialX;
         state.currentY = clientY - state.initialY;
         state.xOffset = state.currentX;
         state.yOffset = state.currentY;
         
+        // Aplicar la transformación CSS para mover la ventana
         elementos.contenedor.style.transform = `translate3d(${state.xOffset}px, ${state.yOffset}px, 0)`;
     }
-    
-    // Crear interfaz
+
+    /**
+     * =============================================================================
+     * CREACIÓN DINÁMICA DE LA INTERFAZ DE USUARIO
+     * =============================================================================
+     * 
+     * Esta función construye toda la interfaz flotante de la extensión,
+     * incluyendo controles, estilos CSS y estructura del DOM.
+     */
     function crearInterfaz() {
-        // Contenedor principal
+        /**
+         * CONTENEDOR PRINCIPAL
+         * 
+         * Div principal que contiene toda la interfaz flotante.
+         * Configurado con posicionamiento fijo y z-index alto para estar siempre visible.
+         */
         elementos.contenedor = document.createElement('div');
         elementos.contenedor.id = 'tiktok-auto-taptap';
         elementos.contenedor.style.cssText = `
@@ -389,7 +679,12 @@
             box-sizing: border-box;
         `;
         
-        // Barra de arrastre
+        /**
+         * BARRA DE ARRASTRE
+         * 
+         * Elemento visual en la parte superior que indica dónde el usuario
+         * puede hacer clic para arrastrar la ventana.
+         */
         elementos.barraArrastre = document.createElement('div');
         elementos.barraArrastre.style.cssText = `
             width: 100%;
@@ -403,6 +698,7 @@
             justify-content: center;
         `;
         
+        // Indicador visual de que es una barra de arrastre
         const indicador = document.createElement('div');
         indicador.style.cssText = `
             width: 40px;
@@ -412,7 +708,12 @@
         `;
         elementos.barraArrastre.appendChild(indicador);
         
-        // Botón minimizar
+        /**
+         * BOTÓN MINIMIZAR/MAXIMIZAR
+         * 
+         * Botón pequeño en la esquina superior derecha para ocultar/mostrar
+         * los controles y hacer la interfaz más compacta.
+         */
         elementos.botonMinimizar = document.createElement('button');
         elementos.botonMinimizar.textContent = '−';
         elementos.botonMinimizar.style.cssText = `
@@ -431,7 +732,12 @@
             padding: 0;
         `;
         
-        // Botón principal
+        /**
+         * BOTÓN PRINCIPAL DE CONTROL
+         * 
+         * Botón grande que permite activar/desactivar el auto tap-tap.
+         * Cambia de color y texto según el estado actual.
+         */
         elementos.boton = document.createElement('button');
         elementos.boton.textContent = '❤️ Auto Tap-Tap: OFF';
         elementos.boton.style.cssText = `
@@ -448,7 +754,12 @@
             margin-bottom: 10px;
         `;
         
-        // Selector de intervalo
+        /**
+         * SELECTOR DE VELOCIDAD
+         * 
+         * Dropdown que permite al usuario elegir la velocidad de los tap-taps
+         * (intervalo entre cada corazón enviado).
+         */
         elementos.selector = document.createElement('select');
         elementos.selector.id = 'selector-intervalo';
         elementos.selector.name = 'selector-intervalo';
@@ -462,6 +773,7 @@
             cursor: pointer;
         `;
         
+        // Poblar el selector con las opciones de velocidad predefinidas
         config.intervalos.forEach(({ valor, texto }) => {
             const option = document.createElement('option');
             option.value = valor;
@@ -469,7 +781,11 @@
             elementos.selector.appendChild(option);
         });
         
-        // Contador
+        /**
+         * DISPLAY DEL CONTADOR
+         * 
+         * Área que muestra cuántos tap-taps se han enviado en la sesión actual.
+         */
         elementos.contadorDiv = document.createElement('div');
         elementos.contadorDiv.style.cssText = `
             color: white;
@@ -480,7 +796,11 @@
         elementos.contadorDiv.innerHTML = '❤️ Tap-taps dados: <span id="contador-taptaps">0</span>';
         elementos.contador = elementos.contadorDiv.querySelector('#contador-taptaps');
         
-        // Botón reset
+        /**
+         * BOTÓN DE RESET
+         * 
+         * Botón pequeño para resetear el contador de tap-taps a cero.
+         */
         elementos.botonReset = document.createElement('button');
         elementos.botonReset.textContent = '🔄 Reset';
         elementos.botonReset.style.cssText = `
@@ -495,7 +815,12 @@
             width: 100%;
         `;
 
-        // Configuración de chat
+        /**
+         * SECCIÓN DE CONFIGURACIÓN DE CHAT
+         * 
+         * Área que permite configurar el tiempo de espera para reactivación
+         * automática después de usar el chat.
+         */
         elementos.configDiv = document.createElement('div');
         elementos.configDiv.style.cssText = `
             margin-top: 10px;
@@ -549,7 +874,12 @@
         elementos.configDiv.appendChild(configLabel);
         elementos.configDiv.appendChild(elementos.tiempoInput);
         
-        // Sección de copyright
+        /**
+         * SECCIÓN DE COPYRIGHT
+         * 
+         * Información sobre los desarrolladores y la organización
+         * que creó la extensión.
+         */
         elementos.copyrightDiv = document.createElement('div');
         elementos.copyrightDiv.style.cssText = `
             margin-top: 10px;
@@ -599,7 +929,12 @@
         elementos.copyrightDiv.appendChild(copyrightText);
         elementos.copyrightDiv.appendChild(devInfo);
 
-        // Ensamblar interfaz
+        /**
+         * ENSAMBLAR TODA LA INTERFAZ
+         * 
+         * Agregar todos los elementos creados al contenedor principal
+         * y luego insertar la interfaz completa en el DOM de la página.
+         */
         elementos.contenedor.appendChild(elementos.barraArrastre);
         elementos.contenedor.appendChild(elementos.botonMinimizar);
         elementos.contenedor.appendChild(elementos.boton);
@@ -609,17 +944,61 @@
         elementos.contenedor.appendChild(elementos.configDiv);
         elementos.contenedor.appendChild(elementos.copyrightDiv);
         
+        // Insertar la interfaz completa en el DOM de la página
         document.body.appendChild(elementos.contenedor);
     }
     
-    // Funciones del chat
+    /**
+     * =============================================================================
+     * SISTEMA DE DETECCIÓN Y MANEJO DEL CHAT DE TIKTOK
+     * =============================================================================
+     * 
+     * Este sistema es uno de los componentes más sofisticados de la extensión.
+     * Se encarga de detectar automáticamente cuando el usuario interactúa con
+     * el chat de TikTok Live y pausar/reactivar el auto tap-tap inteligentemente.
+     * 
+     * FUNCIONALIDADES PRINCIPALES:
+     * - Búsqueda dinámica del elemento de chat en el DOM
+     * - Observación de cambios en la estructura de la página
+     * - Detección de interacciones del usuario con el chat
+     * - Pausa automática durante escritura en el chat
+     * - Reactivación automática tras período de inactividad
+     * - Sistema de timers y cancelación inteligente
+     */
+    
+    /**
+     * FUNCIÓN PRINCIPAL DE MANEJO DE INTERACCIONES DE CHAT
+     * 
+     * Coordina todo el sistema de detección del chat. Primero intenta encontrar
+     * el elemento de chat inmediatamente, y si no lo encuentra, configura un
+     * observer para detectarlo cuando aparezca dinámicamente.
+     * 
+     * PROCESO:
+     * 1. Búsqueda inmediata del elemento de chat
+     * 2. Si no se encuentra, configurar MutationObserver
+     * 3. Una vez encontrado, configurar todos los event listeners
+     * 4. Devolver función de limpieza para cleanup posterior
+     * 
+     * @returns {Object} - Objeto con función de cleanup del observer
+     */
     function manejarInteraccionChat() {
         console.log('🔍 Iniciando búsqueda del chat...');
         
         let chatInput = null;
+        
+        /**
+         * OBJETO DE CONTROL DEL MUTATION OBSERVER
+         * 
+         * Encapsula la lógica del observer que vigila cambios en el DOM
+         * para detectar cuando aparece dinámicamente el elemento de chat.
+         */
         const chatObserver = {
             observer: null,
             active: false,
+            
+            /**
+             * Función de limpieza que desconecta el observer y marca como inactivo
+             */
             cleanup() {
                 if (this.observer) {
                     this.observer.disconnect();
@@ -628,16 +1007,29 @@
             }
         };
 
-        // Función auxiliar para encontrar la caja de chat
+        /**
+         * FUNCIÓN AUXILIAR PARA BÚSQUEDA INTELIGENTE DEL CHAT
+         * 
+         * Utiliza múltiples estrategias para encontrar el elemento de input del chat
+         * en diferentes versiones y estados de la interfaz de TikTok Live.
+         * 
+         * ESTRATEGIAS DE BÚSQUEDA:
+         * 1. Selectores específicos priorizados por confiabilidad
+         * 2. Búsqueda alternativa por atributos contenteditable
+         * 3. Validación de elementos encontrados
+         * 
+         * @returns {Element|null} - Elemento de chat encontrado o null
+         */
         const buscarChatInput = () => {
-            // Lista priorizada de selectores
+            // Lista priorizada de selectores CSS para diferentes versiones de TikTok
             const selectores = [
-                'div[contenteditable="plaintext-only"][maxlength="150"]',
-                'div[contenteditable="plaintext-only"][placeholder="Di algo bonito"]',
-                'div[contenteditable="plaintext-only"]',
-                'input[placeholder="Di algo bonito"]'
+                'div[contenteditable="plaintext-only"][maxlength="150"]',    // Selector más específico
+                'div[contenteditable="plaintext-only"][placeholder="Di algo bonito"]', // Con placeholder específico
+                'div[contenteditable="plaintext-only"]',                     // Genérico contenteditable
+                'input[placeholder="Di algo bonito"]'                       // Fallback para input tradicional
             ];
 
+            // Intentar cada selector en orden de prioridad
             for (const selector of selectores) {
                 const elemento = document.querySelector(selector);
                 if (elemento) {
@@ -646,35 +1038,49 @@
                 }
             }
 
-            // Búsqueda alternativa
+            // ESTRATEGIA ALTERNATIVA: Búsqueda manual por atributos
+            // Si los selectores específicos fallan, buscar manualmente
             const posiblesChatInputs = Array.from(document.querySelectorAll('div[contenteditable]'));
             return posiblesChatInputs.find(el => el.getAttribute('contenteditable') === 'plaintext-only');
         };
 
-        // Inicializar observer
+        /**
+         * INICIALIZAR MUTATION OBSERVER PARA DETECCIÓN DINÁMICA
+         * 
+         * Configura un observer que vigila cambios en el DOM para detectar
+         * cuando el elemento de chat aparece dinámicamente (por ejemplo,
+         * después de que se carga completamente la interfaz de TikTok).
+         */
         const iniciarObservador = () => {
+            // Evitar múltiples observers activos
             if (chatObserver.active) return;
 
+            // Limpiar cualquier observer previo
             chatObserver.cleanup();
+            
+            // Crear nuevo MutationObserver
             chatObserver.observer = new MutationObserver((mutations) => {
-                if (chatInput) return; // Ya encontramos el chat
+                // Si ya encontramos el chat, no seguir buscando
+                if (chatInput) return;
 
+                // Intentar encontrar el chat en cada mutación del DOM
                 chatInput = buscarChatInput();
                 if (chatInput) {
                     console.log('🎉 Chat encontrado por el observador!');
-                    chatObserver.cleanup();
-                    configurarEventosChat(chatInput);
+                    chatObserver.cleanup(); // Limpiar observer una vez encontrado
+                    configurarEventosChat(chatInput); // Configurar eventos del chat
                 }
             });
 
+            // Configurar el observer para vigilar cambios en todo el documento
             chatObserver.observer.observe(document.body, {
-                childList: true,
-                subtree: true
+                childList: true, // Vigilar adición/eliminación de nodos
+                subtree: true    // Vigilar cambios en todo el subárbol
             });
             chatObserver.active = true;
         };
 
-        // Primera búsqueda
+        // PASO 1: Búsqueda inmediata del elemento de chat
         chatInput = buscarChatInput();
         if (chatInput) {
             console.log('✨ Chat encontrado inmediatamente!');
@@ -684,7 +1090,7 @@
             iniciarObservador();
         }
         
-        // Guardar la referencia del observador para limpieza posterior
+        // PASO 2: Guardar referencia del observador en el estado global para limpieza posterior
         state.chatObserver = chatObserver;
         
         return chatObserver;
@@ -754,6 +1160,12 @@
                     chatInput.blur();
                 }
 
+                // Actualizar estado visual del botón antes de toggle
+                elementos.boton.textContent = '❤️ Auto Tap-Tap: ON';
+                elementos.boton.style.background = '#00ff88';
+                elementos.selector.disabled = true;
+                elementos.selector.style.opacity = '0.5';
+
                 toggleAutoTapTap(true);
                 mostrarNotificacionChat('¡Auto Tap-Tap reactivado! 🎉', 'success');
             }
@@ -793,7 +1205,7 @@
                 }
                 
                 timers.chat = setTimeout(() => {
-                    mostrarNotificacionChat(`⏳ Reactivando en ${state.tiempoReactivacion} segundos...`, 'info');
+                    mostrarCuentaRegresiva(`⏳ Reactivando en ${state.tiempoReactivacion}s...`);
                     setTimeout(reactivarAutoTapTap, state.tiempoReactivacion * 1000);
                 }, 0);
             }
@@ -885,7 +1297,7 @@
             if (!chatContainer.contains(e.target) && state.pausadoPorChat && !state.apagadoManualmente) {
                 timers.cleanupAll();
                 timers.chat = setTimeout(reactivarAutoTapTap, state.tiempoReactivacion * 1000);
-                mostrarNotificacionChat(`⏳ Reactivando en ${state.tiempoReactivacion} segundos...`, 'info');
+                mostrarCuentaRegresiva(`⏳ Reactivando en ${state.tiempoReactivacion}s...`);
             }
         };
 
@@ -908,22 +1320,33 @@
 
     // Función para mostrar notificaciones del chat
     function mostrarNotificacionChat(mensaje, tipo = 'info') {
+        // Crear div de notificaciones bajo copyright si no existe
+        if (!elementos.notificacionesContainer) {
+            elementos.notificacionesContainer = document.createElement('div');
+            elementos.notificacionesContainer.style.cssText = `
+                margin-top: 10px;
+                width: 100%;
+            `;
+            // Insertar después del div de copyright
+            elementos.contenedor.appendChild(elementos.notificacionesContainer);
+        }
+
         // Solo crear el contenedor si no existe
         if (!elementos.notificacionChat) {
             elementos.notificacionChat = document.createElement('div');
             elementos.notificacionChat.style.cssText = `
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                padding: 10px 20px;
+                padding: 10px 15px;
                 border-radius: 8px;
                 font-family: Arial, sans-serif;
                 font-size: 14px;
-                z-index: 999999;
                 opacity: 0;
                 transition: opacity 0.3s ease;
+                width: 100%;
+                text-align: center;
+                margin-bottom: 5px;
+                box-sizing: border-box;
             `;
-            document.body.appendChild(elementos.notificacionChat);
+            elementos.notificacionesContainer.appendChild(elementos.notificacionChat);
         }
 
         // Establecer estilos según el tipo de notificación
@@ -931,7 +1354,7 @@
             success: {
                 background: 'rgba(14, 79, 2, 0.95)',
                 color: '#fff',
-                border: '1px solidrgb(24, 80, 2)',
+                border: '1px solid rgb(24, 80, 2)',
                 boxShadow: '0 2px 8px rgba(66, 224, 4, 0.2)'
             },
             warning: {
@@ -959,6 +1382,44 @@
         }, 3000);
     }
     
+    // Función para mostrar cuenta regresiva en esquina inferior derecha
+    function mostrarCuentaRegresiva(mensaje) {
+        // Solo crear el contenedor de cuenta regresiva si no existe
+        if (!elementos.cuentaRegresivaDiv) {
+            elementos.cuentaRegresivaDiv = document.createElement('div');
+            elementos.cuentaRegresivaDiv.style.cssText = `
+                position: absolute;
+                bottom: -5px;
+                right: -5px;
+                background: rgba(0, 0, 0, 0.95);
+                color: #fff;
+                border: 1px solid #666;
+                padding: 8px 12px;
+                border-radius: 8px;
+                font-family: Arial, sans-serif;
+                font-size: 12px;
+                z-index: 999999;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+                text-align: center;
+                white-space: nowrap;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            `;
+            elementos.contenedor.appendChild(elementos.cuentaRegresivaDiv);
+        }
+
+        // Mostrar mensaje
+        elementos.cuentaRegresivaDiv.textContent = mensaje;
+        elementos.cuentaRegresivaDiv.style.opacity = '1';
+
+        // Ocultar después de la duración del mensaje
+        setTimeout(() => {
+            if (elementos.cuentaRegresivaDiv) {
+                elementos.cuentaRegresivaDiv.style.opacity = '0';
+            }
+        }, 3000);
+    }
+
     // Configurar eventos
     function configurarEventos() {
         const events = [];
