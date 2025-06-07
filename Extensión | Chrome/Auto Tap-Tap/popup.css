@@ -188,31 +188,31 @@ h1::before {
 }
 
 /* BOTÓN DE INICIO (INICIAR AUTOMATIZACIÓN)
-   Estilo rojo siguiendo la paleta de colores de TikTok */
+   Estilo magenta de TikTok para estado desactivado */
 .toggle-button.start {
-    background: #ff0050;          /* Rojo principal de TikTok para acción primaria */
+    background: #ff0050;          /* Magenta de TikTok para estado desactivado */
 }
 
 /* EFECTO HOVER DEL BOTÓN DE INICIO
    Interacción visual cuando el usuario pasa el mouse (excepto si está disabled) */
 .toggle-button.start:hover:not(:disabled) {
-    background: #ff3366;          /* Rojo más claro para feedback visual */
+    background: #ff3366;          /* Magenta más claro para feedback visual */
     transform: translateY(-1px);  /* Ligero movimiento hacia arriba para efecto de elevación */
-    box-shadow: 0 4px 12px rgba(255, 0, 80, 0.3); /* Sombra roja difusa para profundidad */
+    box-shadow: 0 4px 12px rgba(255, 0, 80, 0.3); /* Sombra magenta difusa para profundidad */
 }
 
 /* BOTÓN DE DETENER (PARAR AUTOMATIZACIÓN)
-   Estilo verde para indicar acción de pausa/detención */
+   Estilo cyan de TikTok para estado activado */
 .toggle-button.stop {
-    background: #025016d1;        /* Verde oscuro con transparencia para seriedad */
+    background: #00f2ea;          /* Cyan de TikTok para estado activado */
 }
 
 /* EFECTO HOVER DEL BOTÓN DE DETENER
    Feedback visual para acción de detención */
 .toggle-button.stop:hover:not(:disabled) {
-    background: #199403;          /* Verde más brillante para confirmación visual */
+    background: #33f5ed;          /* Cyan más claro para confirmación visual */
     transform: translateY(-1px);  /* Consistencia con animación de botón start */
-    box-shadow: 0 4px 12px rgba(66, 224, 4, 0.3); /* Sombra verde para profundidad */
+    box-shadow: 0 4px 12px rgba(0, 242, 234, 0.3); /* Sombra cyan para profundidad */
 }
 
 /* ESTADO DESHABILITADO DE BOTONES TOGGLE

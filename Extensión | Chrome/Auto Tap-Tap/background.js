@@ -52,46 +52,81 @@ let badgeInterval = null;
  * @type {Object}
  * @property {boolean} active - Indica si la automatización está activa
  * @property {number} contador - Número total de taps realizados en la sesión actual
+ * @property {boolean} enTikTok - Indica si estamos en una página de TikTok
+ * @property {boolean} enLive - Indica si estamos en un Live de TikTok
  */
 let extensionState = {
     active: false,      // Estado de activación de la automatización
-    contador: 0         // Contador de taps de la sesión actual
+    contador: 0,        // Contador de taps de la sesión actual
+    enTikTok: false,    // Estado de página TikTok
+    enLive: false       // Estado de Live TikTok
 };
 
 // ========================================================================================
-// 🏷️ SISTEMA DE GESTIÓN DE INSIGNIA (BADGE)
+// 🏷️ SISTEMA DE GESTIÓN DE INSIGNIA (BADGE) MEJORADO
 // ========================================================================================
 
 /**
- * Actualiza el texto de la insignia del ícono de la extensión en la barra de herramientas
+ * Actualiza el texto de la insignia del ícono de la extensión según el contexto
  * 
- * FUNCIONALIDAD:
- * Esta función se encarga de mostrar visualmente el contador de tap-taps en la insignia
- * del ícono de la extensión. Proporciona feedback visual inmediato al usuario sobre
- * la actividad de la automatización.
+ * FUNCIONALIDAD MEJORADA:
+ * Esta función ahora maneja diferentes estados según el contexto donde se encuentre
+ * el usuario, proporcionando feedback visual específico para cada situación.
  * 
- * COMPORTAMIENTO:
- * - Si count > 0: Muestra el número en la insignia
- * - Si count = 0: Deja la insignia sin texto (vacía)
+ * ESTADOS DE BADGE:
+ * 1. TikTok Live + Activo: Muestra contador numérico con animación verde
+ * 2. TikTok Live + Inactivo: Muestra "OFF" con color rojo
+ * 3. TikTok no-Live: Muestra "Live" con color amarillo (indica necesidad de estar en Live)
+ * 4. No TikTok: Badge vacío con color rojo
  * 
- * CASOS DE USO:
- * 1. Actualización en tiempo real del contador de tap-taps
- * 2. Limpieza de la insignia cuando se detiene la automatización
- * 3. Sincronización visual con el estado del content script
- * 
- * @param {number} count - Número de tap-taps a mostrar en la insignia
- * @description Controla la visualización numérica en la insignia del ícono de extensión
+ * @param {number} count - Número de tap-taps a mostrar (solo en modo activo)
+ * @description Controla la visualización contextual en la insignia del ícono de extensión
  * 
  * INTEGRACIÓN:
  * - Llamada desde: syncState(), onMessage listener, animateBadge()
  * - API usada: chrome.action.setBadgeText()
  */
 function updateBadge(count) {
-    // Convierte el contador a string si es mayor a 0, sino muestra texto vacío
-    const text = count > 0 ? count.toString() : '';
+    // ESTADO 1: TikTok Live - Mostrar contador o estado
+    if (extensionState.enTikTok && extensionState.enLive) {
+        if (extensionState.active && count > 0) {
+            // Mostrar contador numérico cuando está activo
+            chrome.action.setBadgeText({ text: count.toString() });
+            chrome.action.setBadgeBackgroundColor({ color: '#00ff88' });
+        } else if (extensionState.active) {
+            // Mostrar "ON" cuando está activo pero sin tap-taps aún
+            chrome.action.setBadgeText({ text: 'ON' });
+            chrome.action.setBadgeBackgroundColor({ color: '#00ff88' });
+        } else {
+            // Mostrar "OFF" cuando está inactivo
+            chrome.action.setBadgeText({ text: 'OFF' });
+            chrome.action.setBadgeBackgroundColor({ color: '#ff0050' });
+        }
+    }
+    // ESTADO 2: TikTok no-Live - Indicar necesidad de estar en Live
+    else if (extensionState.enTikTok && !extensionState.enLive) {
+        chrome.action.setBadgeText({ text: 'Live' });
+        chrome.action.setBadgeBackgroundColor({ color: '#ffa500' }); // Color naranja/amarillo
+    }
+    // ESTADO 3: No TikTok - Badge vacío
+    else {
+        chrome.action.setBadgeText({ text: '' });
+        chrome.action.setBadgeBackgroundColor({ color: '#ff0050' }); // Color rojo
+    }
+}
+
+/**
+ * Actualiza el contexto de la extensión (TikTok/Live) y refresca el badge
+ * 
+ * @param {boolean} enTikTok - Indica si estamos en una página de TikTok
+ * @param {boolean} enLive - Indica si estamos en un Live de TikTok
+ */
+function updateContext(enTikTok, enLive) {
+    extensionState.enTikTok = enTikTok;
+    extensionState.enLive = enLive;
     
-    // Aplica el texto a la insignia usando Chrome Extensions API
-    chrome.action.setBadgeText({ text });
+    // Actualizar badge según el nuevo contexto
+    updateBadge(extensionState.contador);
 }
 
 /**
@@ -102,36 +137,16 @@ function updateBadge(count) {
  * está funcionando activamente. La animación alternante llama la atención y comunica
  * claramente el estado activo del sistema.
  * 
- * MECÁNICA DE ANIMACIÓN:
+ * MECÁNICA DE ANIMACIÓN CONTEXTUAL:
  * 1. 🔴 Limpia cualquier animación previa en curso
- * 2. 🎨 Alterna entre dos tonos de verde cada segundo:
- *    - Verde claro (#00ff88) - Estado "encendido" de la animación
- *    - Verde medio (#00cc66) - Estado "apagado" de la animación
+ * 2. 🎨 Alterna entre tonos según el contexto:
+ *    - TikTok Live: Verde claro/medio (#00ff88/#00cc66)
+ *    - TikTok no-Live: Naranja alternante (sin animación, estado fijo)
+ *    - No TikTok: Sin animación
  * 3. ⏱️ Intervalo de 1000ms para crear efecto parpadeante suave
  * 4. 🛑 Se auto-detiene cuando extensionState.active cambia a false
  * 
- * GESTIÓN DE RECURSOS:
- * - Limpia intervalos anteriores para evitar memory leaks
- * - Se detiene automáticamente cuando la extensión se desactiva
- * - Restaura color rojo (#ff0050) al detenerse
- * 
- * ESTADOS VISUALES:
- * - ACTIVO: Animación verde parpadeante (vida/funcionando)
- * - INACTIVO: Color rojo sólido (detenido/error)
- * 
  * @description Controla la animación visual del estado activo de la extensión
- * 
- * FLUJO DE EJECUCIÓN:
- * 1. Verificación y limpieza de intervalo previo
- * 2. Inicialización de variable de alternancia
- * 3. Creación de nuevo intervalo con callback de animación
- * 4. Verificación continua del estado de extensión
- * 5. Auto-limpieza al desactivarse
- * 
- * INTEGRACIÓN:
- * - Llamada desde: onMessage listener (caso 'started')
- * - Depende de: extensionState.active
- * - API usada: chrome.action.setBadgeBackgroundColor()
  */
 function animateBadge() {
     // Limpia cualquier animación previa para evitar múltiples intervalos concurrentes
@@ -139,13 +154,18 @@ function animateBadge() {
         clearInterval(badgeInterval);
     }
     
+    // Solo animar si estamos en TikTok Live y la automatización está activa
+    if (!extensionState.enTikTok || !extensionState.enLive || !extensionState.active) {
+        return;
+    }
+    
     // Variable para controlar la alternancia de colores en la animación
     let isAlternate = false;
     
     // Establece intervalo de animación con ciclo de 1 segundo
     badgeInterval = setInterval(() => {
-        // Verifica si la extensión sigue activa antes de continuar animación
-        if (extensionState.active) {
+        // Verifica si la extensión sigue activa y en contexto correcto
+        if (extensionState.active && extensionState.enTikTok && extensionState.enLive) {
             // Alterna entre dos tonos de verde para crear efecto parpadeante
             chrome.action.setBadgeBackgroundColor({ 
                 color: isAlternate ? '#00cc66' : '#00ff88' 
@@ -153,10 +173,10 @@ function animateBadge() {
             // Cambia el estado para la siguiente iteración
             isAlternate = !isAlternate;
         } else {
-            // Si la extensión se desactiva, detiene la animación automáticamente
+            // Si cambia el contexto o se desactiva, detiene la animación
             clearInterval(badgeInterval);
-            // Restaura el color rojo para indicar estado inactivo
-            chrome.action.setBadgeBackgroundColor({ color: '#ff0050' });
+            // Actualizar badge según el nuevo contexto
+            updateBadge(extensionState.contador);
         }
     }, 1000); // Intervalo de 1 segundo para animación suave
 }
@@ -216,34 +236,52 @@ async function syncState() {
         // Consulta todas las pestañas activas del navegador
         const tabs = await chrome.tabs.query({ active: true });
         
-        // Filtra solo pestañas que contengan TikTok en su URL
+        // Verifica si alguna pestaña activa es de TikTok
         const tiktokTabs = tabs.filter(tab => tab.url?.includes('tiktok.com'));
         
-        // Itera a través de cada pestaña de TikTok encontrada
-        for (const tab of tiktokTabs) {
-            // Envía mensaje de consulta de estado al content script de la pestaña
-            chrome.tabs.sendMessage(tab.id, { 
-                action: 'getStatus' 
-            }, response => {
-                // Verifica que no haya errores de comunicación y que haya respuesta válida
-                if (!chrome.runtime.lastError && response) {
-                    // Actualiza el estado local con los datos del content script
-                    extensionState = {
-                        active: response.activo,        // Estado de automatización activa
-                        contador: response.contador     // Contador de tap-taps actual
-                    };
-                    
-                    // Actualiza la insignia con el nuevo contador
-                    updateBadge(response.contador);
-                    
-                    // Si la automatización está activa, inicia animación visual
-                    if (response.activo) {
-                        animateBadge();
+        if (tiktokTabs.length > 0) {
+            // Hay pestañas de TikTok activas - sincronizar con content script
+            for (const tab of tiktokTabs) {
+                chrome.tabs.sendMessage(tab.id, { 
+                    action: 'getStatus' 
+                }, response => {
+                    if (!chrome.runtime.lastError && response) {
+                        // Actualizar estado con información del content script
+                        const newEnTikTok = true;
+                        const newEnLive = response.enLive || false;
+                        
+                        // Actualizar contexto si ha cambiado
+                        if (extensionState.enTikTok !== newEnTikTok || 
+                            extensionState.enLive !== newEnLive) {
+                            updateContext(newEnTikTok, newEnLive);
+                        }
+                        
+                        // Actualizar estado de automatización
+                        extensionState.active = response.activo;
+                        extensionState.contador = response.contador;
+                        
+                        // Actualizar badge según el contexto actual
+                        updateBadge(response.contador);
+                        
+                        // Iniciar animación si está activo y en Live
+                        if (response.activo && newEnLive) {
+                            animateBadge();
+                        }
                     }
+                });
+            }
+        } else {
+            // No hay pestañas de TikTok activas - actualizar a contexto no-TikTok
+            if (extensionState.enTikTok) {
+                updateContext(false, false);
+                extensionState.active = false;
+                extensionState.contador = 0;
+                
+                // Detener cualquier animación
+                if (badgeInterval) {
+                    clearInterval(badgeInterval);
                 }
-                // Nota: Los errores de comunicación se ignoran silenciosamente para
-                // evitar spam en consola cuando las pestañas no tienen content script
-            });
+            }
         }
     } catch (error) {
         // Registra errores para debugging sin interrumpir operación
@@ -382,27 +420,34 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
              * ACCIONES EJECUTADAS:
              * 1. Actualiza estado global a activo
              * 2. Sincroniza contador si se proporciona
-             * 3. Cambia insignia a modo "ON" con color verde
-             * 4. Inicia animación parpadeante
+             * 3. Actualiza badge según contexto actual
+             * 4. Inicia animación parpadeante si está en Live
              * 5. Confirma operación exitosa
              * 
              * DATOS DE REQUEST ESPERADOS:
              * - contador (opcional): Número actual de tap-taps realizados
+             * - enTikTok (opcional): Si estamos en página de TikTok
+             * - enLive (opcional): Si estamos en Live de TikTok
              */
             extensionState.active = true;
+            
+            // Actualizar contexto si se proporciona
+            if (request.enTikTok !== undefined) {
+                updateContext(request.enTikTok, request.enLive || false);
+            }
             
             // Actualiza contador si se proporciona en el mensaje
             if (request.contador !== undefined) {
                 extensionState.contador = request.contador;
-                updateBadge(request.contador);
             }
             
-            // Configura insignia para estado activo
-            chrome.action.setBadgeText({ text: 'ON' });
-            chrome.action.setBadgeBackgroundColor({ color: '#00ff88' });
+            // Actualizar badge según el contexto actual
+            updateBadge(extensionState.contador);
             
-            // Inicia animación visual de estado activo
-            animateBadge();
+            // Inicia animación visual de estado activo solo si estamos en Live
+            if (extensionState.enLive) {
+                animateBadge();
+            }
             
             // Confirma procesamiento exitoso
             sendResponse({ success: true });
@@ -417,16 +462,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
              * 
              * ACCIONES EJECUTADAS:
              * 1. Actualiza estado global a inactivo
-             * 2. Cambia insignia a modo "OFF" con color rojo
+             * 2. Actualiza badge según contexto actual
              * 3. Detiene cualquier animación en curso
              * 4. Limpia recursos de intervalos
              * 5. Confirma operación exitosa
+             * 
+             * DATOS DE REQUEST ESPERADOS:
+             * - enTikTok (opcional): Si estamos en página de TikTok
+             * - enLive (opcional): Si estamos en Live de TikTok
              */
             extensionState.active = false;
             
-            // Configura insignia para estado inactivo
-            chrome.action.setBadgeText({ text: 'OFF' });
-            chrome.action.setBadgeBackgroundColor({ color: '#ff0050' });
+            // Actualizar contexto si se proporciona
+            if (request.enTikTok !== undefined) {
+                updateContext(request.enTikTok, request.enLive || false);
+            }
+            
+            // Actualizar badge según el contexto actual
+            updateBadge(extensionState.contador);
             
             // Detiene animación y limpia intervalo
             if (badgeInterval) {
@@ -453,6 +506,28 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
              */
             extensionState.contador = request.count;
             updateBadge(request.count);
+            sendResponse({ success: true });
+            break;
+            
+        // ====================================================================
+        // CASO: ACTUALIZACIÓN DE CONTEXTO
+        // ====================================================================
+        case 'updateContext':
+            /**
+             * Procesa actualización del contexto de la extensión
+             * 
+             * FUNCIONALIDAD:
+             * Permite al content script notificar cambios en el contexto
+             * (si está en TikTok, si está en Live) para actualizar el badge
+             * adecuadamente según la situación actual.
+             * 
+             * DATOS DE REQUEST ESPERADOS:
+             * - enTikTok: Boolean indicando si estamos en página TikTok
+             * - enLive: Boolean indicando si estamos en Live TikTok
+             */
+            if (request.enTikTok !== undefined && request.enLive !== undefined) {
+                updateContext(request.enTikTok, request.enLive);
+            }
             sendResponse({ success: true });
             break;
             

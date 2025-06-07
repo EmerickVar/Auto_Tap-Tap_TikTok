@@ -22,7 +22,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://www.tiktok.com/@*/live", "https://www.tiktok.com/@*/live?*"],
+      "matches": ["https://www.tiktok.com/*"],
       "js": ["content.js"],
       "run_at": "document_end",
       "all_frames": true

@@ -216,14 +216,39 @@ document.addEventListener('DOMContentLoaded', () => {
                     }, 3000);
                 } else if (response) {
                     // ✅ RESPUESTA EXITOSA DEL CONTENT SCRIPT
-                    // Actualiza UI con estado real del sistema
-                    updateUI(response.activo, response.contador);
-                    elementos.toggleButton.disabled = false; // Habilitar control principal
-                    
-                    // ⚙️ SINCRONIZAR CONFIGURACIÓN DE CHAT
-                    // Si el content script envía configuración, actualizar input
-                    if (response.tiempoReactivacion) {
-                        elementos.chatReactivationTime.value = response.tiempoReactivacion;
+                    // Verificar si tenemos los nuevos campos de contexto
+                    if (response.enTikTok !== undefined && response.enLive !== undefined) {
+                        // 🎯 MANEJO DE LOS TRES ESTADOS SEGÚN CONTEXTO
+                        if (response.enTikTok && response.enLive) {
+                            // 🟢 ESTADO: EN TIKTOK LIVE - Funcionalidad completa
+                            updateUI(response.activo, response.contador);
+                            elementos.toggleButton.disabled = false; // Habilitar control principal
+                            
+                            // ⚙️ SINCRONIZAR CONFIGURACIÓN DE CHAT
+                            if (response.tiempoReactivacion) {
+                                elementos.chatReactivationTime.value = response.tiempoReactivacion;
+                            }
+                        } else if (response.enTikTok && !response.enLive) {
+                            // 🟡 ESTADO: EN TIKTOK PERO NO EN LIVE - Mensaje específico + botón deshabilitado
+                            elementos.statusText.textContent = 'ℹ️ Solo funciona en TikTok Live';
+                            elementos.statusText.className = 'status-text inactive';
+                            elementos.toggleButton.textContent = 'Solo en Live';
+                            elementos.toggleButton.className = 'toggle-button start';
+                            elementos.toggleButton.disabled = true; // Deshabilitar botón
+                            elementos.sessionTapTaps.textContent = '0';
+                        } else {
+                            // 🔴 ESTADO: NO EN TIKTOK - Comportamiento original
+                            elementos.statusText.textContent = '⚠️ Abre TikTok primero';
+                            elementos.toggleButton.disabled = true;
+                        }
+                    } else {
+                        // 🔄 COMPATIBILIDAD: Respuesta sin nuevos campos (modo legacy)
+                        updateUI(response.activo, response.contador);
+                        elementos.toggleButton.disabled = false;
+                        
+                        if (response.tiempoReactivacion) {
+                            elementos.chatReactivationTime.value = response.tiempoReactivacion;
+                        }
                     }
                 }
             });
