@@ -119,23 +119,23 @@ sequenceDiagram
     Note over P,T: 🚀 Usuario abre popup
     
     P->>+B: ping (health check)
-    B-->>-P: {success: true}
+    B-->>-P: success: true
     
     P->>+C: getStatus
-    C-->>-P: {activo, contador, tiempoReactivacion}
+    C-->>-P: activo, contador, tiempoReactivacion
     
     Note over P,T: 👆 Usuario activa automatización
     
     P->>+C: toggleAutomation
     C->>C: Validar página TikTok
     C->>+S: Cargar configuración
-    S-->>-C: {intervalo, reactivacionTime}
+    S-->>-C: intervalo, reactivacionTime
     C->>C: state.activo = true
     C->>+B: started
     B->>B: Actualizar badge verde
     B-->>-C: Badge actualizado
     C->>C: Iniciar setInterval
-    C-->>-P: {success: true, activo: true}
+    C-->>-P: success: true, activo: true
     
     Note over P,T: 🔄 Loop de automatización activo
     
@@ -172,7 +172,7 @@ sequenceDiagram
     B-->>-C: Badge actualizado
     C->>+S: Guardar estado final
     S-->>-C: Estado guardado
-    C-->>-P: {success: true, activo: false}
+    C-->>-P: success: true, activo: false
     
     Note over P,T: 🔄 Sincronización periódica
     
@@ -182,47 +182,6 @@ sequenceDiagram
         S-->>-C: Estado sincronizado
         C-->>-B: Sync completo
     end
-```
-    
-    P->>+S: get(['totalTapTaps'])
-    S-->>-P: {totalTapTaps: number}
-    
-    Note over P,T: 👆 Usuario hace clic en toggle
-    
-    P->>+C: toggle
-    C->>C: toggleAutoTapTap()
-    C->>+B: started/stopped
-    B->>B: updateState + animateBadge()
-    B-->>-C: {success: true}
-    C-->>-P: {success: true}
-    
-    Note over P,T: 🔄 Automatización activa
-    
-    loop Cada intervalo configurado
-        C->>+T: click en heart button
-        T-->>-C: evento ejecutado
-        C->>C: incrementar contador
-        C->>+B: updateTapTaps
-        B->>B: updateBadge(count)
-        B-->>-C: {success: true}
-        C->>+S: set({totalTapTaps})
-        S-->>-C: guardado
-    end
-    
-    Note over P,T: 💬 Usuario usa chat
-    
-    T->>+C: focus/input en chat
-    C->>C: pausar automatización
-    C->>+B: stopped
-    B->>B: updateState
-    B-->>-C: {success: true}
-    
-    Note over P,T: ⏰ Después de inactividad
-    
-    C->>C: reactivar automatización
-    C->>+B: started
-    B->>B: updateState + animateBadge()
-    B-->>-C: {success: true}
 ```
 
 ---
@@ -366,6 +325,7 @@ flowchart TD
     class AUTOMATION_LOOP,CLICK_HEART,INCREMENT,WAIT_INTERVAL automationStyle
     class PAUSE_AUTO,SAVE_STATE,WAIT_CHAT_INACTIVE,COUNTDOWN chatStyle
     class NOTIFY_BG_START,NOTIFY_BG_STOP,NOTIFY_BG_COUNT,BG_UPDATE_START,BG_UPDATE_STOP,BG_UPDATE_BADGE bgStyle
+```
 ```
 
 ---
@@ -624,6 +584,7 @@ graph TB
         RETRY -->|No| FALLBACK
     end
 ```
+```
 
 ---
 
@@ -689,33 +650,33 @@ sequenceDiagram
         UI-->>-BG: Badge actualizado con número
         BG-->>-CS: {success: true}
         
-        CS->>+S: 💾 set({totalTapTaps: X})
+        CS->>+S: 💾 set totalTapTaps: X
         S-->>-CS: Guardado exitoso
     end
     
     Note over CS,P: 🎨 Popup abierto - Actualización UI
     
-    P->>+CS: 📡 {action: 'getStatus'}
-    CS-->>-P: {activo: true, contador: X, tiempoReactivacion: Y}
+    P->>+CS: 📡 action: getStatus
+    CS-->>-P: activo: true, contador: X, tiempoReactivacion: Y
     
-    P->>+S: 📊 get(['totalTapTaps'])
-    S-->>-P: {totalTapTaps: Z}
+    P->>+S: 📊 get totalTapTaps
+    S-->>-P: totalTapTaps: Z
     
-    P->>P: 🎨 updateUI(activo, contador)
+    P->>P: 🎨 updateUI activo, contador
     P->>P: 📈 Mostrar estadísticas
     
     Note over CS,P: ⏹️ Detener Automatización
     
-    P->>+CS: 📤 {action: 'toggle'}
+    P->>+CS: 📤 action: toggle
     CS->>CS: ⏹️ Detener intervalos
-    CS->>+BG: 📤 {action: 'stopped'}
+    CS->>+BG: 📤 action: stopped
     BG->>BG: ❌ extensionState.active = false
-    BG->>BG: 🏷️ Badge a rojo + "OFF"
+    BG->>BG: 🏷️ Badge a rojo + OFF
     BG->>BG: 🛑 Detener animación
-    BG-->>-CS: {success: true}
-    CS-->>-P: {success: true}
+    BG-->>-CS: success: true
+    CS-->>-P: success: true
     
-    P->>P: 🎨 updateUI(false, contador)
+    P->>P: 🎨 updateUI false, contador
 ```
 
 ---
