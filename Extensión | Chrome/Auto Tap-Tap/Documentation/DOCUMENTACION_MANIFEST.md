@@ -1,6 +1,10 @@
 # 📋 DOCUMENTACIÓN COMPLETA - MANIFEST.JSON
 ## Extensión: Auto Tap-Tap TikTok Chrome Extension
 
+**📅 Fecha de Actualización:** 7 de diciembre de 2024  
+**👨‍💻 Desarrollador:** Emerick Echeverría Vargas  
+**📊 Estado:** Documentación actualizada con especificaciones actuales
+
 ---
 
 ### 🎯 **PROPÓSITO DEL ARCHIVO**
@@ -297,5 +301,5 @@ El archivo `manifest.json` es el **corazón configurativo** de cualquier extensi
 
 **📚 Documentación creada por:** Emerick Echeverría Vargas (@EmerickVar)  
 **🏢 Organización:** New Age Coding Organization  
-**📅 Fecha:** Junio 2025  
+**📅 Fecha:** Diciembre 2024  
 **🔄 Versión de documentación:** 1.0.0

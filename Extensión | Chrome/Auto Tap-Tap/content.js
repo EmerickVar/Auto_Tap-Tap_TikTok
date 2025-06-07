@@ -654,6 +654,64 @@ function setupBasicMessageListener() {
     
     /**
      * =============================================================================
+     * FUNCIÓN PARA PAUSAR POR INTERACCIÓN CON CHAT
+     * =============================================================================
+     * 
+     * Función específica para pausar el Auto Tap-Tap cuando el usuario interactúa
+     * con el chat. A diferencia de toggleAutoTapTap, esta función está diseñada
+     * específicamente para el sistema de chat y no interfiere con el estado manual.
+     * 
+     * @returns {boolean} - true si se pausó exitosamente, false en caso contrario
+     */
+    function pausarPorChat() {
+        console.log('💬 Pausando Auto Tap-Tap por interacción con chat');
+        console.log('Estado antes de pausar:', {
+            activo: state.activo,
+            pausadoPorChat: state.pausadoPorChat,
+            apagadoManualmente: state.apagadoManualmente
+        });
+
+        // Solo pausar si está activo y no fue apagado manualmente
+        if (state.activo && !state.apagadoManualmente) {
+            // Marcar como pausado por chat
+            state.pausadoPorChat = true;
+            
+            // Limpiar intervalo existente
+            if (state.intervalo) {
+                console.log('🧹 Limpiando intervalo por pausa de chat');
+                safeInterval.clear(state.intervalo);
+                state.intervalo = null;
+            }
+            
+            // Actualizar estado a inactivo
+            state.activo = false;
+            
+            // Actualizar interfaz
+            elementos.boton.textContent = '💤 Auto Tap-Tap: OFF (Chat)';
+            elementos.boton.style.background = '#ff6b6b';
+            elementos.selector.disabled = false;
+            elementos.selector.style.opacity = '1';
+            
+            // Actualizar colores dinámicamente
+            actualizarColoresBoton();
+            
+            // Notificar al background script
+            safeRuntimeMessage({ 
+                action: 'paused_by_chat', 
+                enTikTok: true, 
+                enLive: true 
+            });
+            
+            console.log('✅ Auto Tap-Tap pausado por chat');
+            return true;
+        }
+        
+        console.log('⚠️ No se pausó - estado no permite pausa');
+        return false;
+    }
+    
+    /**
+     * =============================================================================
      * FUNCIÓN PRINCIPAL DE CONTROL - ALTERNAR AUTO TAP-TAP
      * =============================================================================
      * 
@@ -702,8 +760,7 @@ function setupBasicMessageListener() {
         state.activo = nuevoEstado;
         
         // PASO 5A: LÓGICA DE ACTIVACIÓN
-        if (nuevoEstado || fromChat) {
-            // Solo activar si no viene del sistema de chat
+        if (nuevoEstado) {
             console.log('✨ Activando Auto Tap-Tap');
             const intervalo = parseInt(elementos.selector.value);
             elementos.selector.disabled = true;
@@ -712,10 +769,22 @@ function setupBasicMessageListener() {
             // Actualizar colores dinámicamente
             actualizarColoresBoton();
             
-            // Al activar manualmente, resetear el estado de apagado manual
+            // Al activar manualmente, resetear el estado de apagado manual y pausa por chat
             state.apagadoManualmente = false;
             
-            // Solo iniciar el intervalo si no está pausado por chat
+            // Si es activación manual y estaba pausado por chat, limpiar ese estado
+            if (!fromChat && state.pausadoPorChat) {
+                console.log('🔄 Reactivación manual desde pausa por chat');
+                state.pausadoPorChat = false;
+                // Limpiar timers de chat si existen
+                timers.cleanupAll();
+                if (inactivityTimer) {
+                    clearTimeout(inactivityTimer);
+                    inactivityTimer = null;
+                }
+            }
+            
+            // Iniciar intervalo si no está pausado por chat
             if (!state.pausadoPorChat) {
                 console.log('🚀 Iniciando intervalo de tap-taps');
                 presionarL(); // Ejecutar el primer tap-tap inmediatamente
@@ -1115,10 +1184,12 @@ function setupBasicMessageListener() {
             typing: null,
             chat: null,
             countdown: null,
+            cuentaRegresiva: null,
             cleanupAll() {
                 Object.entries(this).forEach(([key, timer]) => {
                     if (typeof timer === 'number') {
                         clearTimeout(timer);
+                        clearInterval(timer);
                         this[key] = null;
                     }
                 });
@@ -1145,7 +1216,7 @@ function setupBasicMessageListener() {
             }
         };
 
-        // Reactivar el Auto Tap-Tap
+        // Reactivar el Auto Tap-Tap después de pausa por chat
         const reactivarAutoTapTap = () => {
             console.log('🎯 Intentando reactivar Auto Tap-Tap...');
             console.log('Estado actual:', { 
@@ -1155,6 +1226,7 @@ function setupBasicMessageListener() {
             });
             
             if (!state.apagadoManualmente) {
+                // Limpiar estados de chat
                 state.pausadoPorChat = false;
                 timers.cleanupAll();
                 
@@ -1163,6 +1235,7 @@ function setupBasicMessageListener() {
                     inactivityTimer = null;
                 }
 
+                // Quitar foco del chat
                 if (chatInput.getAttribute('contenteditable')) {
                     chatInput.blur();
                     chatInput.setAttribute('focused', 'false');
@@ -1170,16 +1243,33 @@ function setupBasicMessageListener() {
                     chatInput.blur();
                 }
 
-                // Actualizar estado visual del botón antes de toggle
+                // Reactivar directamente sin usar toggleAutoTapTap
+                state.activo = true;
+                
+                // Configurar intervalo
+                const intervalo = parseInt(elementos.selector.value);
+                presionarL(); // Ejecutar inmediatamente
+                state.intervalo = safeInterval.create(presionarL, intervalo);
+                
+                // Actualizar estado visual
                 elementos.boton.textContent = '❤️ Auto Tap-Tap: ON';
                 elementos.boton.style.background = '#00f2ea';
-                // Actualizar colores dinámicamente
-                actualizarColoresBoton();
                 elementos.selector.disabled = true;
                 elementos.selector.style.opacity = '0.5';
-
-                toggleAutoTapTap(true);
+                actualizarColoresBoton();
+                
+                // Notificar al background script
+                safeRuntimeMessage({ 
+                    action: 'reactivated_from_chat',
+                    contador: state.contador,
+                    enTikTok: true,
+                    enLive: true
+                }).catch(error => console.warn('Error al notificar reactivación:', error));
+                
                 mostrarNotificacionChat('¡Auto Tap-Tap reactivado! 🎉', 'success');
+                console.log('✅ Auto Tap-Tap reactivado exitosamente');
+            } else {
+                console.log('⚠️ No se puede reactivar - fue apagado manualmente');
             }
         };
 
@@ -1218,7 +1308,6 @@ function setupBasicMessageListener() {
                 
                 timers.chat = setTimeout(() => {
                     mostrarCuentaRegresiva(`⏳ Reactivando en ${state.tiempoReactivacion}s...`);
-                    setTimeout(reactivarAutoTapTap, state.tiempoReactivacion * 1000);
                 }, 0);
             }
         };
@@ -1235,9 +1324,6 @@ function setupBasicMessageListener() {
             if (state.activo && !state.apagadoManualmente) {
                 console.log('🛑 Pausando Auto Tap-Tap por interacción con chat');
                 
-                // Asegurar que se marca como pausado por chat antes de toggle
-                state.pausadoPorChat = true;
-                
                 // Limpiar cualquier timer existente
                 timers.cleanupAll();
                 if (inactivityTimer) {
@@ -1245,14 +1331,16 @@ function setupBasicMessageListener() {
                     inactivityTimer = null;
                 }
                 
-                // Pausar el Auto Tap-Tap
-                toggleAutoTapTap(false);
+                // Pausar específicamente por chat
+                const pausado = pausarPorChat();
                 
-                // Mostrar notificación
-                mostrarNotificacionChat('✍️ Auto Tap-Tap pausado mientras escribes...', 'warning');
-                
-                // Iniciar manejo de inactividad
-                handleActivity();
+                if (pausado) {
+                    // Mostrar notificación
+                    mostrarNotificacionChat('✍️ Auto Tap-Tap pausado mientras escribes...', 'warning');
+                    
+                    // Iniciar manejo de inactividad
+                    handleActivity();
+                }
                 
                 // Prevenir la propagación del evento
                 e.stopPropagation();
@@ -1308,7 +1396,6 @@ function setupBasicMessageListener() {
 
             if (!chatContainer.contains(e.target) && state.pausadoPorChat && !state.apagadoManualmente) {
                 timers.cleanupAll();
-                timers.chat = setTimeout(reactivarAutoTapTap, state.tiempoReactivacion * 1000);
                 mostrarCuentaRegresiva(`⏳ Reactivando en ${state.tiempoReactivacion}s...`);
             }
         };
@@ -1394,6 +1481,103 @@ function setupBasicMessageListener() {
                 elementos.notificacionChat.style.transform = 'translateY(10px)';
             }
         }, 3000);
+    }
+    
+    // Función para mostrar cuenta regresiva de reactivación
+    function mostrarCuentaRegresiva(mensajeInicial) {
+        // Limpiar cualquier cuenta regresiva anterior
+        if (elementos.cuentaRegresivaDiv) {
+            elementos.cuentaRegresivaDiv.remove();
+            elementos.cuentaRegresivaDiv = null;
+        }
+        
+        // Limpiar timer anterior de cuenta regresiva si existe
+        if (timers.cuentaRegresiva) {
+            clearInterval(timers.cuentaRegresiva);
+            timers.cuentaRegresiva = null;
+        }
+        
+        // Crear div de cuenta regresiva independiente
+        elementos.cuentaRegresivaDiv = document.createElement('div');
+        elementos.cuentaRegresivaDiv.style.cssText = `
+            position: fixed;
+            bottom: 70px;
+            right: 20px;
+            z-index: 1000001;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            background: rgba(255, 165, 0, 0.95);
+            color: #fff;
+            border: 1px solid #ff8c00;
+            box-shadow: 0 2px 8px rgba(255, 165, 0, 0.3);
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            text-align: center;
+            box-sizing: border-box;
+            max-width: 280px;
+            word-wrap: break-word;
+            transform: translateY(10px);
+            pointer-events: none;
+            font-weight: bold;
+        `;
+        
+        // Agregar directamente al body
+        document.body.appendChild(elementos.cuentaRegresivaDiv);
+        
+        // Variables para la cuenta regresiva
+        let tiempoRestante = state.tiempoReactivacion;
+        elementos.cuentaRegresivaDiv.textContent = `⏳ Reactivando en ${tiempoRestante}s...`;
+        
+        // Mostrar con animación de entrada
+        elementos.cuentaRegresivaDiv.style.opacity = '1';
+        elementos.cuentaRegresivaDiv.style.transform = 'translateY(0)';
+        
+        // Iniciar cuenta regresiva
+        timers.cuentaRegresiva = setInterval(() => {
+            tiempoRestante--;
+            
+            if (tiempoRestante > 0) {
+                elementos.cuentaRegresivaDiv.textContent = `⏳ Reactivando en ${tiempoRestante}s...`;
+                
+                // Cambiar color cuando quedan pocos segundos
+                if (tiempoRestante <= 3) {
+                    elementos.cuentaRegresivaDiv.style.background = 'rgba(255, 69, 0, 0.95)';
+                    elementos.cuentaRegresivaDiv.style.border = '1px solid #ff4500';
+                    elementos.cuentaRegresivaDiv.style.boxShadow = '0 2px 8px rgba(255, 69, 0, 0.4)';
+                }
+            } else {
+                // Mostrar mensaje final antes de reactivar
+                elementos.cuentaRegresivaDiv.textContent = '✨ Reactivando Auto Tap-Tap...';
+                elementos.cuentaRegresivaDiv.style.background = 'rgba(0, 200, 0, 0.95)';
+                elementos.cuentaRegresivaDiv.style.border = '1px solid #00c800';
+                elementos.cuentaRegresivaDiv.style.boxShadow = '0 2px 8px rgba(0, 200, 0, 0.4)';
+                
+                // Ejecutar la reactivación después de un breve retraso
+                setTimeout(() => {
+                    reactivarAutoTapTap();
+                    
+                    // Limpiar la notificación después de mostrar el mensaje final
+                    setTimeout(() => {
+                        if (elementos.cuentaRegresivaDiv) {
+                            elementos.cuentaRegresivaDiv.style.opacity = '0';
+                            elementos.cuentaRegresivaDiv.style.transform = 'translateY(10px)';
+                            setTimeout(() => {
+                                if (elementos.cuentaRegresivaDiv) {
+                                    elementos.cuentaRegresivaDiv.remove();
+                                    elementos.cuentaRegresivaDiv = null;
+                                }
+                            }, 300);
+                        }
+                    }, 1000);
+                }, 500);
+                
+                // Limpiar el timer
+                clearInterval(timers.cuentaRegresiva);
+                timers.cuentaRegresiva = null;
+            }
+        }, 1000);
     }
     
     /**

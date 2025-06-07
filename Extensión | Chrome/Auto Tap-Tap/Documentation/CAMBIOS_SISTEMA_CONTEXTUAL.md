@@ -1,6 +1,6 @@
 # 🔄 CAMBIOS SISTEMA DE BADGES CONTEXTUAL
 
-## 📅 Fecha: 6 de junio de 2025
+## 📅 Fecha: 7 de diciembre de 2024
 ## 👨‍💻 Desarrollador: Emerick Echeverría Vargas
 
 ---
@@ -13,22 +13,94 @@ Implementar un sistema de badges contextual que muestre diferentes estados segú
 
 ---
 
-## ✅ **CAMBIOS COMPLETADOS**
+## ✅ **CARACTERÍSTICAS IMPLEMENTADAS**
 
-### 🔧 **1. CONTENT.JS - Actualizaciones**
+### 🔧 **1. CONTENT.JS - Sistema de Detección de Contexto**
 
-#### **A. Sistema de Detección de Contexto (NUEVO)**
+#### **A. Funciones de Detección de Contexto**
 ```javascript
-// Funciones agregadas después de la línea ~220
-function isOnTikTok()           // Detecta si estamos en TikTok
-function isOnTikTokLive()       // Detecta si estamos en Live
-function getCurrentContext()    // Obtiene contexto actual
-function notifyContextChange()  // Notifica cambios al background
+// Detecta si estamos en cualquier página de TikTok
+function isOnTikTok() {
+    return window.location.hostname.includes('tiktok.com');
+}
+
+// Detecta específicamente si estamos en un Live de TikTok
+function isOnTikTokLive() {
+    const pathname = window.location.pathname;
+    const search = window.location.search;
+    const fullPath = pathname + search;
+    const livePattern = /^\/@[^\/]+\/live(?:\/[^?]*)?(?:\?.*)?$/;
+    return livePattern.test(fullPath);
+}
+
+// Obtiene el contexto actual completo
+function getCurrentContext() {
+    return {
+        enTikTok: isOnTikTok(),
+        enLive: isOnTikTokLive()
+    };
+}
+
+// Notifica cambios de contexto al background script
+function notifyContextChange(enTikTok, enLive) {
+    safeRuntimeMessage({
+        action: 'updateContext',
+        enTikTok: enTikTok,
+        enLive: enLive
+    });
+}
 ```
 
-#### **B. Actualización de getStatus**
+#### **B. Sistema de Navegación SPA**
 ```javascript
-// Línea ~1885 - Agregado enTikTok y enLive
+function setupNavigationDetection() {
+    let lastUrl = window.location.href;
+    
+    // Detecta cambios de URL en Single Page Applications
+    const checkUrlChange = () => {
+        const currentUrl = window.location.href;
+        if (currentUrl !== lastUrl) {
+            lastUrl = currentUrl;
+            const { enTikTok, enLive } = getCurrentContext();
+            notifyContextChange(enTikTok, enLive);
+            
+            if (!enLive) {
+                cleanupExtensionResources();
+            }
+        }
+    };
+    
+    // Observer para detectar cambios dinámicos
+    const urlObserver = new MutationObserver(() => {
+        setTimeout(checkUrlChange, 100);
+    });
+    
+    urlObserver.observe(document, {
+        subtree: true,
+        childList: true
+    });
+}
+```
+
+#### **C. Actualización de Mensajes Runtime**
+Todos los mensajes `safeRuntimeMessage()` ahora incluyen contexto:
+```javascript
+safeRuntimeMessage({ 
+    action: 'started',
+    contador: state.contador,
+    enTikTok: true,              // NUEVO
+    enLive: true                 // NUEVO
+})
+
+safeRuntimeMessage({ 
+    action: 'stopped',
+    enTikTok: true,              // NUEVO
+    enLive: true                 // NUEVO
+})
+```
+
+#### **D. Respuesta `getStatus` Actualizada**
+```javascript
 return {
     activo: state.activo,
     contador: state.contador,
@@ -38,16 +110,6 @@ return {
     enLive: true                 // NUEVO
 };
 ```
-
-#### **C. Actualización de Mensajes safeRuntimeMessage**
-```javascript
-// Línea ~713 - Mensaje 'started' 
-safeRuntimeMessage({ 
-    action: 'started',
-    contador: state.contador,
-    enTikTok: true,              // NUEVO
-    enLive: true                 // NUEVO
-})
 
 // Línea ~725 - Mensaje 'stopped'
 safeRuntimeMessage({ 

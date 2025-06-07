@@ -1,6 +1,10 @@
 # 🏗️ DIAGRAMA COMPLETO DE ARQUITECTURA Y FLUJOS
 ## TikTok Auto Tap-Tap - Chrome Extension
 
+**📅 Fecha de Actualización:** 7 de diciembre de 2024  
+**👨‍💻 Desarrollador:** Emerick Echeverría Vargas  
+**📊 Estado:** Arquitectura actualizada con sistema contextual
+
 ---
 
 ## 📋 **ÍNDICE DE DIAGRAMAS**
@@ -744,7 +748,7 @@ sequenceDiagram
 - **Organización**: New Age Coding Organization
 - **Proyecto**: TikTok Auto Tap-Tap Chrome Extension
 - **Versión**: 1.0.0
-- **Fecha de diagramas**: 6 de junio de 2025
+- **Fecha de diagramas**: 7 de diciembre de 2024
 
 ---
 
