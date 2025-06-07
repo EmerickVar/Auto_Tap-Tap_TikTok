@@ -1,9 +1,10 @@
 # 🏗️ DIAGRAMA COMPLETO DE ARQUITECTURA Y FLUJOS
 ## TikTok Auto Tap-Tap - Chrome Extension
 
-**📅 Fecha de Actualización:** 7 de diciembre de 2024  
+**📅 Fecha de Actualización:** 7 de junio de 2025  
 **👨‍💻 Desarrollador:** Emerick Echeverría Vargas  
-**📊 Estado:** Arquitectura actualizada con sistema contextual
+**📊 Estado:** Arquitectura actualizada con correcciones JavaScript  
+**🔧 Versión:** 1.1.1 - Errores JavaScript corregidos
 
 ---
 
@@ -677,6 +678,15 @@ sequenceDiagram
     CS-->>-P: success: true
     
     P->>P: 🎨 updateUI false, contador
+    
+    Note over P,CS: 🔄 Reset Contador (Junio 2025 - Corregido)
+    
+    P->>+CS: 📤 {action: 'updateTapTaps', count: 0}
+    CS->>CS: ✅ Validar tipo number
+    CS->>CS: 🔄 state.contador = 0
+    CS->>CS: 📱 Actualizar elementos.contadorDiv
+    CS-->>-P: {success: true}
+    P->>P: 🎨 updateUI con contador resetado
 ```
 
 ---

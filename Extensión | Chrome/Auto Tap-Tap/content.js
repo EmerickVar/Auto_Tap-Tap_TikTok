@@ -190,6 +190,30 @@ function setupBasicMessageListener() {
     
     /**
      * =============================================================================
+     * TIMERS GLOBALES PARA GESTIÓN DE CUENTA REGRESIVA Y CHAT
+     * =============================================================================
+     * 
+     * Objeto global que contiene todos los timers relacionados con el sistema
+     * de chat y cuenta regresiva para evitar problemas de scope.
+     */
+    const timers = {
+        typing: null,
+        chat: null,
+        countdown: null,
+        cuentaRegresiva: null,
+        cleanupAll() {
+            Object.entries(this).forEach(([key, timer]) => {
+                if (typeof timer === 'number') {
+                    clearTimeout(timer);
+                    clearInterval(timer);
+                    this[key] = null;
+                }
+            });
+        }
+    };
+    
+    /**
+     * =============================================================================
      * VARIABLE GLOBAL PARA EL LISTENER DE MENSAJES
      * =============================================================================
      * 
@@ -951,6 +975,19 @@ function setupBasicMessageListener() {
                         }
                         break;
                         
+                    case 'updateTapTaps':
+                        // Actualizar contador desde popup (principalmente para reset)
+                        if (request.hasOwnProperty('count') && typeof request.count === 'number') {
+                            state.contador = request.count;
+                            if (elementos.contadorDiv) {
+                                elementos.contadorDiv.textContent = `Tap-Taps: ${state.contador}`;
+                            }
+                            sendResponse({ success: true });
+                        } else {
+                            sendResponse({ error: 'Valor de contador inválido' });
+                        }
+                        break;
+                        
                     default:
                         console.log('🤷 Acción no reconocida:', request.action);
                         sendResponse({ error: 'Acción no reconocida' });
@@ -1179,22 +1216,6 @@ function setupBasicMessageListener() {
 
     function configurarEventosChat(chatInput) {
         console.log('🔄 Configurando eventos del chat...');
-        
-        const timers = {
-            typing: null,
-            chat: null,
-            countdown: null,
-            cuentaRegresiva: null,
-            cleanupAll() {
-                Object.entries(this).forEach(([key, timer]) => {
-                    if (typeof timer === 'number') {
-                        clearTimeout(timer);
-                        clearInterval(timer);
-                        this[key] = null;
-                    }
-                });
-            }
-        };
 
         // Variables para el manejo de inactividad
         let inactivityTimer = null;

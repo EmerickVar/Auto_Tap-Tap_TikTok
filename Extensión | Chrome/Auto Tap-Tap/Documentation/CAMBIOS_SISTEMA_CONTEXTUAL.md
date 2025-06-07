@@ -2,6 +2,10 @@
 
 ## 📅 Fecha: 7 de diciembre de 2024
 ## 👨‍💻 Desarrollador: Emerick Echeverría Vargas
+## 🛠️ Actualización: 7 de junio de 2025 - Errores JavaScript corregidos
+
+> **📝 NOTA:** Para información sobre correcciones de errores JavaScript realizadas en junio 2025, 
+> consultar `/Documentation/CORRECCIONES_ERRORES_JUNIO2025.md`
 
 ---
 
