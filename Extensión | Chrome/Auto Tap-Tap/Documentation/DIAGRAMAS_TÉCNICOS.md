@@ -2,7 +2,7 @@
 
 *Documentación visual de la arquitectura y flujos del sistema*
 
-**📅 Versión:** 1.1.1 - Junio 2025  
+**📅 Versión:** 1.0.0 - Junio 2025  
 **🎯 Propósito:** Diagramas técnicos consolidados y verificados
 
 ---
@@ -726,6 +726,6 @@ graph LR
 
 ---
 
-**📅 Última actualización**: 7 de junio de 2025  
+**📅 Última actualización**: 8 de junio de 2025  
 **🔧 Estado**: Diagramas consolidados y verificados  
 **✅ Compatibilidad**: Mermaid v10+ | GitHub | GitLab | VSCode

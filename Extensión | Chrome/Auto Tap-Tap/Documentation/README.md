@@ -2,7 +2,7 @@
 
 *Extensión Chrome para automatización de Tap-Tap en TikTok Live*
 
-**📅 Versión:** 1.1.1 - Junio 2025  
+**📅 Versión:** 1.0.0 - Junio 2025  
 **👨‍💻 Desarrollador:** Emerick Echeverría Vargas  
 **🏢 Organización:** [New Age Coding Organization](https://newagecoding.org)
 
