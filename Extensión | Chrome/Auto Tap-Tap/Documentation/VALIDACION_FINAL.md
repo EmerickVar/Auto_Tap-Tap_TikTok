@@ -45,7 +45,8 @@
 | 5 | **Sistema de Chat** | DIAGRAMAS_TÉCNICOS.md | ✅ Válida | ✅ Correcto |
 | 6 | **Gestión de Estados** | DIAGRAMAS_TÉCNICOS.md | ✅ Válida | ✅ Correcto |
 | 7 | **Sistema de Almacenamiento** | DIAGRAMAS_TÉCNICOS.md | ✅ Válida | ✅ Correcto |
-| 8 | **Correcciones JavaScript** | DIAGRAMAS_TÉCNICOS.md | ✅ Válida | ✅ Correcto |
+| 8 | **Corrección updateTapTaps** | DIAGRAMAS_TÉCNICOS.md | ✅ Válida | ✅ Correcto |
+| 9 | **Corrección reactivarAutoTapTap** | DIAGRAMAS_TÉCNICOS.md | ✅ Válida | ✅ Correcto |
 
 ### 🛠️ Características Técnicas Verificadas
 

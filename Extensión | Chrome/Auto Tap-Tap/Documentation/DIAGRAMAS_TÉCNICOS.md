@@ -16,6 +16,7 @@
 5. [💬 Sistema de Chat](#-sistema-de-chat)
 6. [🎨 Gestión de Estados](#-gestión-de-estados)
 7. [💾 Sistema de Almacenamiento](#-sistema-de-almacenamiento)
+8. [📊 Correcciones JavaScript (Junio 2025)](#-correcciones-javascript-junio-2025)
 
 ---
 
@@ -611,6 +612,43 @@ sequenceDiagram
 
 ## 📊 Correcciones JavaScript (Junio 2025)
 
+### 🐛 Error de Scope: reactivarAutoTapTap
+
+```mermaid
+graph TB
+    subgraph "❌ Problema Original"
+        CONF[configurarEventosChat]
+        LOCAL[reactivarAutoTapTap función local]
+        MOSTRAR[mostrarCuentaRegresiva]
+        ERROR[🚨 ReferenceError: reactivarAutoTapTap is not defined]
+        
+        CONF --> LOCAL
+        MOSTRAR --> ERROR
+        LOCAL -.->|No accesible| MOSTRAR
+    end
+    
+    subgraph "✅ Solución Aplicada"
+        GLOBAL[reactivarAutoTapTap función global]
+        SEARCH[🔍 Búsqueda dinámica de chat]
+        ROBUST[🛡️ Manejo de errores try-catch]
+        SUCCESS[🎯 Llamada exitosa desde cualquier scope]
+        
+        GLOBAL --> SEARCH
+        GLOBAL --> ROBUST
+        MOSTRAR --> SUCCESS
+        GLOBAL -.->|Accesible globalmente| MOSTRAR
+    end
+    
+    %% Styling
+    classDef errorStyle fill:#ffebee,stroke:#d32f2f,stroke-width:2px
+    classDef successStyle fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    classDef processStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    
+    class ERROR errorStyle
+    class GLOBAL,SEARCH,ROBUST,SUCCESS successStyle
+    class CONF,LOCAL,MOSTRAR processStyle
+```
+
 ### 🔄 Flujo de Corrección updateTapTaps
 
 ```mermaid
@@ -674,7 +712,7 @@ graph LR
 
 ### ✅ Estado de Validación Mermaid
 
-- **8 diagramas** principales verificados
+- **9 diagramas** principales verificados
 - **Sintaxis Mermaid** 100% válida
 - **Compatibilidad** con GitHub/GitLab/VSCode
 - **Renderizado** probado correctamente

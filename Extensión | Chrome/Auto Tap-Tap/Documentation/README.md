@@ -26,7 +26,7 @@
 
 - 🎯 **Resumen del Proyecto**: Características, estadísticas y hitos
 - 🏗️ **Arquitectura Técnica**: Componentes y diagramas principales
-- 🔧 **Correcciones JavaScript**: Fixes aplicados en Junio 2025
+- 🔧 **Correcciones JavaScript**: Fixes de errores críticos aplicados en Junio 2025
 - 🧪 **Testing y Validación**: Procedimientos de prueba automatizada
 - 🚀 **Guía de Instalación**: Instrucciones de configuración y uso
 - 👨‍💻 **Desarrollo y Mantenimiento**: Información técnica avanzada

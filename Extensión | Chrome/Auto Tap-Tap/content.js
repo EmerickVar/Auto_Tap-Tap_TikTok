@@ -736,6 +736,75 @@ function setupBasicMessageListener() {
     
     /**
      * =============================================================================
+     * FUNCIÓN PARA REACTIVAR AUTO TAP-TAP DESPUÉS DE PAUSA POR CHAT
+     * =============================================================================
+     * 
+     * Función específica para reactivar el Auto Tap-Tap después de que fue pausado
+     * por interacción con el chat. Esta función maneja toda la lógica de reactivación
+     * incluyendo limpieza de estados, configuración de intervalos y actualización de UI.
+     * 
+     * @description Reactiva el sistema después de pausa automática por chat
+     */
+    function reactivarAutoTapTap() {
+        console.log('🎯 Intentando reactivar Auto Tap-Tap...');
+        console.log('Estado actual:', { 
+            apagadoManualmente: state.apagadoManualmente,
+            pausadoPorChat: state.pausadoPorChat,
+            activo: state.activo
+        });
+        
+        if (!state.apagadoManualmente) {
+            // Limpiar estados de chat
+            state.pausadoPorChat = false;
+            timers.cleanupAll();
+
+            // Intentar quitar foco del chat si existe
+            try {
+                const chatInput = document.querySelector('div[contenteditable="plaintext-only"]') ||
+                                document.querySelector('div[contenteditable="plaintext-only"][maxlength="150"]');
+                
+                if (chatInput) {
+                    chatInput.blur();
+                    if (chatInput.getAttribute('contenteditable')) {
+                        chatInput.setAttribute('focused', 'false');
+                    }
+                }
+            } catch (error) {
+                console.warn('No se pudo quitar el foco del chat:', error);
+            }
+
+            // Reactivar directamente sin usar toggleAutoTapTap
+            state.activo = true;
+            
+            // Configurar intervalo
+            const intervalo = parseInt(elementos.selector.value);
+            presionarL(); // Ejecutar inmediatamente
+            state.intervalo = safeInterval.create(presionarL, intervalo);
+            
+            // Actualizar estado visual
+            elementos.boton.textContent = '❤️ Auto Tap-Tap: ON';
+            elementos.boton.style.background = '#00f2ea';
+            elementos.selector.disabled = true;
+            elementos.selector.style.opacity = '0.5';
+            actualizarColoresBoton();
+            
+            // Notificar al background script
+            safeRuntimeMessage({ 
+                action: 'reactivated_from_chat',
+                contador: state.contador,
+                enTikTok: true,
+                enLive: true
+            }).catch(error => console.warn('Error al notificar reactivación:', error));
+            
+            mostrarNotificacionChat('¡Auto Tap-Tap reactivado! 🎉', 'success');
+            console.log('✅ Auto Tap-Tap reactivado exitosamente');
+        } else {
+            console.log('⚠️ No se puede reactivar - fue apagado manualmente');
+        }
+    }
+    
+    /**
+     * =============================================================================
      * FUNCIÓN PRINCIPAL DE CONTROL - ALTERNAR AUTO TAP-TAP
      * =============================================================================
      * 
@@ -1234,63 +1303,6 @@ function setupBasicMessageListener() {
                     console.log('⏳ Inactividad detectada en chat vacío');
                     iniciarCuentaRegresiva();
                 }, 2000); // 2 segundos de inactividad
-            }
-        };
-
-        // Reactivar el Auto Tap-Tap después de pausa por chat
-        const reactivarAutoTapTap = () => {
-            console.log('🎯 Intentando reactivar Auto Tap-Tap...');
-            console.log('Estado actual:', { 
-                apagadoManualmente: state.apagadoManualmente,
-                pausadoPorChat: state.pausadoPorChat,
-                activo: state.activo
-            });
-            
-            if (!state.apagadoManualmente) {
-                // Limpiar estados de chat
-                state.pausadoPorChat = false;
-                timers.cleanupAll();
-                
-                if (inactivityTimer) {
-                    clearTimeout(inactivityTimer);
-                    inactivityTimer = null;
-                }
-
-                // Quitar foco del chat
-                if (chatInput.getAttribute('contenteditable')) {
-                    chatInput.blur();
-                    chatInput.setAttribute('focused', 'false');
-                } else {
-                    chatInput.blur();
-                }
-
-                // Reactivar directamente sin usar toggleAutoTapTap
-                state.activo = true;
-                
-                // Configurar intervalo
-                const intervalo = parseInt(elementos.selector.value);
-                presionarL(); // Ejecutar inmediatamente
-                state.intervalo = safeInterval.create(presionarL, intervalo);
-                
-                // Actualizar estado visual
-                elementos.boton.textContent = '❤️ Auto Tap-Tap: ON';
-                elementos.boton.style.background = '#00f2ea';
-                elementos.selector.disabled = true;
-                elementos.selector.style.opacity = '0.5';
-                actualizarColoresBoton();
-                
-                // Notificar al background script
-                safeRuntimeMessage({ 
-                    action: 'reactivated_from_chat',
-                    contador: state.contador,
-                    enTikTok: true,
-                    enLive: true
-                }).catch(error => console.warn('Error al notificar reactivación:', error));
-                
-                mostrarNotificacionChat('¡Auto Tap-Tap reactivado! 🎉', 'success');
-                console.log('✅ Auto Tap-Tap reactivado exitosamente');
-            } else {
-                console.log('⚠️ No se puede reactivar - fue apagado manualmente');
             }
         };
 
