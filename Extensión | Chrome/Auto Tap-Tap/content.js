@@ -1452,156 +1452,58 @@ function setupBasicMessageListener() {
 
     // Función para mostrar notificaciones del chat
     function mostrarNotificacionChat(mensaje, tipo = 'info') {
-        // Crear div de notificaciones independiente si no existe
-        if (!elementos.notificacionChat) {
-            elementos.notificacionChat = document.createElement('div');
-            elementos.notificacionChat.style.cssText = `
-                position: fixed;
-                bottom: 10px;
-                right: 20px;
-                z-index: 1000000;
-                padding: 12px 16px;
-                border-radius: 8px;
-                font-family: Arial, sans-serif;
-                font-size: 14px;
-                opacity: 0;
-                transition: opacity 0.3s ease, transform 0.3s ease;
-                text-align: center;
-                box-sizing: border-box;
-                max-width: 280px;
-                word-wrap: break-word;
-                transform: translateY(10px);
-                pointer-events: none;
-            `;
-            // Agregar directamente al body para que sea independiente
-            document.body.appendChild(elementos.notificacionChat);
-        }
-
-        // Establecer estilos según el tipo de notificación
-        const estilos = {
-            success: {
-                background: 'rgba(14, 79, 2, 0.95)',
-                color: '#fff',
-                border: '1px solid rgb(24, 80, 2)',
-                boxShadow: '0 2px 8px rgba(66, 224, 4, 0.2)'
-            },
-            warning: {
-                background: 'rgba(255, 0, 80, 0.95)',
-                color: '#fff',
-                border: '1px solid #ff0050',
-                boxShadow: '0 2px 8px rgba(255, 0, 80, 0.2)'
-            },
-            info: {
-                background: 'rgba(0, 0, 0, 0.95)',
-                color: '#fff',
-                border: '1px solid #666',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
-            }
-        };
-
-        // Aplicar estilos según tipo
-        Object.assign(elementos.notificacionChat.style, estilos[tipo]);
-        elementos.notificacionChat.textContent = mensaje;
-        
-        // Mostrar con animación de entrada
-        elementos.notificacionChat.style.opacity = '1';
-        elementos.notificacionChat.style.transform = 'translateY(0)';
-
-        // Ocultar después de 3 segundos con animación de salida
-        setTimeout(() => {
-            if (elementos.notificacionChat) {
-                elementos.notificacionChat.style.opacity = '0';
-                elementos.notificacionChat.style.transform = 'translateY(10px)';
-            }
-        }, 3000);
+        // Usar el nuevo sistema de notificaciones integradas
+        agregarNotificacion(mensaje, tipo, 3000);
     }
     
     // Función para mostrar cuenta regresiva de reactivación
     function mostrarCuentaRegresiva(mensajeInicial) {
-        // Limpiar cualquier cuenta regresiva anterior
-        if (elementos.cuentaRegresivaDiv) {
-            elementos.cuentaRegresivaDiv.remove();
-            elementos.cuentaRegresivaDiv = null;
-        }
-        
         // Limpiar timer anterior de cuenta regresiva si existe
         if (timers.cuentaRegresiva) {
             clearInterval(timers.cuentaRegresiva);
             timers.cuentaRegresiva = null;
         }
         
-        // Crear div de cuenta regresiva independiente
-        elementos.cuentaRegresivaDiv = document.createElement('div');
-        elementos.cuentaRegresivaDiv.style.cssText = `
-            position: fixed;
-            bottom: 70px;
-            right: 20px;
-            z-index: 1000001;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-            background: rgba(255, 165, 0, 0.95);
-            color: #fff;
-            border: 1px solid #ff8c00;
-            box-shadow: 0 2px 8px rgba(255, 165, 0, 0.3);
-            opacity: 0;
-            transition: opacity 0.3s ease, transform 0.3s ease;
-            text-align: center;
-            box-sizing: border-box;
-            max-width: 280px;
-            word-wrap: break-word;
-            transform: translateY(10px);
-            pointer-events: none;
-            font-weight: bold;
-        `;
-        
-        // Agregar directamente al body
-        document.body.appendChild(elementos.cuentaRegresivaDiv);
-        
         // Variables para la cuenta regresiva
         let tiempoRestante = state.tiempoReactivacion;
-        elementos.cuentaRegresivaDiv.textContent = `⏳ Reactivando en ${tiempoRestante}s...`;
+        let notificacionCuentaRegresiva = null;
         
-        // Mostrar con animación de entrada
-        elementos.cuentaRegresivaDiv.style.opacity = '1';
-        elementos.cuentaRegresivaDiv.style.transform = 'translateY(0)';
+        // Crear notificación inicial con duración 0 (permanente hasta que la removamos)
+        notificacionCuentaRegresiva = agregarNotificacion(`⏳ Reactivando en ${tiempoRestante}s...`, 'countdown', 0);
         
         // Iniciar cuenta regresiva
         timers.cuentaRegresiva = setInterval(() => {
             tiempoRestante--;
             
             if (tiempoRestante > 0) {
-                elementos.cuentaRegresivaDiv.textContent = `⏳ Reactivando en ${tiempoRestante}s...`;
-                
-                // Cambiar color cuando quedan pocos segundos
-                if (tiempoRestante <= 3) {
-                    elementos.cuentaRegresivaDiv.style.background = 'rgba(255, 69, 0, 0.95)';
-                    elementos.cuentaRegresivaDiv.style.border = '1px solid #ff4500';
-                    elementos.cuentaRegresivaDiv.style.boxShadow = '0 2px 8px rgba(255, 69, 0, 0.4)';
+                // Actualizar el texto de la notificación existente
+                if (notificacionCuentaRegresiva) {
+                    notificacionCuentaRegresiva.textContent = `⏳ Reactivando en ${tiempoRestante}s...`;
+                    
+                    // Cambiar color cuando quedan pocos segundos
+                    if (tiempoRestante <= 3) {
+                        notificacionCuentaRegresiva.style.background = 'rgba(255, 69, 0, 0.95)';
+                        notificacionCuentaRegresiva.style.border = '1px solid #ff4500';
+                        notificacionCuentaRegresiva.style.boxShadow = '0 2px 8px rgba(255, 69, 0, 0.4)';
+                    }
                 }
             } else {
                 // Mostrar mensaje final antes de reactivar
-                elementos.cuentaRegresivaDiv.textContent = '✨ Reactivando Auto Tap-Tap...';
-                elementos.cuentaRegresivaDiv.style.background = 'rgba(0, 200, 0, 0.95)';
-                elementos.cuentaRegresivaDiv.style.border = '1px solid #00c800';
-                elementos.cuentaRegresivaDiv.style.boxShadow = '0 2px 8px rgba(0, 200, 0, 0.4)';
+                if (notificacionCuentaRegresiva) {
+                    notificacionCuentaRegresiva.textContent = '✨ Reactivando Auto Tap-Tap...';
+                    notificacionCuentaRegresiva.style.background = 'rgba(0, 200, 0, 0.95)';
+                    notificacionCuentaRegresiva.style.border = '1px solid #00c800';
+                    notificacionCuentaRegresiva.style.boxShadow = '0 2px 8px rgba(0, 200, 0, 0.4)';
+                }
                 
                 // Ejecutar la reactivación después de un breve retraso
                 setTimeout(() => {
                     reactivarAutoTapTap();
                     
-                    // Limpiar la notificación después de mostrar el mensaje final
+                    // Remover la notificación después de mostrar el mensaje final
                     setTimeout(() => {
-                        if (elementos.cuentaRegresivaDiv) {
-                            elementos.cuentaRegresivaDiv.style.opacity = '0';
-                            elementos.cuentaRegresivaDiv.style.transform = 'translateY(10px)';
-                            setTimeout(() => {
-                                if (elementos.cuentaRegresivaDiv) {
-                                    elementos.cuentaRegresivaDiv.remove();
-                                    elementos.cuentaRegresivaDiv = null;
-                                }
-                            }, 300);
+                        if (notificacionCuentaRegresiva) {
+                            removerNotificacion(notificacionCuentaRegresiva);
                         }
                     }, 1000);
                 }, 500);
@@ -1624,16 +1526,153 @@ function setupBasicMessageListener() {
      * @description Limpia notificaciones de chat y cuenta regresiva del DOM
      */
     function limpiarNotificacionesFlotantes() {
-        // Limpiar notificación de chat
+        // Limpiar notificación de chat independiente (legacy)
         if (elementos.notificacionChat && elementos.notificacionChat.parentNode) {
             elementos.notificacionChat.parentNode.removeChild(elementos.notificacionChat);
             elementos.notificacionChat = null;
         }
         
-        // Limpiar notificación de cuenta regresiva
+        // Limpiar notificación de cuenta regresiva independiente (legacy)
         if (elementos.cuentaRegresivaDiv && elementos.cuentaRegresivaDiv.parentNode) {
             elementos.cuentaRegresivaDiv.parentNode.removeChild(elementos.cuentaRegresivaDiv);
             elementos.cuentaRegresivaDiv = null;
+        }
+        
+        // Limpiar todas las notificaciones del contenedor integrado
+        if (elementos.contenedorNotificaciones) {
+            elementos.contenedorNotificaciones.innerHTML = '';
+        }
+    }
+    
+    /**
+     * =============================================================================
+     * SISTEMA DE GESTIÓN DE NOTIFICACIONES INTEGRADAS
+     * =============================================================================
+     * 
+     * Sistema que gestiona las notificaciones dentro del div flotante principal,
+     * permitiendo que se apilen verticalmente en la esquina inferior derecha.
+     */
+    
+    /**
+     * AGREGAR NOTIFICACIÓN AL CONTENEDOR INTEGRADO
+     * 
+     * Crea y agrega una nueva notificación al contenedor de notificaciones
+     * del div flotante principal.
+     * 
+     * @param {string} mensaje - Texto a mostrar en la notificación
+     * @param {string} tipo - Tipo de notificación ('success', 'warning', 'info', 'countdown')
+     * @param {number} duracion - Duración en milisegundos (0 = permanente)
+     * @returns {HTMLElement} - Elemento de la notificación creada
+     */
+    function agregarNotificacion(mensaje, tipo = 'info', duracion = 3000) {
+        if (!elementos.contenedorNotificaciones) {
+            console.warn('Contenedor de notificaciones no disponible');
+            return null;
+        }
+        
+        // Crear elemento de notificación
+        const notificacion = document.createElement('div');
+        notificacion.style.cssText = `
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            font-weight: bold;
+            opacity: 0;
+            transform: translateX(20px);
+            transition: all 0.3s ease;
+            text-align: center;
+            box-sizing: border-box;
+            max-width: 250px;
+            word-wrap: break-word;
+            pointer-events: auto;
+            margin-bottom: 4px;
+        `;
+        
+        // Establecer estilos según el tipo de notificación
+        const estilos = {
+            success: {
+                background: 'rgba(14, 79, 2, 0.95)',
+                color: '#fff',
+                border: '1px solid rgb(24, 80, 2)',
+                boxShadow: '0 2px 8px rgba(66, 224, 4, 0.2)'
+            },
+            warning: {
+                background: 'rgba(255, 0, 80, 0.95)',
+                color: '#fff',
+                border: '1px solid #ff0050',
+                boxShadow: '0 2px 8px rgba(255, 0, 80, 0.2)'
+            },
+            info: {
+                background: 'rgba(0, 0, 0, 0.95)',
+                color: '#fff',
+                border: '1px solid #666',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+            },
+            countdown: {
+                background: 'rgba(255, 165, 0, 0.95)',
+                color: '#fff',
+                border: '1px solid #ff8c00',
+                boxShadow: '0 2px 8px rgba(255, 165, 0, 0.3)'
+            }
+        };
+        
+        // Aplicar estilos según tipo
+        Object.assign(notificacion.style, estilos[tipo]);
+        notificacion.textContent = mensaje;
+        
+        // Agregar al contenedor
+        elementos.contenedorNotificaciones.appendChild(notificacion);
+        
+        // Animar entrada
+        setTimeout(() => {
+            notificacion.style.opacity = '1';
+            notificacion.style.transform = 'translateX(0)';
+        }, 10);
+        
+        // Auto-eliminar si tiene duración especificada
+        if (duracion > 0) {
+            setTimeout(() => {
+                removerNotificacion(notificacion);
+            }, duracion);
+        }
+        
+        return notificacion;
+    }
+    
+    /**
+     * REMOVER NOTIFICACIÓN DEL CONTENEDOR
+     * 
+     * Remueve una notificación específica con animación de salida.
+     * 
+     * @param {HTMLElement} notificacion - Elemento de notificación a remover
+     */
+    function removerNotificacion(notificacion) {
+        if (!notificacion || !notificacion.parentNode) return;
+        
+        // Animar salida
+        notificacion.style.opacity = '0';
+        notificacion.style.transform = 'translateX(20px)';
+        
+        // Remover del DOM después de la animación
+        setTimeout(() => {
+            if (notificacion.parentNode) {
+                notificacion.parentNode.removeChild(notificacion);
+            }
+        }, 300);
+    }
+    
+    /**
+     * LIMPIAR TODAS LAS NOTIFICACIONES
+     * 
+     * Remueve todas las notificaciones del contenedor.
+     */
+    function limpiarTodasLasNotificaciones() {
+        if (elementos.contenedorNotificaciones) {
+            const notificaciones = elementos.contenedorNotificaciones.children;
+            Array.from(notificaciones).forEach(notificacion => {
+                removerNotificacion(notificacion);
+            });
         }
     }
 
@@ -2009,6 +2048,21 @@ function setupBasicMessageListener() {
             Por <a href="https://github.com/EmerickVar" target="_blank" style="color: #00f2ea; text-decoration: none;">@EmerickVar</a>
         `;
         
+        // CREAR CONTENEDOR DE NOTIFICACIONES
+        elementos.contenedorNotificaciones = document.createElement('div');
+        elementos.contenedorNotificaciones.style.cssText = `
+            position: absolute;
+            bottom: -10px;
+            right: 0;
+            width: 100%;
+            z-index: 1000002;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        `;
+        
         // ENSAMBLAR TODOS LOS ELEMENTOS
         contenidoPrincipal.appendChild(elementos.boton);
         contenidoPrincipal.appendChild(selectorContainer);
@@ -2019,6 +2073,7 @@ function setupBasicMessageListener() {
         
         elementos.contenedor.appendChild(elementos.barraArrastre);
         elementos.contenedor.appendChild(contenidoPrincipal);
+        elementos.contenedor.appendChild(elementos.contenedorNotificaciones);
         
         // INSERTAR EN EL DOM
         document.body.appendChild(elementos.contenedor);
