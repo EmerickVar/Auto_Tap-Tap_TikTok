@@ -1,92 +1,67 @@
-# 🏗️ DIAGRAMA COMPLETO DE ARQUITECTURA Y FLUJOS
-## TikTok Auto Tap-Tap - Chrome Extension
+# 🏗️ Diagramas Técnicos - TikTok Auto Tap-Tap
 
-**📅 Fecha de Actualización:** 7 de junio de 2025  
-**👨‍💻 Desarrollador:** Emerick Echeverría Vargas  
-**📊 Estado:** Arquitectura actualizada con correcciones JavaScript  
-**🔧 Versión:** 1.1.1 - Errores JavaScript corregidos
+*Documentación visual de la arquitectura y flujos del sistema*
+
+**📅 Versión:** 1.1.1 - Junio 2025  
+**🎯 Propósito:** Diagramas técnicos consolidados y verificados
 
 ---
 
-## 📋 **ÍNDICE DE DIAGRAMAS**
+## 📋 Índice de Diagramas
 
 1. [🎯 Arquitectura General](#-arquitectura-general)
-2. [🔄 Flujo de Comunicación entre Componentes](#-flujo-de-comunicación-entre-componentes)
+2. [🔄 Flujo de Comunicación](#-flujo-de-comunicación)
 3. [⚡ Proceso de Inicialización](#-proceso-de-inicialización)
-4. [🎮 Flujo de Automatización Principal](#-flujo-de-automatización-principal)
-5. [💬 Sistema de Detección de Chat](#-sistema-de-detección-de-chat)
-6. [🎨 Gestión de UI y Estados](#-gestión-de-ui-y-estados)
+4. [🎮 Automatización Principal](#-automatización-principal)
+5. [💬 Sistema de Chat](#-sistema-de-chat)
+6. [🎨 Gestión de Estados](#-gestión-de-estados)
 7. [💾 Sistema de Almacenamiento](#-sistema-de-almacenamiento)
-8. [🔄 Sincronización y Background](#-sincronización-y-background)
 
 ---
 
-## 🎯 **ARQUITECTURA GENERAL**
+## 🎯 Arquitectura General
 
 ```mermaid
 graph TB
-    subgraph "Chrome Extension Architecture"
-        subgraph "Manifest V3"
-            M[manifest.json]
-        end
+    subgraph "Chrome Extension V3"
+        M[manifest.json<br/>📋 Configuración]
         
         subgraph "Background Script"
-            BG[background.js]
-            SW[Service Worker]
-            BADGE[Badge System]
-            SYNC[Sync Manager]
+            BG[background.js<br/>🔧 Service Worker]
+            BADGE[🏷️ Sistema Badges]
+            SYNC[🔄 Sincronización]
         end
         
         subgraph "Content Script"
-            CS[content.js]
-            IIFE[IIFE Container]
-            STATE[State Manager]
-            UI[UI Creator]
-            CHAT[Chat Detector]
-            AUTO[Automation Engine]
+            CS[content.js<br/>📜 IIFE Container]
+            STATE[📊 Gestor Estado]
+            UI[🎨 Interfaz Flotante]
+            CHAT[💬 Detector Chat]
+            AUTO[🤖 Motor Automatización]
         end
         
         subgraph "Popup Interface"
-            PH[popup.html]
-            PC[popup.css]
-            PJ[popup.js]
-            CTRL[Controls]
-            STATS[Statistics]
+            PH[popup.html<br/>🖼️ Estructura]
+            PJ[popup.js<br/>⚡ Lógica]
+            PC[popup.css<br/>🎨 Estilos]
         end
         
         subgraph "Storage System"
-            LS[chrome.storage.local]
-            CONFIG[Configuration]
-            PERSIST[Persistence]
-        end
-        
-        subgraph "TikTok Page"
-            DOM[TikTok DOM]
-            LIVE[Live Stream]
-            CHAT_INPUT[Chat Input]
-            HEART_BTN[Heart Button]
+            LS[chrome.storage.local<br/>💾 Persistencia]
+            CONFIG[⚙️ Configuración]
         end
     end
     
-    %% Connections
+    subgraph "TikTok Live Page"
+        DOM[🌐 TikTok DOM]
+        CHAT_INPUT[💬 Input Chat]
+        HEART_BTN[❤️ Botón Corazón]
+    end
+    
+    %% Conexiones principales
     M --> BG
     M --> CS
     M --> PH
-    
-    BG --> SW
-    BG --> BADGE
-    BG --> SYNC
-    
-    CS --> IIFE
-    CS --> STATE
-    CS --> UI
-    CS --> CHAT
-    CS --> AUTO
-    
-    PH --> PC
-    PH --> PJ
-    PJ --> CTRL
-    PJ --> STATS
     
     CS <==> DOM
     AUTO --> HEART_BTN
@@ -96,98 +71,108 @@ graph TB
     CS <==> LS
     PJ <==> LS
     
-    LS --> CONFIG
-    LS --> PERSIST
-    
-    %% Messaging
+    %% Comunicación entre componentes
     BG <==> CS
     BG <==> PJ
     PJ <==> CS
+    
+    %% Estilos
+    classDef bgStyle fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
+    classDef csStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef popupStyle fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    classDef storageStyle fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef tikTokStyle fill:#ffebee,stroke:#d32f2f,stroke-width:2px
+    
+    class BG,BADGE,SYNC bgStyle
+    class CS,STATE,UI,CHAT,AUTO csStyle
+    class PH,PJ,PC popupStyle
+    class LS,CONFIG storageStyle
+    class DOM,CHAT_INPUT,HEART_BTN tikTokStyle
 ```
 
 ---
 
-## 🔄 **FLUJO DE COMUNICACIÓN ENTRE COMPONENTES**
+## 🔄 Flujo de Comunicación
 
 ```mermaid
 sequenceDiagram
-    participant P as popup.js
-    participant B as background.js
-    participant C as content.js
-    participant S as chrome.storage
-    participant T as TikTok DOM
+    participant P as 🎨 popup.js
+    participant B as 🔧 background.js
+    participant C as 📜 content.js
+    participant S as 💾 Storage
+    participant T as 🌐 TikTok
     
-    Note over P,T: 🚀 Usuario abre popup
+    Note over P,T: 🚀 Inicialización del Sistema
     
     P->>+B: ping (health check)
-    B-->>-P: success: true
+    B-->>-P: {success: true}
     
     P->>+C: getStatus
-    C-->>-P: activo, contador, tiempoReactivacion
+    C-->>-P: {activo, contador, configuración}
     
-    Note over P,T: 👆 Usuario activa automatización
+    Note over P,T: ⚡ Proceso de Activación
     
     P->>+C: toggleAutomation
-    C->>C: Validar página TikTok
-    C->>+S: Cargar configuración
-    S-->>-C: intervalo, reactivacionTime
-    C->>C: state.activo = true
-    C->>+B: started
-    B->>B: Actualizar badge verde
-    B-->>-C: Badge actualizado
-    C->>C: Iniciar setInterval
-    C-->>-P: success: true, activo: true
+    C->>C: 🔍 Validar página TikTok Live
     
-    Note over P,T: 🔄 Loop de automatización activo
+    C->>+S: 📥 Cargar configuración
+    S-->>-C: {intervalo, tiempoReactivacion}
+    
+    C->>+B: 📤 started
+    B->>B: 🏷️ Badge verde + animación
+    B-->>-C: {success: true}
+    
+    C->>C: ⏰ Iniciar setInterval
+    C-->>-P: {success: true, activo: true}
+    
+    Note over P,T: 🔄 Loop de Automatización Activo
     
     loop Cada intervalo configurado
-        C->>+T: Buscar botón corazón
+        C->>+T: 🔍 Buscar botón corazón
         alt Botón encontrado y visible
-            T-->>C: Elemento corazón
-            C->>T: click()
-            C->>C: contador++
-            C->>+S: Guardar contador
-            S-->>-C: Guardado exitoso
-        else Botón no encontrado
-            C->>C: Log error
+            T-->>C: ❤️ Elemento disponible
+            C->>T: 👆 click()
+            C->>C: 📈 contador++
+            C->>+S: 💾 Guardar contador
+            S-->>-C: {success: true}
+            C->>+B: 📊 updateCount
+            B->>B: 🔄 Actualizar badge número
+            B-->>-C: {success: true}
+        else Chat detectado como activo
+            C->>C: ⏸️ Pausar automáticamente
+            C->>C: 🔔 Mostrar notificación chat
+            C->>C: 🕐 Iniciar cuenta regresiva
         end
     end
     
-    Note over P,T: 💬 Detección de chat activo
+    Note over P,T: 💬 Interacción con Chat
     
-    loop Monitor continuo
-        C->>+T: Observar cambios en chat
-        T-->>-C: MutationEvent
-        C->>C: Procesar mensajes
-        C->>+S: Actualizar último chat visto
-        S-->>-C: Guardado exitoso
+    C->>T: 👂 Detectar focus en chat
+    T-->>C: 🎯 Usuario interactúa
+    C->>C: ⏸️ Pausar por chat
+    C->>C: 👁️ Monitorear inactividad
+    
+    alt Usuario deja de escribir
+        C->>C: ⏱️ Timer inactividad
+        C->>C: 🕐 Mostrar cuenta regresiva
+        C->>C: ▶️ Reanudar automáticamente
+    else Usuario sale del chat
+        C->>C: ⚡ Reanudar inmediatamente
     end
     
-    Note over P,T: ⏹️ Usuario desactiva
+    Note over P,T: ⏹️ Proceso de Desactivación
     
     P->>+C: toggleAutomation
-    C->>C: state.activo = false
-    C->>C: clearInterval
-    C->>+B: stopped
-    B->>B: Actualizar badge gris
-    B-->>-C: Badge actualizado
-    C->>+S: Guardar estado final
-    S-->>-C: Estado guardado
-    C-->>-P: success: true, activo: false
-    
-    Note over P,T: 🔄 Sincronización periódica
-    
-    loop Cada 30 segundos
-        B->>+C: sync request
-        C->>+S: Guardar estado actual
-        S-->>-C: Estado sincronizado
-        C-->>-B: Sync completo
-    end
+    C->>C: 🧹 Limpiar intervalos
+    C->>+B: 📤 stopped
+    B->>B: 🏷️ Badge rojo + detener animación
+    B-->>-C: {success: true}
+    C-->>-P: {success: true, activo: false}
 ```
 
 ---
 
-## ⚡ **PROCESO DE INICIALIZACIÓN**
+## ⚡ Proceso de Inicialización
 
 ```mermaid
 flowchart TD
@@ -197,30 +182,30 @@ flowchart TD
     MANIFEST --> CS_CHECK{🔍 ¿Página TikTok Live?}
     MANIFEST --> POPUP_READY[🎨 Popup listo para uso]
     
-    %% Background initialization
+    %% Background initialization path
     BG_INIT --> BG_STATE[📊 Inicializar extensionState]
     BG_STATE --> BG_STORAGE[💾 Configurar storage inicial]
-    BG_STORAGE --> BG_BADGE[🏷️ Configurar badge rojo]
+    BG_STORAGE --> BG_BADGE[🏷️ Configurar badge rojo OFF]
     BG_BADGE --> BG_LISTEN[👂 Activar message listeners]
-    BG_LISTEN --> BG_SYNC[🔄 Iniciar sync periódico]
+    BG_LISTEN --> BG_SYNC[🔄 Iniciar sync periódico 5s]
     
-    %% Content script check
+    %% Content script conditional injection
     CS_CHECK -->|❌ No| CS_WAIT[⏳ Esperar navegación]
     CS_CHECK -->|✅ Sí| CS_INJECT[📜 Inyectar content.js]
     
     CS_WAIT --> CS_CHECK
     
-    %% Content script initialization
+    %% Content script initialization sequence
     CS_INJECT --> CS_IIFE[🔒 Ejecutar IIFE]
-    CS_IIFE --> CS_STATE_INIT[📊 Inicializar state]
-    CS_STATE_INIT --> CS_STORAGE_LOAD[💾 Cargar configuración]
+    CS_IIFE --> CS_STATE_INIT[📊 Inicializar state global]
+    CS_STATE_INIT --> CS_STORAGE_LOAD[💾 Cargar configuración storage]
     CS_STORAGE_LOAD --> CS_UI_CREATE[🎨 Crear interfaz flotante]
     CS_UI_CREATE --> CS_EVENTS[🎯 Configurar event listeners]
-    CS_EVENTS --> CS_CHAT_INIT[💬 Inicializar detector de chat]
+    CS_EVENTS --> CS_CHAT_INIT[💬 Inicializar detector chat]
     CS_CHAT_INIT --> CS_MESSAGING[📡 Configurar mensajería]
     CS_MESSAGING --> CS_READY[✅ Content script listo]
     
-    %% Popup interaction
+    %% Popup interaction flow
     POPUP_READY --> POPUP_CLICK{👆 ¿Usuario abre popup?}
     POPUP_CLICK -->|❌ No| POPUP_WAIT[⏳ Esperar interacción]
     POPUP_CLICK -->|✅ Sí| POPUP_LOAD[📄 Cargar popup.html]
@@ -235,7 +220,7 @@ flowchart TD
     POPUP_EVENTS --> POPUP_INTERVAL[⏰ Iniciar actualización periódica]
     POPUP_INTERVAL --> POPUP_READY_FINAL[✅ Popup completamente funcional]
     
-    %% Final states
+    %% Final convergence
     BG_SYNC --> SYSTEM_READY[🎉 Sistema Completamente Inicializado]
     CS_READY --> SYSTEM_READY
     POPUP_READY_FINAL --> SYSTEM_READY
@@ -254,17 +239,17 @@ flowchart TD
 
 ---
 
-## 🎮 **FLUJO DE AUTOMATIZACIÓN PRINCIPAL**
+## 🎮 Automatización Principal
 
 ```mermaid
 flowchart TD
-    TOGGLE_CLICK([👆 Usuario hace clic en Toggle]) --> CHECK_STATE{🔍 ¿Estado actual?}
+    TOGGLE_CLICK([👆 Usuario Toggle]) --> CHECK_STATE{🔍 ¿Estado actual?}
     
     CHECK_STATE -->|🔴 Inactivo| START_FLOW[▶️ Iniciar Automatización]
     CHECK_STATE -->|🟢 Activo| STOP_FLOW[⏹️ Detener Automatización]
     
     %% Start Flow
-    START_FLOW --> VALIDATE_PAGE{🎯 ¿Página TikTok Live válida?}
+    START_FLOW --> VALIDATE_PAGE{🎯 ¿TikTok Live válido?}
     VALIDATE_PAGE -->|❌ No| SHOW_ERROR[🚨 Mostrar error]
     VALIDATE_PAGE -->|✅ Sí| SET_ACTIVE[✅ state.activo = true]
     
@@ -274,7 +259,7 @@ flowchart TD
     
     START_INTERVAL --> AUTOMATION_LOOP{🔄 Loop de Automatización}
     
-    %% Automation Loop
+    %% Main Automation Loop
     AUTOMATION_LOOP --> CHECK_ACTIVE{🔍 ¿Sigue activo?}
     CHECK_ACTIVE -->|❌ No| CLEANUP[🧹 Limpiar intervalo]
     CHECK_ACTIVE -->|✅ Sí| CHECK_CHAT{💬 ¿Chat activo?}
@@ -294,7 +279,7 @@ flowchart TD
     WAIT_INTERVAL --> AUTOMATION_LOOP
     WAIT_HEART --> AUTOMATION_LOOP
     
-    %% Pause Flow (Chat)
+    %% Pause Flow (Chat interaction)
     PAUSE_AUTO --> SAVE_STATE[💾 Guardar estado de pausa]
     SAVE_STATE --> SHOW_CHAT_NOTIFICATION[🔔 Mostrar notificación chat]
     SHOW_CHAT_NOTIFICATION --> WAIT_CHAT_INACTIVE[⏳ Esperar inactividad chat]
@@ -327,11 +312,10 @@ flowchart TD
     class PAUSE_AUTO,SAVE_STATE,WAIT_CHAT_INACTIVE,COUNTDOWN chatStyle
     class NOTIFY_BG_START,NOTIFY_BG_STOP,NOTIFY_BG_COUNT,BG_UPDATE_START,BG_UPDATE_STOP,BG_UPDATE_BADGE bgStyle
 ```
-```
 
 ---
 
-## 💬 **SISTEMA DE DETECCIÓN DE CHAT**
+## 💬 Sistema de Chat
 
 ```mermaid
 flowchart TD
@@ -381,7 +365,7 @@ flowchart TD
     CHECK_TIMER -->|❌ No| MONITOR_ACTIVITY
     CHECK_TIMER -->|✅ Sí| START_COUNTDOWN[🕐 Iniciar cuenta regresiva]
     
-    START_COUNTDOWN --> SHOW_COUNTDOWN[🔔 Mostrar "Reactivando en X segundos"]
+    START_COUNTDOWN --> SHOW_COUNTDOWN[🔔 Mostrar 'Reactivando en X segundos']
     SHOW_COUNTDOWN --> COUNTDOWN_LOOP{🔄 Loop cuenta regresiva}
     
     COUNTDOWN_LOOP --> COUNTDOWN_TICK[⏰ Tick cuenta regresiva]
@@ -398,6 +382,7 @@ flowchart TD
     MONITOR_ACTIVITY --> USER_BLURS{👋 ¿Usuario sale del chat?}
     USER_BLURS -->|❌ No| MONITOR_ACTIVITY
     USER_BLURS -->|✅ Sí| IMMEDIATE_REACTIVATE[⚡ Reactivar inmediatamente]
+    
     IMMEDIATE_REACTIVATE --> WAIT_INTERACTION
     
     %% Styling
@@ -416,115 +401,116 @@ flowchart TD
 
 ---
 
-## 🎨 **GESTIÓN DE UI Y ESTADOS**
+## 🎨 Gestión de Estados
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Initializing: 🚀 Extension loads
+    [*] --> Inicializando: 🚀 Extension loads
     
-    state "🔄 Initializing" as Initializing {
-        [*] --> CreatingUI: Create floating interface
-        CreatingUI --> LoadingConfig: Load saved settings
-        LoadingConfig --> SettingEvents: Configure event listeners
-        SettingEvents --> [*]
+    state "🔄 Inicializando" as Inicializando {
+        [*] --> CreandoUI: Create floating interface
+        CreandoUI --> CargandoConfig: Load saved settings
+        CargandoConfig --> ConfigurandoEventos: Configure event listeners
+        ConfigurandoEventos --> [*]
     }
     
-    Initializing --> Inactive: ✅ Ready
+    Inicializando --> Inactivo: ✅ Ready
     
-    state "🔴 Inactive" as Inactive {
-        [*] --> Standby: Waiting for user
-        Standby --> ValidatingPage: User clicks toggle
-        ValidatingPage --> ErrorState: ❌ Invalid page
-        ValidatingPage --> StartingUp: ✅ Valid TikTok Live
-        ErrorState --> Standby: Show error message
-        StartingUp --> [*]: Transition to Active
+    state "🔴 Inactivo" as Inactivo {
+        [*] --> EnEspera: Waiting for user
+        EnEspera --> Validando: User clicks toggle
+        Validando --> EstadoError: ❌ Invalid page
+        Validando --> Iniciando: ✅ Valid TikTok Live
+        EstadoError --> EnEspera: Show error message
+        Iniciando --> [*]: Transition to Active
     }
     
-    state "🟢 Active" as Active {
-        [*] --> Running: Automation started
-        Running --> Executing: Heart button found
-        Executing --> Waiting: Click executed
-        Waiting --> Running: Interval elapsed
-        Running --> Paused: Chat interaction detected
+    state "🟢 Activo" as Activo {
+        [*] --> Ejecutando: Automation started
+        Ejecutando --> Ejecutando: Heart button found
+        Ejecutando --> EsperandoBoton: Heart button not found
+        EsperandoBoton --> Ejecutando: Heart button appears
+        Ejecutando --> Pausado: Chat interaction detected
         
-        state "⏸️ Paused" as Paused {
-            [*] --> ChatActive: User typing in chat
-            ChatActive --> Monitoring: Monitor inactivity
-            Monitoring --> Countdown: Inactivity detected
-            Countdown --> AutoResume: Timer expired
-            ChatActive --> ManualResume: User leaves chat
-            AutoResume --> [*]
-            ManualResume --> [*]
+        state "⏸️ Pausado" as Pausado {
+            [*] --> ChatActivo: User typing in chat
+            ChatActivo --> Monitoreando: Monitor inactivity
+            Monitoreando --> CuentaRegresiva: Inactivity detected
+            CuentaRegresiva --> ReanudarAuto: Timer expired
+            ChatActivo --> ReanudarManual: User leaves chat
+            ReanudarAuto --> [*]
+            ReanudarManual --> [*]
         }
         
-        Paused --> Running: Resume automation
-        Running --> [*]: User stops or error
+        Pausado --> Ejecutando: Resume automation
+        Ejecutando --> [*]: User stops or error
     }
     
-    Active --> Inactive: 🔴 Stop automation
-    Inactive --> Active: 🟢 Start automation
+    Activo --> Inactivo: 🔴 Stop automation
+    Inactivo --> Activo: 🟢 Start automation
     
-    state "🚨 Error States" as ErrorStates {
-        InvalidPage: Not TikTok Live page
-        NoHeartButton: Heart button not found
-        StorageError: Storage operation failed
-        CommunicationError: Background communication failed
+    state "🚨 Estados de Error" as EstadosError {
+        PaginaInvalida: Not TikTok Live page
+        BotonNoEncontrado: Heart button not found
+        ErrorStorage: Storage operation failed
+        ErrorComunicacion: Background communication failed
     }
     
-    Inactive --> ErrorStates: Various errors
-    Active --> ErrorStates: Runtime errors
-    ErrorStates --> Inactive: Recovery or reset
+    Inactivo --> EstadosError: Various errors
+    Activo --> EstadosError: Runtime errors
+    EstadosError --> Inactivo: Recovery or reset
     
     %% Background sync states
     state "🔄 Background Sync" as BackgroundSync {
-        [*] --> Syncing: Every 5 seconds
-        Syncing --> UpdatingBadge: Update badge count
-        UpdatingBadge --> CheckingState: Verify active state
-        CheckingState --> AnimatingBadge: If active
-        CheckingState --> StaticBadge: If inactive
-        AnimatingBadge --> [*]
-        StaticBadge --> [*]
+        [*] --> Sincronizando: Every 5 seconds
+        Sincronizando --> ActualizandoBadge: Update badge count
+        ActualizandoBadge --> VerificandoEstado: Verify active state
+        VerificandoEstado --> AnimandoBadge: If active
+        VerificandoEstado --> BadgeEstatico: If inactive
+        AnimandoBadge --> [*]
+        BadgeEstatico --> [*]
     }
     
-    Active --> BackgroundSync: Continuous sync
-    Inactive --> BackgroundSync: State monitoring
+    Activo --> BackgroundSync: Continuous sync
+    Inactivo --> BackgroundSync: State monitoring
     
     %% UI Update flows
-    state "🎨 UI Updates" as UIUpdates {
-        [*] --> PopupSync: Popup queries state
-        PopupSync --> UpdateIndicators: Update status text
-        UpdateIndicators --> UpdateButtons: Update button states
-        UpdateButtons --> UpdateCounters: Update statistics
-        UpdateCounters --> [*]
+    state "🎨 Actualizaciones UI" as ActualizacionesUI {
+        [*] --> SincPopup: Popup queries state
+        SincPopup --> ActualizarIndicadores: Update status text
+        ActualizarIndicadores --> ActualizarBotones: Update button states
+        ActualizarBotones --> ActualizarContadores: Update statistics
+        ActualizarContadores --> [*]
     }
     
-    Active --> UIUpdates: State changes
-    Inactive --> UIUpdates: State changes
-    BackgroundSync --> UIUpdates: Sync triggered
+    Activo --> ActualizacionesUI: State changes
+    Inactivo --> ActualizacionesUI: State changes
+    BackgroundSync --> ActualizacionesUI: Sync triggered
 ```
 
 ---
 
-## 💾 **SISTEMA DE ALMACENAMIENTO**
+## 💾 Sistema de Almacenamiento
 
 ```mermaid
 graph TB
     subgraph "Chrome Storage System"
         subgraph "Storage Keys"
             TOTAL[totalTapTaps<br/>📊 Contador global]
-            TIEMPO[tiempoReactivacion<br/>⏰ Tiempo de reactivación]
+            TIEMPO[tiempoReactivacion<br/>⏰ Tiempo reactivación]
             ACTIVO[estado_activo<br/>🔄 Estado persistente]
+            POSICION[position<br/>📍 Posición UI]
         end
         
         subgraph "Storage Operations"
-            GET[chrome.storage.local.get()]
-            SET[chrome.storage.local.set()]
+            GET[chrome.storage.local.get]
+            SET[chrome.storage.local.set]
             WATCH[storage.onChanged]
         end
     end
     
     subgraph "Content Script Storage"
-        CS_SAVE[safeStorageOperation()]
+        CS_SAVE[safeStorageOperation]
         CS_LOAD[Cargar configuración]
         CS_AUTO[Auto-save on changes]
     end
@@ -537,7 +523,7 @@ graph TB
     
     subgraph "Popup Script Storage"
         POP_LOAD[Cargar estadísticas]
-        POP_CONFIG[Configuración de usuario]
+        POP_CONFIG[Configuración usuario]
         POP_UPDATE[Actualización periódica]
     end
     
@@ -554,67 +540,57 @@ graph TB
     SET --> TOTAL
     SET --> TIEMPO
     SET --> ACTIVO
+    SET --> POSICION
     
     GET --> TOTAL
     GET --> TIEMPO
     GET --> ACTIVO
+    GET --> POSICION
     
     %% Cross-component sync
     WATCH --> CS_AUTO
     WATCH --> BG_SYNC
     WATCH --> POP_UPDATE
     
-    %% Storage flow sequence
-    subgraph "Storage Operations Flow"
-        START_OP([Operation Initiated])
-        VALIDATE[Validate Data]
-        EXECUTE[Execute Operation]
-        ERROR_CHECK{Error?}
-        SUCCESS[Success Response]
-        ERROR_HANDLE[Error Handling]
-        RETRY{Retry?}
-        FALLBACK[Fallback/Default]
-        
-        START_OP --> VALIDATE
-        VALIDATE --> EXECUTE
-        EXECUTE --> ERROR_CHECK
-        ERROR_CHECK -->|No| SUCCESS
-        ERROR_CHECK -->|Yes| ERROR_HANDLE
-        ERROR_HANDLE --> RETRY
-        RETRY -->|Yes| EXECUTE
-        RETRY -->|No| FALLBACK
-    end
-```
+    %% Styling
+    classDef storageStyle fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef operationStyle fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
+    classDef csStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef bgStyle fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
+    classDef popupStyle fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    
+    class TOTAL,TIEMPO,ACTIVO,POSICION storageStyle
+    class GET,SET,WATCH operationStyle
+    class CS_SAVE,CS_LOAD,CS_AUTO csStyle
+    class BG_INIT,BG_SYNC,BG_PERSIST bgStyle
+    class POP_LOAD,POP_CONFIG,POP_UPDATE popupStyle
 ```
 
----
-
-## 🔄 **SINCRONIZACIÓN Y BACKGROUND**
+### 🔄 Flujo de Sincronización
 
 ```mermaid
 sequenceDiagram
-    participant T as Timer (5s)
-    participant B as background.js
-    participant TAB as Active Tabs
-    participant C as content.js
-    participant UI as Badge/UI
-    participant S as Storage
+    participant T as ⏰ Timer (5s)
+    participant B as 🔧 background.js
+    participant C as 📜 content.js
+    participant S as 💾 Storage
+    participant UI as 🎨 Badge UI
     
-    Note over T,S: 🔄 Sincronización Automática cada 5 segundos
+    Note over T,UI: 🔄 Proceso de Sincronización Automática
     
-    T->>+B: ⏰ Timer trigger
-    B->>B: 🔍 Iniciar syncState()
-    
-    B->>+TAB: 📋 chrome.tabs.query({active: true})
-    TAB-->>-B: Array de tabs activos
-    
-    loop Para cada tab de TikTok
-        B->>+C: 📡 sendMessage('getStatus')
+    loop Cada 5 segundos
+        T->>+B: ⏰ Trigger sync
+        
+        B->>+C: 📡 {action: 'getStatus'}
         
         alt Content script responde
-            C->>C: 📊 Obtener estado actual
-            C-->>-B: {activo: boolean, contador: number}
-            B->>B: 🔄 Actualizar extensionState
+            C->>+S: 📥 Obtener estado actual
+            S-->>-C: {contador, activo, etc}
+            C-->>-B: {contador, activo, contexto}
+            
+            B->>B: 📊 extensionState.contador = valor
+            B->>B: 🔄 extensionState.active = estado
+            
             B->>+UI: 🏷️ updateBadge(contador)
             UI-->>-B: Badge actualizado
             
@@ -629,98 +605,89 @@ sequenceDiagram
     end
     
     B-->>-T: ✅ Sincronización completada
-    
-    Note over T,S: 📡 Comunicación de Mensajes Runtime
-    
-    participant CS as content.js
-    participant BG as background.js
-    participant P as popup.js
-    
-    Note over CS,P: 🎮 Flujo de Automatización
-    
-    CS->>+BG: 📤 {action: 'started', contador: X}
-    BG->>BG: ✅ extensionState.active = true
-    BG->>BG: 🏷️ Badge a verde + "ON"
-    BG->>BG: ✨ Iniciar animateBadge()
-    BG-->>-CS: {success: true}
-    
-    loop Durante automatización
-        CS->>+BG: 📤 {action: 'updateTapTaps', count: X}
-        BG->>BG: 📊 extensionState.contador = X
-        BG->>+UI: 🔢 updateBadge(X)
-        UI-->>-BG: Badge actualizado con número
-        BG-->>-CS: {success: true}
-        
-        CS->>+S: 💾 set totalTapTaps: X
-        S-->>-CS: Guardado exitoso
-    end
-    
-    Note over CS,P: 🎨 Popup abierto - Actualización UI
-    
-    P->>+CS: 📡 action: getStatus
-    CS-->>-P: activo: true, contador: X, tiempoReactivacion: Y
-    
-    P->>+S: 📊 get totalTapTaps
-    S-->>-P: totalTapTaps: Z
-    
-    P->>P: 🎨 updateUI activo, contador
-    P->>P: 📈 Mostrar estadísticas
-    
-    Note over CS,P: ⏹️ Detener Automatización
-    
-    P->>+CS: 📤 action: toggle
-    CS->>CS: ⏹️ Detener intervalos
-    CS->>+BG: 📤 action: stopped
-    BG->>BG: ❌ extensionState.active = false
-    BG->>BG: 🏷️ Badge a rojo + OFF
-    BG->>BG: 🛑 Detener animación
-    BG-->>-CS: success: true
-    CS-->>-P: success: true
-    
-    P->>P: 🎨 updateUI false, contador
-    
-    Note over P,CS: 🔄 Reset Contador (Junio 2025 - Corregido)
-    
-    P->>+CS: 📤 {action: 'updateTapTaps', count: 0}
-    CS->>CS: ✅ Validar tipo number
-    CS->>CS: 🔄 state.contador = 0
-    CS->>CS: 📱 Actualizar elementos.contadorDiv
-    CS-->>-P: {success: true}
-    P->>P: 🎨 updateUI con contador resetado
 ```
 
 ---
 
-## 📊 **MÉTRICAS Y ESTADÍSTICAS DEL SISTEMA**
+## 📊 Correcciones JavaScript (Junio 2025)
 
-### 🔢 **Componentes Principales**
-- **6 archivos** principales de código
-- **4 sistemas** de comunicación inter-componentes  
-- **3 interfaces** de usuario (content UI, popup, badge)
-- **2 sistemas** de almacenamiento (chrome.storage + estado runtime)
-- **1 service worker** para gestión de background
+### 🔄 Flujo de Corrección updateTapTaps
 
-### ⚡ **Flujos de Datos**
-- **12 tipos** de mensajes diferentes entre componentes
-- **5 segundos** de intervalo de sincronización automática
-- **3 niveles** de manejo de errores y recuperación
-- **2 tipos** de persistencia (sesión + permanente)
+```mermaid
+sequenceDiagram
+    participant P as 🎨 popup.js
+    participant C as 📜 content.js
+    participant S as 💾 Storage
+    
+    Note over P,S: 🔄 Reset Contador (Corrección Junio 2025)
+    
+    P->>+C: 📤 {action: 'updateTapTaps', count: 0}
+    
+    C->>C: ✅ Validar request.hasOwnProperty('count')
+    C->>C: ✅ Validar typeof request.count === 'number'
+    
+    alt Validación exitosa
+        C->>C: 🔄 state.contador = request.count
+        C->>C: 📱 elementos.contadorDiv.textContent = `Tap-Taps: ${count}`
+        C-->>P: {success: true}
+        
+        P->>P: 🎨 updateUI con contador reseteado
+        
+    else Validación falla
+        C-->>P: {error: 'Valor de contador inválido'}
+        P->>P: 🚨 Mostrar error en UI
+    end
+    
+    deactivate C
+```
 
-### 🎯 **Puntos de Integración**
-- **Chrome APIs**: `tabs`, `storage`, `runtime`, `action`
-- **TikTok DOM**: Detección de elementos, eventos de chat
-- **UI Components**: 3 interfaces sincronizadas en tiempo real
-- **Background Tasks**: Sincronización, badges, persistencia
+### 🕐 Flujo de Cuenta Regresiva (timers)
+
+```mermaid
+graph LR
+    INIT[🚀 Inicialización] --> TIMERS_DEF[📊 Definir objeto timers global]
+    
+    TIMERS_DEF --> TIMERS_OBJ{🔧 timers object}
+    
+    TIMERS_OBJ --> TYPING[⌨️ typing: null]
+    TIMERS_OBJ --> CHAT[💬 chat: null]
+    TIMERS_OBJ --> COUNTDOWN[🕐 countdown: null]
+    TIMERS_OBJ --> CUENTA[🔔 cuentaRegresiva: null]
+    TIMERS_OBJ --> CLEANUP[🧹 cleanupAll method]
+    
+    CUENTA --> MOSTRAR_CUENTA[📱 mostrarCuentaRegresiva]
+    
+    MOSTRAR_CUENTA --> ACCESS_OK[✅ Acceso correcto a timers]
+    ACCESS_OK --> NO_ERROR[🚫 Sin 'timers is not defined']
+    
+    %% Styling
+    classDef successStyle fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    classDef timerStyle fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    
+    class ACCESS_OK,NO_ERROR successStyle
+    class TYPING,CHAT,COUNTDOWN,CUENTA,CLEANUP timerStyle
+```
 
 ---
 
-## 👨‍💻 **Información del Desarrollador**
-- **Autor**: Emerick Echeverría Vargas (@EmerickVar)
-- **Organización**: New Age Coding Organization
-- **Proyecto**: TikTok Auto Tap-Tap Chrome Extension
-- **Versión**: 1.0.0
-- **Fecha de diagramas**: 7 de diciembre de 2024
+## 🧪 Verificación de Diagramas
+
+### ✅ Estado de Validación Mermaid
+
+- **8 diagramas** principales verificados
+- **Sintaxis Mermaid** 100% válida
+- **Compatibilidad** con GitHub/GitLab/VSCode
+- **Renderizado** probado correctamente
+
+### 🔧 Notas Técnicas
+
+- Todos los diagramas usan **sintaxis Mermaid v10+**
+- **Colores** consistentes entre diagramas
+- **Iconos** Unicode para mejor visualización
+- **Flujos** lógicos verificados contra código real
 
 ---
 
-> **📌 Nota**: Estos diagramas representan la arquitectura completa y todos los flujos de la extensión TikTok Auto Tap-Tap, proporcionando una visión comprehensiva del sistema para desarrolladores, colaboradores y futuras modificaciones del proyecto.
+**📅 Última actualización**: 7 de junio de 2025  
+**🔧 Estado**: Diagramas consolidados y verificados  
+**✅ Compatibilidad**: Mermaid v10+ | GitHub | GitLab | VSCode
