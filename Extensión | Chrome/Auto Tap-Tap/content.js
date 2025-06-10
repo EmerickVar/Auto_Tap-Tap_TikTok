@@ -185,7 +185,11 @@ function setupBasicMessageListener() {
         chatTimeout: null,      // Referencia al setTimeout para reactivar después de usar el chat
         tiempoReactivacion: 10, // Tiempo en segundos que espera antes de reactivar automáticamente
         pausadoPorChat: false,  // Indica si el sistema se pausó automáticamente por detectar uso del chat
-        apagadoManualmente: false // Indica si el usuario apagó manualmente (no reactivar automáticamente)
+        apagadoManualmente: false, // Indica si el usuario apagó manualmente (no reactivar automáticamente)
+        
+        // SISTEMA DE NOTIFICACIONES DE CUENTA REGRESIVA
+        notificacionCuentaRegresiva: null, // Referencia a la notificación de cuenta regresiva activa
+        limpiarCuentaRegresiva: null       // Función para limpiar cuenta regresiva
     };
     
     /**
@@ -202,6 +206,7 @@ function setupBasicMessageListener() {
         countdown: null,
         cuentaRegresiva: null,
         cleanupAll() {
+            console.log('🧹 Ejecutando cleanup completo de timers...');
             Object.entries(this).forEach(([key, timer]) => {
                 if (typeof timer === 'number') {
                     clearTimeout(timer);
@@ -209,6 +214,25 @@ function setupBasicMessageListener() {
                     this[key] = null;
                 }
             });
+            
+            // También limpiar notificaciones de cuenta regresiva si existen
+            if (state.limpiarCuentaRegresiva && typeof state.limpiarCuentaRegresiva === 'function') {
+                try {
+                    state.limpiarCuentaRegresiva();
+                } catch (error) {
+                    console.warn('Error en cleanup de cuenta regresiva:', error);
+                }
+            }
+            
+            // Limpieza defensiva adicional de notificaciones persistentes
+            try {
+                if (state.notificacionCuentaRegresiva) {
+                    removerNotificacion(state.notificacionCuentaRegresiva, true);
+                    state.notificacionCuentaRegresiva = null;
+                }
+            } catch (error) {
+                console.warn('Error en cleanup defensivo:', error);
+            }
         }
     };
     
@@ -396,13 +420,13 @@ function setupBasicMessageListener() {
                         contador: state.contador,
                         enTikTok: true,
                         enLive: true
-                    });
+                    }).catch(error => console.warn('Error al notificar inicio:', error));
                 } else {
                     safeRuntimeMessage({ 
                         action: 'stopped',
                         enTikTok: true,
                         enLive: true
-                    });
+                    }).catch(error => console.warn('Error al notificar parada:', error));
                 }
                 
                 // PASO 5: Reconfigurar los event listeners
@@ -502,6 +526,17 @@ function setupBasicMessageListener() {
                             }
 
                             if (response.error) {
+                                console.warn('🚨 Background script respondió con error:', response.error);
+                                console.warn('Mensaje original:', message);
+                                
+                                // Para errores de "Acción no reconocida", resolver en lugar de rechazar
+                                // para evitar excepciones no capturadas
+                                if (response.error.includes('Acción no reconocida')) {
+                                    console.warn('⚠️ Resolviendo error de acción no reconocida silenciosamente');
+                                    resolve({ error: response.error, handled: true });
+                                    return;
+                                }
+                                
                                 reject(new Error(response.error));
                                 return;
                             }
@@ -724,7 +759,7 @@ function setupBasicMessageListener() {
                 action: 'paused_by_chat', 
                 enTikTok: true, 
                 enLive: true 
-            });
+            }).catch(error => console.warn('Error al notificar pausa por chat:', error));
             
             console.log('✅ Auto Tap-Tap pausado por chat');
             return true;
@@ -757,6 +792,11 @@ function setupBasicMessageListener() {
             // Limpiar estados de chat
             state.pausadoPorChat = false;
             timers.cleanupAll();
+            
+            // Limpiar específicamente cualquier cuenta regresiva activa
+            if (state.limpiarCuentaRegresiva && typeof state.limpiarCuentaRegresiva === 'function') {
+                state.limpiarCuentaRegresiva();
+            }
 
             // Intentar quitar foco del chat si existe
             try {
@@ -871,6 +911,12 @@ function setupBasicMessageListener() {
                 state.pausadoPorChat = false;
                 // Limpiar timers de chat si existen
                 timers.cleanupAll();
+                
+                // Limpiar específicamente cualquier cuenta regresiva activa
+                if (state.limpiarCuentaRegresiva && typeof state.limpiarCuentaRegresiva === 'function') {
+                    state.limpiarCuentaRegresiva();
+                }
+                
                 if (inactivityTimer) {
                     clearTimeout(inactivityTimer);
                     inactivityTimer = null;
@@ -987,6 +1033,7 @@ function setupBasicMessageListener() {
         elementos.botonMinimizar.addEventListener('click', () => {
             const controles = [
                 elementos.boton,
+                elementos.selectorLabel,
                 elementos.selector,
                 elementos.contadorDiv,
                 elementos.botonReset,
@@ -1331,17 +1378,39 @@ function setupBasicMessageListener() {
         const iniciarCuentaRegresiva = () => {
             if (state.pausadoPorChat && !state.apagadoManualmente && !chatInput.textContent.trim()) {
                 console.log('🔄 Iniciando cuenta regresiva por inactividad en chat');
-                timers.cleanupAll();
                 
-                // Limpiar timer de inactividad existente
-                if (inactivityTimer) {
-                    clearTimeout(inactivityTimer);
-                    inactivityTimer = null;
+                // Verificar que no hay una cuenta regresiva ya activa
+                if (!timers.cuentaRegresiva) {
+                    // Limpiar timers específicos sin tocar cuenta regresiva activa
+                    if (timers.typing) {
+                        clearTimeout(timers.typing);
+                        timers.typing = null;
+                    }
+                    if (timers.chat) {
+                        clearTimeout(timers.chat);
+                        timers.chat = null;
+                    }
+                    if (timers.countdown) {
+                        clearTimeout(timers.countdown);
+                        timers.countdown = null;
+                    }
+                    
+                    // Limpiar timer de inactividad existente
+                    if (inactivityTimer) {
+                        clearTimeout(inactivityTimer);
+                        inactivityTimer = null;
+                    }
+                    
+                    // Usar timeout con delay para evitar race conditions
+                    timers.chat = setTimeout(() => {
+                        // Verificar nuevamente que las condiciones siguen siendo válidas
+                        if (state.pausadoPorChat && !state.apagadoManualmente && !chatInput.textContent.trim()) {
+                            mostrarCuentaRegresiva(`⏳ Reactivando en ${state.tiempoReactivacion}s...`);
+                        }
+                    }, 100); // Pequeño delay para estabilidad
+                } else {
+                    console.log('⚠️ Ya hay una cuenta regresiva activa, no creando duplicado');
                 }
-                
-                timers.chat = setTimeout(() => {
-                    mostrarCuentaRegresiva(`⏳ Reactivando en ${state.tiempoReactivacion}s...`);
-                }, 0);
             }
         };
 
@@ -1428,8 +1497,37 @@ function setupBasicMessageListener() {
             });
 
             if (!chatContainer.contains(e.target) && state.pausadoPorChat && !state.apagadoManualmente) {
-                timers.cleanupAll();
-                mostrarCuentaRegresiva(`⏳ Reactivando en ${state.tiempoReactivacion}s...`);
+                console.log('🎯 Click fuera del chat detectado - Iniciando cuenta regresiva');
+                
+                // Verificar que no hay una cuenta regresiva ya activa para evitar duplicados
+                if (!timers.cuentaRegresiva) {
+                    // Limpiar timers ESPECÍFICAMENTE excluyendo cuenta regresiva para evitar race conditions
+                    if (timers.typing) {
+                        clearTimeout(timers.typing);
+                        timers.typing = null;
+                    }
+                    if (timers.chat) {
+                        clearTimeout(timers.chat);
+                        timers.chat = null;
+                    }
+                    if (timers.countdown) {
+                        clearTimeout(timers.countdown);
+                        timers.countdown = null;
+                    }
+                    
+                    // Limpiar timer de inactividad si existe
+                    if (inactivityTimer) {
+                        clearTimeout(inactivityTimer);
+                        inactivityTimer = null;
+                    }
+                    
+                    // Iniciar cuenta regresiva de forma segura
+                    setTimeout(() => {
+                        mostrarCuentaRegresiva(`⏳ Reactivando en ${state.tiempoReactivacion}s...`);
+                    }, 100); // Pequeño delay para asegurar que la limpieza se complete
+                } else {
+                    console.log('⚠️ Ya hay una cuenta regresiva activa, no creando duplicado');
+                }
             }
         };
 
@@ -1458,52 +1556,162 @@ function setupBasicMessageListener() {
     
     // Función para mostrar cuenta regresiva de reactivación
     function mostrarCuentaRegresiva(mensajeInicial) {
+        console.log(`🚀 Iniciando mostrarCuentaRegresiva: "${mensajeInicial}"`);
+        
+        // Verificación defensiva: asegurar que las condiciones son correctas
+        if (!state.pausadoPorChat || state.apagadoManualmente || state.activo) {
+            console.log('⚠️ Condiciones no válidas para cuenta regresiva:', {
+                pausadoPorChat: state.pausadoPorChat,
+                apagadoManualmente: state.apagadoManualmente,
+                activo: state.activo
+            });
+            return;
+        }
+        
+        // Verificar si ya hay una cuenta regresiva activa
+        if (timers.cuentaRegresiva) {
+            console.log('⚠️ Ya hay una cuenta regresiva activa, cancelando nueva');
+            return;
+        }
+        
         // Limpiar timer anterior de cuenta regresiva si existe
         if (timers.cuentaRegresiva) {
             clearInterval(timers.cuentaRegresiva);
             timers.cuentaRegresiva = null;
         }
         
+        // Limpiar notificación anterior si existe
+        if (state.notificacionCuentaRegresiva) {
+            removerNotificacion(state.notificacionCuentaRegresiva);
+            state.notificacionCuentaRegresiva = null;
+        }
+        
         // Variables para la cuenta regresiva
         let tiempoRestante = state.tiempoReactivacion;
-        let notificacionCuentaRegresiva = null;
         
         // Crear notificación inicial con duración 0 (permanente hasta que la removamos)
-        notificacionCuentaRegresiva = agregarNotificacion(`⏳ Reactivando en ${tiempoRestante}s...`, 'countdown', 0);
+        state.notificacionCuentaRegresiva = agregarNotificacion(`⏳ Reactivando en ${tiempoRestante}s...`, 'countdown', 0);
+        
+        // Función de limpieza para la cuenta regresiva
+        const limpiarCuentaRegresiva = () => {
+            console.log('🧹 Limpiando cuenta regresiva...');
+            
+            // Limpiar timer
+            if (timers.cuentaRegresiva) {
+                clearInterval(timers.cuentaRegresiva);
+                timers.cuentaRegresiva = null;
+            }
+            
+            // Limpiar notificación con remoción inmediata para evitar persistence
+            if (state.notificacionCuentaRegresiva) {
+                try {
+                    removerNotificacion(state.notificacionCuentaRegresiva, true); // immediate = true
+                    state.notificacionCuentaRegresiva = null;
+                } catch (error) {
+                    console.warn('Error al limpiar notificación de cuenta regresiva:', error);
+                    state.notificacionCuentaRegresiva = null;
+                }
+            }
+            
+            // Limpieza adicional defensiva: buscar cualquier notificación huérfana de countdown
+            try {
+                if (elementos.contenedorNotificaciones) {
+                    const notificacionesCountdown = Array.from(elementos.contenedorNotificaciones.children)
+                        .filter(el => el.textContent && el.textContent.includes('Reactivando en'));
+                    
+                    if (notificacionesCountdown.length > 0) {
+                        console.log(`🗑️ Limpiando ${notificacionesCountdown.length} notificaciones huérfanas de countdown`);
+                        notificacionesCountdown.forEach(el => {
+                            try {
+                                el.parentNode.removeChild(el);
+                            } catch (err) {
+                                console.warn('Error limpiando notificación huérfana:', err);
+                            }
+                        });
+                    }
+                }
+            } catch (error) {
+                console.warn('Error en limpieza defensiva:', error);
+            }
+        };
         
         // Iniciar cuenta regresiva
         timers.cuentaRegresiva = setInterval(() => {
+            // Verificar que aún estamos pausados por chat y no apagados manualmente
+            if (!state.pausadoPorChat || state.apagadoManualmente || state.activo) {
+                console.log('⚠️ Cancelando cuenta regresiva - estado cambió:', {
+                    pausadoPorChat: state.pausadoPorChat,
+                    apagadoManualmente: state.apagadoManualmente,
+                    activo: state.activo
+                });
+                limpiarCuentaRegresiva();
+                return;
+            }
+            
             tiempoRestante--;
             
             if (tiempoRestante > 0) {
                 // Actualizar el texto de la notificación existente
-                if (notificacionCuentaRegresiva) {
-                    notificacionCuentaRegresiva.textContent = `⏳ Reactivando en ${tiempoRestante}s...`;
+                if (state.notificacionCuentaRegresiva && state.notificacionCuentaRegresiva.parentNode) {
+                    state.notificacionCuentaRegresiva.textContent = `⏳ Reactivando en ${tiempoRestante}s...`;
                     
                     // Cambiar color cuando quedan pocos segundos
                     if (tiempoRestante <= 3) {
-                        notificacionCuentaRegresiva.style.background = 'rgba(255, 69, 0, 0.95)';
-                        notificacionCuentaRegresiva.style.border = '1px solid #ff4500';
-                        notificacionCuentaRegresiva.style.boxShadow = '0 2px 8px rgba(255, 69, 0, 0.4)';
+                        state.notificacionCuentaRegresiva.style.background = 'rgba(255, 69, 0, 0.95)';
+                        state.notificacionCuentaRegresiva.style.border = '1px solid #ff4500';
+                        state.notificacionCuentaRegresiva.style.boxShadow = '0 2px 8px rgba(255, 69, 0, 0.4)';
                     }
+                } else {
+                    // Si la notificación se perdió, cancelar cuenta regresiva
+                    console.log('⚠️ Notificación perdida, cancelando cuenta regresiva');
+                    limpiarCuentaRegresiva();
+                    return;
                 }
             } else {
                 // Mostrar mensaje final antes de reactivar
-                if (notificacionCuentaRegresiva) {
-                    notificacionCuentaRegresiva.textContent = '✨ Reactivando Auto Tap-Tap...';
-                    notificacionCuentaRegresiva.style.background = 'rgba(0, 200, 0, 0.95)';
-                    notificacionCuentaRegresiva.style.border = '1px solid #00c800';
-                    notificacionCuentaRegresiva.style.boxShadow = '0 2px 8px rgba(0, 200, 0, 0.4)';
+                if (state.notificacionCuentaRegresiva && state.notificacionCuentaRegresiva.parentNode) {
+                    state.notificacionCuentaRegresiva.textContent = '✨ Reactivando Auto Tap-Tap...';
+                    state.notificacionCuentaRegresiva.style.background = 'rgba(0, 200, 0, 0.95)';
+                    state.notificacionCuentaRegresiva.style.border = '1px solid #00c800';
+                    state.notificacionCuentaRegresiva.style.boxShadow = '0 2px 8px rgba(0, 200, 0, 0.4)';
                 }
                 
                 // Ejecutar la reactivación después de un breve retraso
                 setTimeout(() => {
-                    reactivarAutoTapTap();
+                    // Verificar nuevamente que podemos reactivar
+                    if (state.pausadoPorChat && !state.apagadoManualmente && !state.activo) {
+                        try {
+                            reactivarAutoTapTap();
+                        } catch (error) {
+                            console.error('Error en reactivación:', error);
+                        }
+                    }
                     
-                    // Remover la notificación después de mostrar el mensaje final
+                    // Siempre limpiar la notificación al final, con un cleanup más agresivo
                     setTimeout(() => {
-                        if (notificacionCuentaRegresiva) {
-                            removerNotificacion(notificacionCuentaRegresiva);
+                        try {
+                            limpiarCuentaRegresiva();
+                            
+                            // Cleanup adicional defensivo para asegurar que no queden elementos
+                            if (elementos.contenedorNotificaciones) {
+                                const elementosCountdown = Array.from(elementos.contenedorNotificaciones.children)
+                                    .filter(el => el.textContent && (
+                                        el.textContent.includes('Reactivando en') || 
+                                        el.textContent.includes('Reactivando Auto Tap-Tap')
+                                    ));
+                                
+                                elementosCountdown.forEach(el => {
+                                    try {
+                                        if (el.parentNode) {
+                                            el.parentNode.removeChild(el);
+                                        }
+                                    } catch (cleanupError) {
+                                        console.warn('Error en cleanup defensivo final:', cleanupError);
+                                    }
+                                });
+                            }
+                        } catch (error) {
+                            console.warn('Error en cleanup final:', error);
                         }
                     }, 1000);
                 }, 500);
@@ -1513,6 +1721,9 @@ function setupBasicMessageListener() {
                 timers.cuentaRegresiva = null;
             }
         }, 1000);
+        
+        // Guardar función de limpieza en el estado para acceso externo
+        state.limpiarCuentaRegresiva = limpiarCuentaRegresiva;
     }
     
     /**
@@ -1526,22 +1737,88 @@ function setupBasicMessageListener() {
      * @description Limpia notificaciones de chat y cuenta regresiva del DOM
      */
     function limpiarNotificacionesFlotantes() {
+        console.log('🧹 Iniciando limpieza completa de notificaciones...');
+        
         // Limpiar notificación de chat independiente (legacy)
         if (elementos.notificacionChat && elementos.notificacionChat.parentNode) {
-            elementos.notificacionChat.parentNode.removeChild(elementos.notificacionChat);
-            elementos.notificacionChat = null;
+            try {
+                elementos.notificacionChat.parentNode.removeChild(elementos.notificacionChat);
+                elementos.notificacionChat = null;
+            } catch (error) {
+                console.warn('Error limpiando notificación de chat:', error);
+                elementos.notificacionChat = null;
+            }
         }
         
         // Limpiar notificación de cuenta regresiva independiente (legacy)
         if (elementos.cuentaRegresivaDiv && elementos.cuentaRegresivaDiv.parentNode) {
-            elementos.cuentaRegresivaDiv.parentNode.removeChild(elementos.cuentaRegresivaDiv);
-            elementos.cuentaRegresivaDiv = null;
+            try {
+                elementos.cuentaRegresivaDiv.parentNode.removeChild(elementos.cuentaRegresivaDiv);
+                elementos.cuentaRegresivaDiv = null;
+            } catch (error) {
+                console.warn('Error limpiando cuenta regresiva legacy:', error);
+                elementos.cuentaRegresivaDiv = null;
+            }
         }
         
-        // Limpiar todas las notificaciones del contenedor integrado
-        if (elementos.contenedorNotificaciones) {
-            elementos.contenedorNotificaciones.innerHTML = '';
+        // Limpiar notificación de cuenta regresiva activa del estado
+        if (state.notificacionCuentaRegresiva) {
+            try {
+                removerNotificacion(state.notificacionCuentaRegresiva, true); // immediate = true
+                state.notificacionCuentaRegresiva = null;
+            } catch (error) {
+                console.warn('Error limpiando notificación activa:', error);
+                state.notificacionCuentaRegresiva = null;
+            }
         }
+        
+        // Limpiar función de cuenta regresiva si existe
+        if (state.limpiarCuentaRegresiva && typeof state.limpiarCuentaRegresiva === 'function') {
+            try {
+                state.limpiarCuentaRegresiva();
+                state.limpiarCuentaRegresiva = null;
+            } catch (error) {
+                console.warn('Error ejecutando función de limpieza:', error);
+                state.limpiarCuentaRegresiva = null;
+            }
+        }
+        
+        // Limpiar TODAS las notificaciones del contenedor integrado de forma defensiva
+        if (elementos.contenedorNotificaciones) {
+            try {
+                // Método 1: Usar la función existente
+                const notificaciones = Array.from(elementos.contenedorNotificaciones.children);
+                notificaciones.forEach(notificacion => {
+                    try {
+                        removerNotificacion(notificacion, true); // immediate = true
+                    } catch (error) {
+                        console.warn('Error removiendo notificación individual:', error);
+                    }
+                });
+                
+                // Método 2: Limpieza forzada con innerHTML (fallback)
+                setTimeout(() => {
+                    try {
+                        if (elementos.contenedorNotificaciones) {
+                            elementos.contenedorNotificaciones.innerHTML = '';
+                        }
+                    } catch (error) {
+                        console.warn('Error en limpieza forzada:', error);
+                    }
+                }, 100);
+                
+            } catch (error) {
+                console.warn('Error en limpieza general de contenedor:', error);
+                // Fallback extremo
+                try {
+                    elementos.contenedorNotificaciones.innerHTML = '';
+                } catch (fallbackError) {
+                    console.error('Error crítico en limpieza:', fallbackError);
+                }
+            }
+        }
+        
+        console.log('✅ Limpieza de notificaciones completada');
     }
     
     /**
@@ -1646,20 +1923,39 @@ function setupBasicMessageListener() {
      * Remueve una notificación específica con animación de salida.
      * 
      * @param {HTMLElement} notificacion - Elemento de notificación a remover
+     * @param {boolean} immediate - Si debe removerse inmediatamente sin animación
      */
-    function removerNotificacion(notificacion) {
-        if (!notificacion || !notificacion.parentNode) return;
+    function removerNotificacion(notificacion, immediate = false) {
+        if (!notificacion) return;
         
-        // Animar salida
-        notificacion.style.opacity = '0';
-        notificacion.style.transform = 'translateX(20px)';
-        
-        // Remover del DOM después de la animación
-        setTimeout(() => {
-            if (notificacion.parentNode) {
-                notificacion.parentNode.removeChild(notificacion);
+        try {
+            if (immediate || !notificacion.parentNode) {
+                // Remover inmediatamente sin animación
+                if (notificacion.parentNode) {
+                    notificacion.parentNode.removeChild(notificacion);
+                }
+                return;
             }
-        }, 300);
+            
+            // Animar salida solo si el elemento aún está en el DOM
+            if (notificacion.parentNode) {
+                notificacion.style.opacity = '0';
+                notificacion.style.transform = 'translateX(20px)';
+                
+                // Remover del DOM después de la animación
+                setTimeout(() => {
+                    try {
+                        if (notificacion.parentNode) {
+                            notificacion.parentNode.removeChild(notificacion);
+                        }
+                    } catch (error) {
+                        console.warn('Error al remover notificación:', error);
+                    }
+                }, 300);
+            }
+        } catch (error) {
+            console.warn('Error en removerNotificacion:', error);
+        }
     }
     
     /**
@@ -1709,7 +2005,7 @@ function setupBasicMessageListener() {
         const pathname = window.location.pathname;
         const livePattern = /^\/@[^\/]+\/live(?:\/[^?]*)?$/;
         return livePattern.test(pathname);
-    }
+       }
     
     /**
      * OBTENER CONTEXTO ACTUAL
@@ -1900,9 +2196,9 @@ function setupBasicMessageListener() {
             margin-bottom: 15px;
         `;
         
-        const selectorLabel = document.createElement('label');
-        selectorLabel.textContent = '⚡ Velocidad:';
-        selectorLabel.style.cssText = `
+        elementos.selectorLabel = document.createElement('label');
+        elementos.selectorLabel.textContent = '⚡ Velocidad:';
+        elementos.selectorLabel.style.cssText = `
             display: block;
             margin-bottom: 8px;
             font-weight: bold;
@@ -1933,7 +2229,7 @@ function setupBasicMessageListener() {
         });
         elementos.selector.value = config.defaultInterval;
         
-        selectorContainer.appendChild(selectorLabel);
+        selectorContainer.appendChild(elementos.selectorLabel);
         selectorContainer.appendChild(elementos.selector);
         
         // CREAR DISPLAY DEL CONTADOR
@@ -2220,6 +2516,9 @@ function setupBasicMessageListener() {
             // Limpiar notificaciones flotantes independientes
             limpiarNotificacionesFlotantes();
             
+            // Limpiar timers de chat y cuenta regresiva
+            timers.cleanupAll();
+            
             // Resetear estados relacionados con automatización
             state.activo = false;
             state.pausadoPorChat = false;
@@ -2339,25 +2638,69 @@ function setupBasicMessageListener() {
         console.log('✅ Sistema de detección de navegación configurado correctamente');
     }
 
-    // ========================================================================================
-    // 🎯 PUNTO DE ENTRADA PRINCIPAL DE LA EXTENSIÓN
-    // ========================================================================================
-    
     /**
-     * INICIACIÓN AUTOMÁTICA DE LA APLICACIÓN
+     * =============================================================================
+     * FUNCIÓN DE LIMPIEZA DEFENSIVA PERIÓDICA
+     * =============================================================================
      * 
-     * Ejecuta la función de inicialización inmediatamente cuando el script
-     * se carga en la página de TikTok. Esta es la llamada que pone en marcha
-     * todo el sistema de Auto Tap-Tap.
+     * Función que se ejecuta periódicamente para limpiar cualquier notificación
+     * huérfana que pueda haber quedado en el DOM debido a race conditions o errores.
+     */
+    function limpiezaDefensivaPeriodica() {
+        try {
+            if (!elementos.contenedorNotificaciones) return;
+            
+            const notificacionesHuerfanas = Array.from(elementos.contenedorNotificaciones.children)
+                .filter(el => {
+                    const texto = el.textContent || '';
+                    return texto.includes('Reactivando en') || 
+                           texto.includes('Reactivando Auto Tap-Tap') ||
+                           texto.includes('Auto Tap-Tap pausado');
+                });
+            
+            if (notificacionesHuerfanas.length > 0) {
+                console.log(`🗑️ Limpieza defensiva: encontradas ${notificacionesHuerfanas.length} notificaciones huérfanas`);
+                
+                notificacionesHuerfanas.forEach((el, index) => {
+                    try {
+                        // Verificar si la notificación debería estar activa
+                        const texto = el.textContent || '';
+                        let deberiaEstarActiva = false;
+                        
+                        if (texto.includes('Reactivando en') && state.pausadoPorChat && timers.cuentaRegresiva) {
+                            // Esta notificación debería estar activa, no la toques
+                            if (state.notificacionCuentaRegresiva === el) {
+                                deberiaEstarActiva = true;
+                            }
+                        }
+                        
+                        if (!deberiaEstarActiva) {
+                            console.log(`🗑️ Removiendo notificación huérfana ${index + 1}: "${texto.substring(0, 50)}..."`);
+                            if (el.parentNode) {
+                                el.parentNode.removeChild(el);
+                            }
+                        }
+                    } catch (error) {
+                        console.warn(`Error removiendo notificación huérfana ${index}:`, error);
+                    }
+                });
+            }
+        } catch (error) {
+            console.warn('Error en limpieza defensiva periódica:', error);
+        }
+    }
+
+    // Configurar limpieza defensiva periódica cada 30 segundos
+    setInterval(limpiezaDefensivaPeriodica, 30000);
+
+    /**
+     * =============================================================================
+     * PUNTO DE ENTRADA PRINCIPAL DE LA EXTENSIÓN
+     * =============================================================================
      * 
-     * TIMING DE EJECUCIÓN:
-     * Se ejecuta tan pronto como el DOM está listo y el content script
-     * se inyecta en la página, asegurando que la extensión esté disponible
-     * para el usuario lo antes posible.
-     * 
-     * PROTECCIÓN CONTRA MÚLTIPLES INSTANCIAS:
-     * El guard clause al inicio del IIFE previene que múltiples instancias
-     * de la extensión se ejecuten simultáneamente en la misma página.
+     * Esta es la llamada que inicia todo el proceso de la extensión. Se ejecuta
+     * inmediatamente después de que el script se inyecta en la página, y llama
+     * a la función init() para comenzar la inicialización.
      */
     init();
 

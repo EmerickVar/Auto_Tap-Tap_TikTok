@@ -551,6 +551,35 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             break;
 
         // ====================================================================
+        case 'paused_by_chat':
+            /**
+             * Maneja notificación de pausa por interacción con chat
+             * 
+             * PROPÓSITO:
+             * Actualiza el badge y estado cuando el auto tap-tap se pausa
+             * automáticamente debido a que el usuario interactúa con el chat.
+             */
+            console.log('💬 Auto Tap-Tap pausado por chat');
+            updateBadge(0, true, true); // count=0, enTikTok=true, enLive=true
+            sendResponse({ success: true });
+            break;
+
+        // ====================================================================
+        case 'reactivated_from_chat':
+            /**
+             * Maneja notificación de reactivación después de pausa por chat
+             * 
+             * PROPÓSITO:
+             * Actualiza el badge y estado cuando el auto tap-tap se reactiva
+             * automáticamente después de una pausa por interacción con chat.
+             */
+            console.log('🎉 Auto Tap-Tap reactivado desde chat');
+            const reactivatedCount = request.contador || 0;
+            updateBadge(reactivatedCount, true, true); // enTikTok=true, enLive=true
+            sendResponse({ success: true });
+            break;
+
+        // ====================================================================
         // CASO: ACCIÓN NO RECONOCIDA
         // ====================================================================
         default:
