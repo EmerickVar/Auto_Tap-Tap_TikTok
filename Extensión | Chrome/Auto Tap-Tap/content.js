@@ -189,7 +189,23 @@ function setupBasicMessageListener() {
         
         // SISTEMA DE NOTIFICACIONES DE CUENTA REGRESIVA
         notificacionCuentaRegresiva: null, // Referencia a la notificación de cuenta regresiva activa
-        limpiarCuentaRegresiva: null       // Función para limpiar cuenta regresiva
+        limpiarCuentaRegresiva: null,       // Función para limpiar cuenta regresiva
+        
+        // MODO HUMANO - VARIABLES ALEATORIAS Y TIMERS
+        modoHumano: {
+            activo: false,              // Indica si el modo humano está activo
+            frecuenciaSesion: 0,        // Duración de sesión activa (2750-7835 ms)
+            frecuenciaTapTap: 0,        // Velocidad de tap-tap durante sesión (200-485 ms)
+            cooldownSesion: 0,          // Tiempo de cooldown entre sesiones (3565-9295 ms)
+            enSesion: false,            // Indica si está en sesión activa o en cooldown
+            tiempoSesionRestante: 0,    // Tiempo restante de la sesión actual
+            tiempoCooldownRestante: 0,  // Tiempo restante del cooldown actual
+            pausadoPorChat: false,      // Indica si fue pausado por chat en modo humano
+            timerSesion: null,          // Timer para duración de sesión
+            timerCooldown: null,        // Timer para cooldown entre sesiones
+            inicioSesion: null,         // Timestamp de inicio de sesión (para cálculos precisos)
+            inicioCooldown: null        // Timestamp de inicio de cooldown (para cálculos precisos)
+        }
     };
     
     /**
@@ -205,6 +221,9 @@ function setupBasicMessageListener() {
         chat: null,
         countdown: null,
         cuentaRegresiva: null,
+        // Timers específicos para modo humano
+        modoHumanoSesion: null,
+        modoHumanoCooldown: null,
         cleanupAll() {
             console.log('🧹 Ejecutando cleanup completo de timers...');
             Object.entries(this).forEach(([key, timer]) => {
@@ -214,6 +233,20 @@ function setupBasicMessageListener() {
                     this[key] = null;
                 }
             });
+            
+            // Limpiar modo humano si está activo
+            if (state.modoHumano && state.modoHumano.activo) {
+                console.log('🧹 Limpiando modo humano durante cleanup de timers');
+                // Limpiar timers específicos del modo humano
+                if (state.modoHumano.timerSesion) {
+                    clearTimeout(state.modoHumano.timerSesion);
+                    state.modoHumano.timerSesion = null;
+                }
+                if (state.modoHumano.timerCooldown) {
+                    clearTimeout(state.modoHumano.timerCooldown);
+                    state.modoHumano.timerCooldown = null;
+                }
+            }
             
             // También limpiar notificaciones de cuenta regresiva si existen
             if (state.limpiarCuentaRegresiva && typeof state.limpiarCuentaRegresiva === 'function') {
@@ -257,6 +290,7 @@ function setupBasicMessageListener() {
     const config = {
         // Array de opciones de velocidad con sus respectivos valores y descripciones
         intervalos: [
+            { valor: 0, texto: 'Modo humano | [Variable]' },           // Modo humano con valores aleatorios
             { valor: 200, texto: '200 milisegundos | [Muy rápido]' },  // 5 tap-taps por segundo
             { valor: 250, texto: '250 milisegundos | [Rápido]' },      // 4 tap-taps por segundo
             { valor: 500, texto: '500 milisegundos | [Normal]' },      // 2 tap-taps por segundo
@@ -657,7 +691,7 @@ function setupBasicMessageListener() {
         // PASO 3: Incrementar contador de tap-taps realizados
         state.contador++;
         
-        // PASO 4: Actualizar la interfaz de usuario inmediatamente
+        // PASO 4
         actualizarContador();
         
         // PASO 5: Realizar operaciones de persistencia de forma asíncrona 
@@ -713,134 +747,382 @@ function setupBasicMessageListener() {
     
     /**
      * =============================================================================
-     * FUNCIÓN PARA PAUSAR POR INTERACCIÓN CON CHAT
+     * SISTEMA DE MODO HUMANO - GESTIÓN DE VARIABLES ALEATORIAS Y CICLOS
      * =============================================================================
-     * 
-     * Función específica para pausar el Auto Tap-Tap cuando el usuario interactúa
-     * con el chat. A diferencia de toggleAutoTapTap, esta función está diseñada
-     * específicamente para el sistema de chat y no interfiere con el estado manual.
-     * 
-     * @returns {boolean} - true si se pausó exitosamente, false en caso contrario
      */
-    function pausarPorChat() {
-        console.log('💬 Pausando Auto Tap-Tap por interacción con chat');
-        console.log('Estado antes de pausar:', {
-            activo: state.activo,
-            pausadoPorChat: state.pausadoPorChat,
-            apagadoManualmente: state.apagadoManualmente
+    
+    /**
+     * GENERAR VARIABLES ALEATORIAS PARA MODO HUMANO
+     * 
+     * Genera valores aleatorios dentro de los rangos especificados para
+     * simular comportamiento humano más realista.
+     * 
+     * RANGOS:
+     * - frecuenciaSesion: 27500-78350 ms (duración de sesión activa)
+     * - frecuenciaTapTap: 200-485 ms (velocidad durante sesión)
+     * - cooldownSesion: 3565-9295 ms (tiempo entre sesiones)
+     */
+    function generarVariablesModoHumano() {
+        console.log('🎲 Generando nuevas variables aleatorias para modo humano...');
+        
+        // Generar valores aleatorios dentro de los rangos especificados
+        state.modoHumano.frecuenciaSesion = Math.floor(Math.random() * (78350 - 27500 + 1)) + 27500;
+        state.modoHumano.frecuenciaTapTap = Math.floor(Math.random() * (485 - 200 + 1)) + 200;
+        state.modoHumano.cooldownSesion = Math.floor(Math.random() * (9295 - 3565 + 1)) + 3565;
+        
+        console.log('🎯 Variables generadas:', {
+            frecuenciaSesion: `${state.modoHumano.frecuenciaSesion}ms (${(state.modoHumano.frecuenciaSesion / 1000).toFixed(1)}s)`,
+            frecuenciaTapTap: `${state.modoHumano.frecuenciaTapTap}ms`,
+            cooldownSesion: `${state.modoHumano.cooldownSesion}ms (${(state.modoHumano.cooldownSesion / 1000).toFixed(1)}s)`
         });
-
-        // Solo pausar si está activo y no fue apagado manualmente
-        if (state.activo && !state.apagadoManualmente) {
-            // Marcar como pausado por chat
-            state.pausadoPorChat = true;
-            
-            // Limpiar intervalo existente
-            if (state.intervalo) {
-                console.log('🧹 Limpiando intervalo por pausa de chat');
-                safeInterval.clear(state.intervalo);
-                state.intervalo = null;
-            }
-            
-            // Actualizar estado a inactivo
-            state.activo = false;
-            
-            // Actualizar interfaz
-            elementos.boton.textContent = '💤 Auto Tap-Tap: OFF (Chat)';
-            elementos.boton.style.background = '#ff6b6b';
-            elementos.selector.disabled = false;
-            elementos.selector.style.opacity = '1';
-            
-            // Actualizar colores dinámicamente
-            actualizarColoresBoton();
-            
-            // Notificar al background script
-            safeRuntimeMessage({ 
-                action: 'paused_by_chat', 
-                enTikTok: true, 
-                enLive: true 
-            }).catch(error => console.warn('Error al notificar pausa por chat:', error));
-            
-            console.log('✅ Auto Tap-Tap pausado por chat');
-            return true;
+        
+        // Actualizar texto del selector con las nuevas variables
+        actualizarTextoSelectorModoHumano();
+    }
+    
+    /**
+     * INICIAR SESIÓN ACTIVA EN MODO HUMANO
+     * 
+     * Inicia una sesión de tap-taps con la frecuencia calculada
+     * y programa el fin de la sesión.
+     */
+    function iniciarSesionModoHumano() {
+        console.log('🚀 Iniciando sesión activa en modo humano...');
+        console.log(`⏱️ Duración de sesión: ${state.modoHumano.frecuenciaSesion}ms (${(state.modoHumano.frecuenciaSesion / 1000).toFixed(1)}s)`);
+        console.log(`💓 Velocidad tap-tap: ${state.modoHumano.frecuenciaTapTap}ms`);
+        
+        state.modoHumano.enSesion = true;
+        state.modoHumano.tiempoSesionRestante = state.modoHumano.frecuenciaSesion;
+        state.modoHumano.inicioSesion = Date.now(); // Registrar timestamp de inicio
+        
+        // Iniciar tap-taps con la frecuencia calculada
+        presionarL(); // Ejecutar inmediatamente
+        state.intervalo = safeInterval.create(presionarL, state.modoHumano.frecuenciaTapTap);
+        
+        // Programar el fin de la sesión
+        timers.modoHumanoSesion = setTimeout(() => {
+            console.log('⏸️ Sesión de modo humano completada, iniciando cooldown...');
+            finalizarSesionModoHumano();
+        }, state.modoHumano.frecuenciaSesion);
+        
+        // Notificación de inicio de sesión
+        agregarNotificacion(
+            `🤖 Modo Humano: Sesión activa por ${(state.modoHumano.frecuenciaSesion / 1000).toFixed(1)}s`, 
+            'info', 
+            3000
+        );
+    }
+    
+    /**
+     * FINALIZAR SESIÓN Y COMENZAR COOLDOWN
+     * 
+     * Detiene los tap-taps e inicia el período de cooldown
+     * antes de la siguiente sesión.
+     */
+    function finalizarSesionModoHumano() {
+        console.log('🛑 Finalizando sesión de modo humano...');
+        
+        // Detener tap-taps
+        if (state.intervalo) {
+            safeInterval.clear(state.intervalo);
+            state.intervalo = null;
         }
         
-        console.log('⚠️ No se pausó - estado no permite pausa');
-        return false;
+        // Limpiar timer de sesión
+        if (timers.modoHumanoSesion) {
+            clearTimeout(timers.modoHumanoSesion);
+            timers.modoHumanoSesion = null;
+        }
+        
+        state.modoHumano.enSesion = false;
+        state.modoHumano.tiempoCooldownRestante = state.modoHumano.cooldownSesion;
+        state.modoHumano.inicioCooldown = Date.now(); // Registrar timestamp de inicio del cooldown
+        
+        console.log(`😴 Iniciando cooldown por ${state.modoHumano.cooldownSesion}ms (${(state.modoHumano.cooldownSesion / 1000).toFixed(1)}s)`);
+        
+        // Programar el reinicio de la siguiente sesión
+        timers.modoHumanoCooldown = setTimeout(() => {
+            console.log('🔄 Cooldown completado, regenerando variables...');
+            if (state.modoHumano.activo && !state.modoHumano.pausadoPorChat && !state.apagadoManualmente) {
+                // Regenerar variables y comenzar nueva sesión
+                generarVariablesModoHumano();
+                iniciarSesionModoHumano();
+            }
+        }, state.modoHumano.cooldownSesion);
+        
+        // Notificación de cooldown
+        agregarNotificacion(
+            `😴 Modo Humano: Cooldown por ${(state.modoHumano.cooldownSesion / 1000).toFixed(1)}s`, 
+            'warning', 
+            3000
+        );
+    }
+    
+    /**
+     * PAUSAR MODO HUMANO POR CHAT
+     * 
+     * Pausa los timers del modo humano sin regenerar variables,
+     * preservando el estado actual para reanudar después.
+     */
+    function pausarModoHumanoPorChat() {
+        console.log('💬 Pausando modo humano por interacción con chat...');
+        
+        state.modoHumano.pausadoPorChat = true;
+        
+        // Actualizar tiempos restantes antes de pausar
+        actualizarTiemposRestantesModoHumano();
+        
+        // Pausar tap-taps si está en sesión activa
+        if (state.modoHumano.enSesion && state.intervalo) {
+            safeInterval.clear(state.intervalo);
+            state.intervalo = null;
+        }
+        
+        // Pausar timers pero conservar tiempo restante
+        if (timers.modoHumanoSesion) {
+            clearTimeout(timers.modoHumanoSesion);
+            timers.modoHumanoSesion = null;
+        }
+        
+        if (timers.modoHumanoCooldown) {
+            clearTimeout(timers.modoHumanoCooldown);
+            timers.modoHumanoCooldown = null;
+        }
+        
+        console.log('⏸️ Timers de modo humano pausados, variables conservadas');
+    }
+    
+    /**
+     * REANUDAR MODO HUMANO DESPUÉS DEL CHAT
+     * 
+     * Reanuda los timers del modo humano desde donde se pausaron,
+     * sin regenerar las variables.
+     */
+    function reanudarModoHumanoDesdeChat() {
+        console.log('🔄 Reanudando modo humano desde pausa de chat...');
+        
+        state.modoHumano.pausadoPorChat = false;
+        
+        if (state.modoHumano.enSesion) {
+            // Reanudar sesión activa
+            console.log(`▶️ Reanudando sesión con ${state.modoHumano.tiempoSesionRestante}ms restantes`);
+            
+            // Reanudar tap-taps
+            presionarL(); // Ejecutar inmediatamente
+            state.intervalo = safeInterval.create(presionarL, state.modoHumano.frecuenciaTapTap);
+            
+            // Reanudar timer de sesión con tiempo restante
+            timers.modoHumanoSesion = setTimeout(() => {
+                console.log('⏸️ Sesión de modo humano completada tras reanudar, iniciando cooldown...');
+                finalizarSesionModoHumano();
+            }, state.modoHumano.tiempoSesionRestante);
+            
+        } else {
+            // Reanudar cooldown
+            console.log(`😴 Reanudando cooldown con ${state.modoHumano.tiempoCooldownRestante}ms restantes`);
+            
+            // Reanudar timer de cooldown con tiempo restante
+            timers.modoHumanoCooldown = setTimeout(() => {
+                console.log('🔄 Cooldown completado tras reanudar, regenerando variables...');
+                if (state.modoHumano.activo && !state.modoHumano.pausadoPorChat && !state.apagadoManualmente) {
+                    generarVariablesModoHumano();
+                    iniciarSesionModoHumano();
+                }
+            }, state.modoHumano.tiempoCooldownRestante);
+        }
+        
+        agregarNotificacion('🤖 Modo Humano reanudado desde chat', 'success', 3000);
+    }
+    
+    /**
+     * ACTUALIZAR TIEMPOS RESTANTES EN MODO HUMANO
+     * 
+     * Función helper que calcula y actualiza los tiempos restantes
+     * de sesión o cooldown para una pausa más precisa.
+     */
+    function actualizarTiemposRestantesModoHumano() {
+        if (!state.modoHumano.activo) return;
+        
+        const ahora = Date.now();
+        
+        if (state.modoHumano.enSesion && state.modoHumano.inicioSesion) {
+            const tiempoTranscurrido = ahora - state.modoHumano.inicioSesion;
+            state.modoHumano.tiempoSesionRestante = Math.max(0, state.modoHumano.frecuenciaSesion - tiempoTranscurrido);
+            console.log(`⏱️ Tiempo de sesión restante: ${state.modoHumano.tiempoSesionRestante}ms`);
+        } else if (!state.modoHumano.enSesion && state.modoHumano.inicioCooldown) {
+            const tiempoTranscurrido = ahora - state.modoHumano.inicioCooldown;
+            state.modoHumano.tiempoCooldownRestante = Math.max(0, state.modoHumano.cooldownSesion - tiempoTranscurrido);
+            console.log(`⏱️ Tiempo de cooldown restante: ${state.modoHumano.tiempoCooldownRestante}ms`);
+        }
+    }
+    
+    /**
+     * ACTUALIZAR TEXTO DINÁMICO DEL SELECTOR PARA MODO HUMANO
+     * 
+     * Actualiza el texto del selector de velocidad para mostrar las variables
+     * actuales del modo humano cuando está activo.
+     */
+    function actualizarTextoSelectorModoHumano() {
+        if (!elementos.selector) return;
+        
+        const opcionModoHumano = elementos.selector.querySelector('option[value="0"]');
+        if (!opcionModoHumano) return;
+        
+        if (state.modoHumano.activo) {
+            // Mostrar variables actuales
+            const sesionS = (state.modoHumano.frecuenciaSesion / 1000).toFixed(1);
+            const cooldownS = (state.modoHumano.cooldownSesion / 1000).toFixed(1);
+            const tapMs = state.modoHumano.frecuenciaTapTap;
+            
+            opcionModoHumano.textContent = `Modo humano | Sesión:${sesionS}s Tap:${tapMs}ms Cooldown:${cooldownS}s`;
+        } else {
+            // Mostrar texto por defecto
+            opcionModoHumano.textContent = 'Modo humano | [Variable]';
+        }
+    }
+    
+    /**
+     * LIMPIAR COMPLETAMENTE EL MODO HUMANO
+     * 
+     * Limpia todos los timers y resetea todas las variables
+     * del modo humano. Se usa cuando se desactiva manualmente.
+     */
+    function limpiarModoHumano() {
+        console.log('🧹 Limpiando completamente el modo humano...');
+        
+        // Limpiar timers
+        if (timers.modoHumanoSesion) {
+            clearTimeout(timers.modoHumanoSesion);
+            timers.modoHumanoSesion = null;
+        }
+        
+        if (timers.modoHumanoCooldown) {
+            clearTimeout(timers.modoHumanoCooldown);
+            timers.modoHumanoCooldown = null;
+        }
+        
+        // Resetear variables
+        state.modoHumano.activo = false;
+        state.modoHumano.frecuenciaSesion = 0;
+        state.modoHumano.frecuenciaTapTap = 0;
+        state.modoHumano.cooldownSesion = 0;
+        state.modoHumano.enSesion = false;
+        state.modoHumano.tiempoSesionRestante = 0;
+        state.modoHumano.tiempoCooldownRestante = 0;
+        state.modoHumano.pausadoPorChat = false;
+        state.modoHumano.inicioSesion = null;
+        state.modoHumano.inicioCooldown = null;
+        
+        // Restaurar texto original del selector
+        actualizarTextoSelectorModoHumano();
+        
+        console.log('✅ Modo humano completamente limpiado');
     }
     
     /**
      * =============================================================================
-     * FUNCIÓN PARA REACTIVAR AUTO TAP-TAP DESPUÉS DE PAUSA POR CHAT
+     * FUNCIONES DE PAUSA Y REACTIVACIÓN CON INTEGRACIÓN DE MODO HUMANO
      * =============================================================================
-     * 
-     * Función específica para reactivar el Auto Tap-Tap después de que fue pausado
-     * por interacción con el chat. Esta función maneja toda la lógica de reactivación
-     * incluyendo limpieza de estados, configuración de intervalos y actualización de UI.
-     * 
-     * @description Reactiva el sistema después de pausa automática por chat
      */
-    function reactivarAutoTapTap() {
-        console.log('🎯 Intentando reactivar Auto Tap-Tap...');
-        console.log('Estado actual:', { 
-            apagadoManualmente: state.apagadoManualmente,
-            pausadoPorChat: state.pausadoPorChat,
-            activo: state.activo
-        });
+
+    /**
+     * PAUSAR AUTO TAP-TAP POR INTERACCIÓN CON CHAT
+     * 
+     * Pausa el sistema cuando el usuario interactúa con el chat.
+     * Integra soporte para modo humano pausando los timers específicos.
+     * 
+     * @returns {boolean} - true si se pausó exitosamente, false si no era necesario
+     */
+    function pausarPorChat() {
+        console.log('💬 Pausando por interacción con chat...');
         
-        if (!state.apagadoManualmente) {
-            // Limpiar estados de chat
-            state.pausadoPorChat = false;
-            timers.cleanupAll();
-            
-            // Limpiar específicamente cualquier cuenta regresiva activa
-            if (state.limpiarCuentaRegresiva && typeof state.limpiarCuentaRegresiva === 'function') {
-                state.limpiarCuentaRegresiva();
-            }
-
-            // Intentar quitar foco del chat si existe
-            try {
-                const chatInput = document.querySelector('div[contenteditable="plaintext-only"]') ||
-                                document.querySelector('div[contenteditable="plaintext-only"][maxlength="150"]');
-                
-                if (chatInput) {
-                    chatInput.blur();
-                    if (chatInput.getAttribute('contenteditable')) {
-                        chatInput.setAttribute('focused', 'false');
-                    }
-                }
-            } catch (error) {
-                console.warn('No se pudo quitar el foco del chat:', error);
-            }
-
-            // Reactivar directamente sin usar toggleAutoTapTap
-            state.activo = true;
-            
-            // Configurar intervalo
-            const intervalo = parseInt(elementos.selector.value);
-            presionarL(); // Ejecutar inmediatamente
-            state.intervalo = safeInterval.create(presionarL, intervalo);
-            
-            // Actualizar estado visual
-            elementos.boton.textContent = '❤️ Auto Tap-Tap: ON';
-            elementos.boton.style.background = '#00f2ea';
-            elementos.selector.disabled = true;
-            elementos.selector.style.opacity = '0.5';
-            actualizarColoresBoton();
-            
-            // Notificar al background script
-            safeRuntimeMessage({ 
-                action: 'reactivated_from_chat',
-                contador: state.contador,
-                enTikTok: true,
-                enLive: true
-            }).catch(error => console.warn('Error al notificar reactivación:', error));
-            
-            mostrarNotificacionChat('¡Auto Tap-Tap reactivado! 🎉', 'success');
-            console.log('✅ Auto Tap-Tap reactivado exitosamente');
-        } else {
-            console.log('⚠️ No se puede reactivar - fue apagado manualmente');
+        // Verificar que el sistema esté activo
+        if (!state.activo || state.pausadoPorChat) {
+            console.log('⚠️ Sistema ya pausado o inactivo');
+            return false;
         }
+        
+        // Marcar como pausado por chat
+        state.pausadoPorChat = true;
+        
+        // PAUSA ESPECÍFICA PARA MODO HUMANO
+        if (state.modoHumano.activo) {
+            console.log('🤖 Pausando modo humano por chat...');
+            pausarModoHumanoPorChat();
+        } else {
+            // PAUSA PARA MODO NORMAL
+            console.log('⏸️ Pausando modo normal por chat...');
+            if (state.intervalo) {
+                safeInterval.clear(state.intervalo);
+                state.intervalo = null;
+            }
+        }
+        
+        // Notificar al background script
+        safeRuntimeMessage({
+            action: 'paused_by_chat',
+            enTikTok: true,
+            enLive: true
+        }).catch(error => console.warn('Error al notificar pausa por chat:', error));
+        
+        console.log('✅ Pausado exitosamente por chat');
+        return true;
+    }
+
+    /**
+     * REACTIVAR AUTO TAP-TAP DESPUÉS DE PAUSA POR CHAT
+     * 
+     * Reactiva el sistema después de una pausa por chat.
+     * Integra soporte para modo humano reanudando desde donde se pausó.
+     * 
+     * @param {boolean} fromManual - Si la reactivación es manual o automática
+     * @returns {boolean} - true si se reactivó exitosamente, false si no era necesario
+     */
+    function reactivarAutoTapTap(fromManual = false) {
+        console.log('🔄 Reactivando Auto Tap-Tap...', { fromManual });
+        
+        // Verificar que esté pausado por chat
+        if (!state.pausadoPorChat) {
+            console.log('⚠️ No estaba pausado por chat');
+            return false;
+        }
+        
+        // Verificar que no esté apagado manualmente
+        if (state.apagadoManualmente) {
+            console.log('⚠️ Está apagado manualmente, no reactivar');
+            return false;
+        }
+        
+        // Marcar como no pausado por chat
+        state.pausadoPorChat = false;
+        
+        // REACTIVACIÓN ESPECÍFICA PARA MODO HUMANO
+        if (state.modoHumano.activo) {
+            console.log('🤖 Reanudando modo humano desde chat...');
+            reanudarModoHumanoDesdeChat();
+        } else {
+            // REACTIVACIÓN PARA MODO NORMAL
+            console.log('▶️ Reanudando modo normal desde chat...');
+            const intervalo = parseInt(elementos.selector.value);
+            if (intervalo > 0) {
+                presionarL(); // Ejecutar inmediatamente
+                state.intervalo = safeInterval.create(presionarL, intervalo);
+            }
+        }
+        
+        // Actualizar colores del botón
+        actualizarColoresBoton();
+        
+        // Notificar al background script
+        safeRuntimeMessage({
+            action: 'reactivated_from_chat',
+            contador: state.contador,
+            enTikTok: true,
+            enLive: true
+        }).catch(error => console.warn('Error al notificar reactivación:', error));
+        
+        console.log('✅ Reactivado exitosamente desde chat');
+        return true;
     }
     
     /**
@@ -925,9 +1207,21 @@ function setupBasicMessageListener() {
             
             // Iniciar intervalo si no está pausado por chat
             if (!state.pausadoPorChat) {
-                console.log('🚀 Iniciando intervalo de tap-taps');
-                presionarL(); // Ejecutar el primer tap-tap inmediatamente
-                state.intervalo = safeInterval.create(presionarL, intervalo);
+                // DETECTAR Y ACTIVAR MODO HUMANO
+                if (intervalo === 0) {
+                    console.log('🤖 Activando Modo Humano...');
+                    state.modoHumano.activo = true;
+                    generarVariablesModoHumano();
+                    iniciarSesionModoHumano();
+                    
+                    // Mostrar notificación especial para modo humano
+                    agregarNotificacion('🤖 Modo Humano activado con variables aleatorias', 'success', 4000);
+                } else {
+                    // Modo normal
+                    console.log('🚀 Iniciando intervalo de tap-taps normal');
+                    presionarL(); // Ejecutar el primer tap-tap inmediatamente
+                    state.intervalo = safeInterval.create(presionarL, intervalo);
+                }
                 
                 // Notificar al background script sobre el estado activo
                 safeRuntimeMessage({ 
@@ -943,6 +1237,13 @@ function setupBasicMessageListener() {
         } else {
             // PASO 5B: LÓGICA DE DESACTIVACIÓN
             console.log('🛑 Desactivando Auto Tap-Tap');
+            
+            // Limpiar modo humano si está activo
+            if (state.modoHumano.activo) {
+                console.log('🧹 Limpiando modo humano por desactivación manual');
+                limpiarModoHumano();
+            }
+            
             elementos.selector.disabled = false;
             elementos.selector.style.opacity = '1';
             
@@ -990,11 +1291,30 @@ function setupBasicMessageListener() {
             const nuevoIntervalo = parseInt(elementos.selector.value);
             // Si está activo, reiniciar con nuevo intervalo
             if (state.activo) {
+                // Limpiar intervalo actual
                 if (state.intervalo) {
                     safeInterval.clear(state.intervalo);
                 }
-                presionarL(); // Ejecutar inmediatamente
-                state.intervalo = safeInterval.create(presionarL, nuevoIntervalo);
+                
+                // Si estaba en modo humano, limpiarlo primero
+                if (state.modoHumano.activo) {
+                    console.log('🔄 Cambiando desde modo humano a intervalo normal');
+                    limpiarModoHumano();
+                }
+                
+                // Configurar nuevo modo
+                if (nuevoIntervalo === 0) {
+                    // Cambiar a modo humano
+                    console.log('🤖 Cambiando a Modo Humano...');
+                    state.modoHumano.activo = true;
+                    generarVariablesModoHumano();
+                    iniciarSesionModoHumano();
+                    agregarNotificacion('🤖 Modo Humano activado', 'success', 3000);
+                } else {
+                    // Modo normal
+                    presionarL(); // Ejecutar inmediatamente
+                    state.intervalo = safeInterval.create(presionarL, nuevoIntervalo);
+                }
             }
             
             // Guardar configuración
@@ -1657,170 +1977,22 @@ function setupBasicMessageListener() {
                     
                     // Cambiar color cuando quedan pocos segundos
                     if (tiempoRestante <= 3) {
-                        state.notificacionCuentaRegresiva.style.background = 'rgba(255, 69, 0, 0.95)';
-                        state.notificacionCuentaRegresiva.style.border = '1px solid #ff4500';
-                        state.notificacionCuentaRegresiva.style.boxShadow = '0 2px 8px rgba(255, 69, 0, 0.4)';
+                elementos.cuentaRegresivaDiv = null;
+ } else {
+                        state.notificacionCuentaRegresiva.style.color = '#ff8c00';
                     }
-                } else {
-                    // Si la notificación se perdió, cancelar cuenta regresiva
-                    console.log('⚠️ Notificación perdida, cancelando cuenta regresiva');
-                    limpiarCuentaRegresiva();
-                    return;
                 }
             } else {
-                // Mostrar mensaje final antes de reactivar
-                if (state.notificacionCuentaRegresiva && state.notificacionCuentaRegresiva.parentNode) {
-                    state.notificacionCuentaRegresiva.textContent = '✨ Reactivando Auto Tap-Tap...';
-                    state.notificacionCuentaRegresiva.style.background = 'rgba(0, 200, 0, 0.95)';
-                    state.notificacionCuentaRegresiva.style.border = '1px solid #00c800';
-                    state.notificacionCuentaRegresiva.style.boxShadow = '0 2px 8px rgba(0, 200, 0, 0.4)';
-                }
-                
-                // Ejecutar la reactivación después de un breve retraso
-                setTimeout(() => {
-                    // Verificar nuevamente que podemos reactivar
-                    if (state.pausadoPorChat && !state.apagadoManualmente && !state.activo) {
-                        try {
-                            reactivarAutoTapTap();
-                        } catch (error) {
-                            console.error('Error en reactivación:', error);
-                        }
-                    }
-                    
-                    // Siempre limpiar la notificación al final, con un cleanup más agresivo
-                    setTimeout(() => {
-                        try {
-                            limpiarCuentaRegresiva();
-                            
-                            // Cleanup adicional defensivo para asegurar que no queden elementos
-                            if (elementos.contenedorNotificaciones) {
-                                const elementosCountdown = Array.from(elementos.contenedorNotificaciones.children)
-                                    .filter(el => el.textContent && (
-                                        el.textContent.includes('Reactivando en') || 
-                                        el.textContent.includes('Reactivando Auto Tap-Tap')
-                                    ));
-                                
-                                elementosCountdown.forEach(el => {
-                                    try {
-                                        if (el.parentNode) {
-                                            el.parentNode.removeChild(el);
-                                        }
-                                    } catch (cleanupError) {
-                                        console.warn('Error en cleanup defensivo final:', cleanupError);
-                                    }
-                                });
-                            }
-                        } catch (error) {
-                            console.warn('Error en cleanup final:', error);
-                        }
-                    }, 1000);
-                }, 500);
-                
-                // Limpiar el timer
-                clearInterval(timers.cuentaRegresiva);
-                timers.cuentaRegresiva = null;
+                // Tiempo agotado, reactivar sistema
+                console.log('⏰ Tiempo de cuenta regresiva agotado, reactivando sistema...');
+                state.contador = 0; // Reiniciar contador al reactivar
+                actualizarContador();
+                reactivarAutoTapTap(true);
+                limpiarCuentaRegresiva();
             }
         }, 1000);
-        
-        // Guardar función de limpieza en el estado para acceso externo
-        state.limpiarCuentaRegresiva = limpiarCuentaRegresiva;
     }
-    
-    /**
-     * =============================================================================
-     * FUNCIÓN PARA LIMPIAR NOTIFICACIONES FLOTANTES
-     * =============================================================================
-     * 
-     * Remueve las notificaciones flotantes independientes del DOM para evitar
-     * elementos huérfanos cuando la extensión se desactiva o recarga.
-     * 
-     * @description Limpia notificaciones de chat y cuenta regresiva del DOM
-     */
-    function limpiarNotificacionesFlotantes() {
-        console.log('🧹 Iniciando limpieza completa de notificaciones...');
-        
-        // Limpiar notificación de chat independiente (legacy)
-        if (elementos.notificacionChat && elementos.notificacionChat.parentNode) {
-            try {
-                elementos.notificacionChat.parentNode.removeChild(elementos.notificacionChat);
-                elementos.notificacionChat = null;
-            } catch (error) {
-                console.warn('Error limpiando notificación de chat:', error);
-                elementos.notificacionChat = null;
-            }
-        }
-        
-        // Limpiar notificación de cuenta regresiva independiente (legacy)
-        if (elementos.cuentaRegresivaDiv && elementos.cuentaRegresivaDiv.parentNode) {
-            try {
-                elementos.cuentaRegresivaDiv.parentNode.removeChild(elementos.cuentaRegresivaDiv);
-                elementos.cuentaRegresivaDiv = null;
-            } catch (error) {
-                console.warn('Error limpiando cuenta regresiva legacy:', error);
-                elementos.cuentaRegresivaDiv = null;
-            }
-        }
-        
-        // Limpiar notificación de cuenta regresiva activa del estado
-        if (state.notificacionCuentaRegresiva) {
-            try {
-                removerNotificacion(state.notificacionCuentaRegresiva, true); // immediate = true
-                state.notificacionCuentaRegresiva = null;
-            } catch (error) {
-                console.warn('Error limpiando notificación activa:', error);
-                state.notificacionCuentaRegresiva = null;
-            }
-        }
-        
-        // Limpiar función de cuenta regresiva si existe
-        if (state.limpiarCuentaRegresiva && typeof state.limpiarCuentaRegresiva === 'function') {
-            try {
-                state.limpiarCuentaRegresiva();
-                state.limpiarCuentaRegresiva = null;
-            } catch (error) {
-                console.warn('Error ejecutando función de limpieza:', error);
-                state.limpiarCuentaRegresiva = null;
-            }
-        }
-        
-        // Limpiar TODAS las notificaciones del contenedor integrado de forma defensiva
-        if (elementos.contenedorNotificaciones) {
-            try {
-                // Método 1: Usar la función existente
-                const notificaciones = Array.from(elementos.contenedorNotificaciones.children);
-                notificaciones.forEach(notificacion => {
-                    try {
-                        removerNotificacion(notificacion, true); // immediate = true
-                    } catch (error) {
-                        console.warn('Error removiendo notificación individual:', error);
-                    }
-                });
-                
-                // Método 2: Limpieza forzada con innerHTML (fallback)
-                setTimeout(() => {
-                    try {
-                        if (elementos.contenedorNotificaciones) {
-                            elementos.contenedorNotificaciones.innerHTML = '';
-                        }
-                    } catch (error) {
-                        console.warn('Error en limpieza forzada:', error);
-                    }
-                }, 100);
-                
-            } catch (error) {
-                console.warn('Error en limpieza general de contenedor:', error);
-                // Fallback extremo
-                try {
-                    elementos.contenedorNotificaciones.innerHTML = '';
-                } catch (fallbackError) {
-                    console.error('Error crítico en limpieza:', fallbackError);
-                }
-            }
-        }
-        
-        console.log('✅ Limpieza de notificaciones completada');
-    }
-    
+
     /**
      * =============================================================================
      * SISTEMA DE GESTIÓN DE NOTIFICACIONES INTEGRADAS
@@ -2492,6 +2664,12 @@ function setupBasicMessageListener() {
             if (state.intervalo) {
                 safeInterval.clear(state.intervalo);
                 state.intervalo = null;
+            }
+            
+            // Limpiar modo humano si está activo
+            if (state.modoHumano.activo) {
+                console.log('🧹 Limpiando modo humano durante cleanup');
+                limpiarModoHumano();
             }
             
             // Limpiar todos los intervalos seguros
