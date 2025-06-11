@@ -2145,6 +2145,106 @@ function setupBasicMessageListener() {
     }
 
     /**
+     * LIMPIAR NOTIFICACIONES FLOTANTES (VERSIÓN ROBUSTA)
+     * 
+     * Realiza una limpieza completa y robusta de todas las notificaciones flotantes
+     * usando múltiples estrategias para garantizar la limpieza completa.
+     * Esta función es más agresiva que limpiarTodasLasNotificaciones para casos críticos.
+     */
+    function limpiarNotificacionesFlotantes() {
+        console.log('🧹 Iniciando limpieza completa de notificaciones flotantes...');
+        
+        try {
+            // ESTRATEGIA 1: Limpieza individual usando la función existente
+            if (elementos.contenedorNotificaciones) {
+                const notificaciones = elementos.contenedorNotificaciones.children;
+                console.log(`📊 Encontradas ${notificaciones.length} notificaciones para limpiar`);
+                
+                // Limpiar cada notificación individualmente con try-catch
+                Array.from(notificaciones).forEach((notificacion, index) => {
+                    try {
+                        removerNotificacion(notificacion, true); // immediate = true para limpieza rápida
+                    } catch (error) {
+                        console.warn(`⚠️ Error al remover notificación ${index}:`, error);
+                    }
+                });
+            }
+            
+            // ESTRATEGIA 2: Limpieza directa del contenedor (fallback)
+            if (elementos.contenedorNotificaciones && elementos.contenedorNotificaciones.children.length > 0) {
+                console.log('🔄 Aplicando limpieza fallback con innerHTML...');
+                try {
+                    elementos.contenedorNotificaciones.innerHTML = '';
+                } catch (error) {
+                    console.warn('⚠️ Error en limpieza fallback:', error);
+                }
+            }
+            
+            // ESTRATEGIA 3: Limpieza extrema - buscar elementos huérfanos
+            try {
+                const elementosHuerfanos = document.querySelectorAll('.tiktok-notification, .auto-taptap-notification, [class*="notification"]');
+                elementosHuerfanos.forEach((elemento, index) => {
+                    try {
+                        // Solo remover si parece ser una notificación de nuestra extensión
+                        if (elemento.textContent && (
+                            elemento.textContent.includes('Modo Humano') ||
+                            elemento.textContent.includes('Auto Tap-Tap') ||
+                            elemento.textContent.includes('Chat detectado') ||
+                            elemento.textContent.includes('Reactivando')
+                        )) {
+                            elemento.remove();
+                            console.log(`🗑️ Elemento huérfano removido: ${index}`);
+                        }
+                    } catch (error) {
+                        console.warn(`⚠️ Error al remover elemento huérfano ${index}:`, error);
+                    }
+                });
+            } catch (error) {
+                console.warn('⚠️ Error en limpieza extrema:', error);
+            }
+            
+            // ESTRATEGIA 4: Limpiar referencias en el estado
+            try {
+                if (state.notificacionCuentaRegresiva) {
+                    state.notificacionCuentaRegresiva = null;
+                }
+                if (state.limpiarCuentaRegresiva && typeof state.limpiarCuentaRegresiva === 'function') {
+                    state.limpiarCuentaRegresiva();
+                    state.limpiarCuentaRegresiva = null;
+                }
+            } catch (error) {
+                console.warn('⚠️ Error al limpiar referencias de estado:', error);
+            }
+            
+            console.log('✅ Limpieza completa de notificaciones flotantes completada');
+            
+        } catch (error) {
+            console.error('❌ Error crítico en limpieza de notificaciones:', error);
+            // Fallback extremo: intentar remover el contenedor completo y recrearlo
+            try {
+                if (elementos.contenedorNotificaciones && elementos.contenedorNotificaciones.parentNode) {
+                    const parent = elementos.contenedorNotificaciones.parentNode;
+                    parent.removeChild(elementos.contenedorNotificaciones);
+                    // Recrear contenedor básico
+                    elementos.contenedorNotificaciones = document.createElement('div');
+                    elementos.contenedorNotificaciones.id = 'tiktok-notifications-container';
+                    elementos.contenedorNotificaciones.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        z-index: 10001;
+                        pointer-events: none;
+                    `;
+                    parent.appendChild(elementos.contenedorNotificaciones);
+                    console.log('🔄 Contenedor de notificaciones recreado');
+                }
+            } catch (recreateError) {
+                console.error('❌ Error crítico en recreación de contenedor:', recreateError);
+            }
+        }
+    }
+
+    /**
      * =============================================================================
      * SISTEMA DE DETECCIÓN DE CONTEXTO PARA BADGE CONTEXTUAL
      * =============================================================================
