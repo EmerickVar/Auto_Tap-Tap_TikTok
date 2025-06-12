@@ -1,630 +1,1603 @@
 /**
- * =============================================================================
- * AUTO TAP-TAP TIKTOK - CONTENT SCRIPT PRINCIPAL
- * =============================================================================
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * 🚀 AUTO TAP-TAP TIKTOK - CONTENT SCRIPT PRINCIPAL (BACKUP VERSION)
+ * ═══════════════════════════════════════════════════════════════════════════════
  * 
- * Este script de contenido se inyecta en las páginas de TikTok Live para 
- * automatizar los tap-taps (corazones) durante las transmisiones en vivo.
+ * @fileoverview Content Script principal para automatización de tap-taps en TikTok Live.
+ *               Este archivo contiene la implementación completa del sistema de 
+ *               automatización, incluyendo interfaz flotante, modo humano, 
+ *               gestión de chat y sistema de notificaciones.
  * 
- * FUNCIONALIDADES PRINCIPALES:
- * - Automatización de tap-taps con intervalos configurables
- * - Interfaz de usuario flotante y arrastrable
- * - Sistema de pausa automática cuando se usa el chat
- * - Reactivación automática después de inactividad en el chat
- * - Notificaciones en tiempo real del estado
- * - Contador de tap-taps realizados
- * - Configuración persistente de ajustes
+ * @author       Emerick Echeverría Vargas (@EmerickVar)
+ * @company      New Age Coding Organization (https://newagecoding.org)
+ * @github       https://github.com/EmerickVar/TikTok.Auto_Tap-Tap
+ * @version      1.1.0
+ * @since        2025-12-01
+ * @license      Propietario
  * 
- * COMPONENTES ARQUITECTÓNICOS:
- * - Gestión de estado centralizada
- * - Sistema de almacenamiento seguro con Chrome API
- * - Detección automática de interacción con chat
- * - Interfaz de usuario dinámica con CSS inyectado
- * - Comunicación bidireccional con background script
+ * @description  
+ * ┌─────────────────────────────────────────────────────────────────────────┐
+ * │ DESCRIPCIÓN GENERAL                                                     │
+ * ├─────────────────────────────────────────────────────────────────────────┤
+ * │ Esta extensión automatiza la interacción con los "tap-taps" (corazones) │
+ * │ en las transmisiones en vivo de TikTok, proporcionando:                 │
+ * │                                                                         │
+ * │ • 🎯 Automatización inteligente con detección de contexto               │
+ * │ • 🤖 Modo humano con comportamiento aleatorio y natural                 │
+ * │ • 💬 Sistema de pausa automática al interactuar con el chat             │
+ * │ • 🎨 Interfaz flotante moderna y completamente funcional                │
+ * │ • 🔄 Sistema de reconexión y recuperación de errores                    │
+ * │ • 📊 Contador de tap-taps con persistencia                              │
+ * │ • 🛡️ Gestión defensiva de recursos y limpieza automática                │
+ * └─────────────────────────────────────────────────────────────────────────┘
  * 
- * @author Emerick Echeverría Vargas
- * @version 1.0
- * @description Content script para automatización de tap-taps en TikTok Live
- * =============================================================================
+ * @architecture
+ * ┌─────────────────────────────────────────────────────────────────────────┐
+ * │ ARQUITECTURA MODULAR                                                    │
+ * ├─────────────────────────────────────────────────────────────────────────┤
+ * │                                                                         │
+ * │ ContextModule      → Detección de contexto y validación de páginas      │
+ * │ StateModule        → Estado global centralizado de la aplicación        │
+ * │ TimerModule        → Gestión unificada de todos los timers              │
+ * │ StorageModule      → Operaciones seguras con Chrome Storage API         │
+ * │ MessagingModule    → Comunicación bidireccional con background script   │
+ * │ AutomationModule   → Lógica principal de automatización de tap-taps     │
+ * │ IntervalModule     → Gestión segura de intervalos                       │
+ * │ ModoHumanoModule   → Simulación de comportamiento humano natural        │
+ * │ ChatModule         → Detección y manejo de interacciones con chat       │
+ * │ NotificationModule → Sistema de notificaciones flotantes                │
+ * │ UIModule           → Interfaz de usuario flotante y interactiva         │
+ * │ DragModule         → Sistema de arrastre para la interfaz               │
+ * │ NavigationModule   → Detección de cambios de navegación                 │
+ * │ ExtensionModule    → Reconexión y recuperación de extensión             │
+ * │ InitModule         → Coordinación de inicialización                     │
+ * │                                                                         │
+ * └─────────────────────────────────────────────────────────────────────────┘
+ * 
+ * @features
+ * ┌─────────────────────────────────────────────────────────────────────────┐
+ * │ CARACTERÍSTICAS PRINCIPALES                                             │
+ * ├─────────────────────────────────────────────────────────────────────────┤
+ * │                                                                         │
+ * │ ⚡️ VELOCIDADES CONFIGURABLES:                                           │
+ * │    • Modo Humano (Variable/Aleatorio)                                   │
+ * │    • 200ms (Muy rápido)                                                 │
+ * │    • 250ms (Rápido)                                                     │
+ * │    • 500ms (Normal)                                                     │
+ * │    • 1000ms (Lento)                                                     │
+ * │                                                                         │
+ * │ 🤖 MODO HUMANO AVANZADO:                                                │
+ * │    • Sesiones de actividad con duración variable (15-45s)               │
+ * │    • Cooldowns realistas entre sesiones (5-20s)                         │
+ * │    • Frecuencia de tap-taps variable dentro de sesiones                 │
+ * │    • Comportamiento completamente aleatorio y natural                   │
+ * │                                                                         │
+ * │ 💬 INTEGRACIÓN CON CHAT:                                                │
+ * │    • Detección automática del campo de chat                             │
+ * │    • Pausa inmediata al interactuar con el chat                         │
+ * │    • Reactivación automática configurable (10-60s)                      │
+ * │    • Gestión inteligente de eventos de foco                             │
+ * │                                                                         │
+ * │ 🎨 INTERFAZ MODERNA:                                                    │
+ * │    • Diseño glassmorphism con efectos visuales                          │
+ * │    • Completamente arrastrable y reposicionable                         │
+ * │    • Minimizable para mayor comodidad                                   │
+ * │    • Notificaciones contextuales elegantes                              │
+ * │    • Persistencia de posición y configuraciones                         │
+ * │                                                                         │
+ * └─────────────────────────────────────────────────────────────────────────┘
+ * 
+ * @security
+ * ┌─────────────────────────────────────────────────────────────────────────┐
+ * │ SEGURIDAD Y ROBUSTEZ                                                    │
+ * ├─────────────────────────────────────────────────────────────────────────┤
+ * │                                                                         │
+ * │ • Validación estricta de contexto (solo TikTok Live)                    │
+ * │ • Prevención de inyección múltiple                                      │
+ * │ • Gestión defensiva de recursos y limpieza automática                   │
+ * │ • Recuperación automática de errores de conexión                        │
+ * │ • Manejo seguro de eventos DOM y observers                              │
+ * │ • Cleanup completo al cambiar de página                                 │
+ * │                                                                         │
+ * └─────────────────────────────────────────────────────────────────────────┘
+ * 
+ * @compatibility
+ * • Chrome Extensions Manifest V3
+ * • TikTok Live (versiones actuales)
+ * • Desktop y Mobile Web
+ * 
+ * @dependencies
+ * • Chrome Storage API
+ * • Chrome Runtime API
+ * • DOM Level 2+ Events
+ * • MutationObserver API
+ * 
+ * ═══════════════════════════════════════════════════════════════════════════════
  */
 
-// filepath: /Users/emerickvar/Documents/GitHub/Auto_Tap-Tap_TikTok/Extensión | Chrome/Auto Tap-Tap/content.js
-
-/**
- * =============================================================================
- * SISTEMA DE MENSAJERÍA BÁSICO PARA PÁGINAS NO-LIVE
- * =============================================================================
- * 
- * Esta función configura un sistema de mensajería mínimo que solo responde
- * a las consultas básicas del popup cuando no estamos en una página Live.
- * Esto previene el ciclo infinito de recarga causado por la falta de respuesta
- * del content script en páginas que no son de transmisión en vivo.
- * 
- * FUNCIONALIDAD LIMITADA:
- * - Solo responde a consultas de estado ('getStatus')
- * - Siempre retorna estado inactivo ya que no hay funcionalidad completa
- * - No maneja toggles ni configuraciones (solo disponibles en Live)
- * - Previene errores de comunicación que causan recargas automáticas
- */
-function setupBasicMessageListener() {
-    try {
-        console.log('🔧 Configurando sistema de mensajería básico...');
-        
-        // Listener simplificado que solo maneja consultas de estado
-        const basicMessageListener = (request, sender, sendResponse) => {
-            try {
-                // Solo respondemos a consultas de estado
-                if (request.action === 'getStatus') {
-                    console.log('📡 Popup consultó estado - Respondiendo con estado inactivo (página TikTok no-Live)');
-                    
-                    // Responder con estado básico indicando que estamos en TikTok pero no en Live
-                    sendResponse({
-                        activo: false,              // Siempre inactivo en páginas no-Live
-                        contador: 0,                // Sin contador en modo básico
-                        tiempoReactivacion: 10,     // Valor por defecto
-                        pausadoPorChat: false,      // Sin detección de chat en modo básico
-                        enTikTok: true,             // Nuevo: Indicar que SÍ estamos en TikTok
-                        enLive: false               // Nuevo: Pero NO estamos en Live
-                    });
-                    return true; // Indicar que la respuesta es síncrona
-                }
-                
-                // Para cualquier otra acción, responder con error explicativo
-                if (request.action) {
-                    console.log(`❌ Acción '${request.action}' no disponible en modo básico`);
-                    sendResponse({ 
-                        error: 'Funcionalidad no disponible. Ve a una página Live de TikTok.' 
-                    });
-                    return true;
-                }
-                
-                // Si no es una acción reconocida, no responder
-                console.log('🤷 Mensaje no reconocido en modo básico:', request);
-                
-            } catch (error) {
-                console.error('Error en listener básico:', error);
-                sendResponse({ error: 'Error interno del content script' });
-            }
-            
-            return true; // Mantener el canal abierto para respuesta asíncrona
-        };
-        
-        // Registrar el listener
-        chrome.runtime.onMessage.addListener(basicMessageListener);
-        console.log('✅ Sistema de mensajería básico configurado correctamente');
-        
-    } catch (error) {
-        console.error('❌ Error al configurar sistema de mensajería básico:', error);
-    }
-}
-
-/**
- * FUNCIÓN PRINCIPAL AUTO-EJECUTABLE (IIFE - Immediately Invoked Function Expression)
- * 
- * Encapsula todo el código de la extensión para evitar contaminación del scope global
- * y conflictos con otros scripts que puedan estar ejecutándose en la página.
- */
 (function() {
-    'use strict'; // Habilita el modo estricto para mejor detección de errores
+    'use strict';
     
     /**
-     * PROTECCIÓN CONTRA MÚLTIPLES INYECCIONES
+     * ═══════════════════════════════════════════════════════════════════════════════
+     * 🔍 MÓDULO DE VERIFICACIÓN DE CONTEXTO
+     * ═══════════════════════════════════════════════════════════════════════════════
      * 
-     * Verifica si la extensión ya ha sido inyectada anteriormente en esta página.
-     * Esto previene la creación de múltiples instancias que podrían causar conflictos.
-     */
-    if (document.getElementById('tiktok-auto-taptap')) return;
-
-    /**
-     * VERIFICACIÓN INICIAL - DETERMINAR SI ESTAMOS EN UN LIVE DE TIKTOK
+     * @module ContextModule
+     * @description Módulo especializado en la validación y verificación del contexto
+     *              de ejecución de la extensión. Determina si estamos en las páginas
+     *              correctas de TikTok y si la extensión debe activarse completamente.
      * 
-     * La extensión completa solo debe funcionar en páginas de transmisiones en vivo de TikTok.
-     * Sin embargo, necesitamos responder a mensajes del popup en todas las páginas de TikTok.
-     */
-    const fullPath = window.location.pathname + window.location.search;
-    const pathname = window.location.pathname;
-    
-    // Debug: Imprimir información de la URL para diagnosticar
-    console.log('🔍 Analizando URL:', {
-        href: window.location.href,
-        pathname: pathname,
-        search: window.location.search,
-        fullPath: fullPath
-    });
-    
-    // Patrón mejorado para detectar páginas Live de TikTok
-    // Debe coincidir con: /@username/live (con o sin parámetros adicionales)
-    const livePattern = /^\/@[^\/]+\/live(?:\/[^?]*)?$/;
-    const isOnLive = livePattern.test(pathname); // Solo usar pathname, no search params
-    
-    console.log('🎯 Resultado detección Live:', {
-        pattern: livePattern.toString(),
-        pathname: pathname,
-        matches: isOnLive
-    });
-
-    if (!isOnLive) {
-        console.log('ℹ️ Extensión en modo básico: Solo responderá a mensajes del popup');
-        console.log('🔧 Llamando a setupBasicMessageListener()...');
-        // Configurar solo el sistema de mensajería básico para responder al popup
-        try {
-            setupBasicMessageListener();
-            console.log('✅ setupBasicMessageListener() ejecutado sin errores');
-        } catch (error) {
-            console.error('❌ Error al ejecutar setupBasicMessageListener():', error);
-        }
-        return;
-    }
-
-    console.log('✅ Extensión en modo completo: Estamos en un Live de TikTok');
-
-    /**
-     * =============================================================================
-     * ESTADO CENTRAL DE LA APLICACIÓN
-     * =============================================================================
+     * @purpose
+     * Este módulo es fundamental para la seguridad y funcionalidad correcta de la 
+     * extensión, asegurando que solo se ejecute en los contextos apropiados y 
+     * evitando conflictos o comportamientos inesperados en otras páginas.
      * 
-     * Objeto principal que mantiene todo el estado de la extensión.
-     * Centralizar el estado facilita el debugging y el mantenimiento del código.
+     * @responsibilities
+     * • Verificar que estemos en el dominio de TikTok
+     * • Detectar específicamente páginas de transmisiones en vivo
+     * • Validar patrones de URL para Live streams
+     * • Prevenir inyección múltiple del content script
+     * • Proporcionar estado contextual para otros módulos
+     * 
+     * @security
+     * • Validación estricta de hostname
+     * • Patrones de URL específicos y seguros
+     * • Prevención de ejecución en contextos no deseados
+     * • Verificación de inyección previa
+     * 
+     * @patterns
+     * URL Pattern para TikTok Live: /@username/live
+     * Ejemplos válidos:
+     * - https://www.tiktok.com/@usuario/live
+     * - https://www.tiktok.com/@usuario/live/12345
+     * - https://m.tiktok.com/@usuario/live
      */
-    const state = {
-        // CONTROL DE AUTOMATIZACIÓN
-        intervalo: null,        // Referencia al setInterval que ejecuta los tap-taps automáticos
-        activo: false,          // Bandera que indica si el auto tap-tap está actualmente funcionando
-        contador: 0,            // Número total de tap-taps enviados en la sesión actual
+    const ContextModule = {
+        /**
+         * Verifica si estamos en una página de TikTok
+         * 
+         * @method isOnTikTok
+         * @description Valida que el hostname actual corresponda al dominio de TikTok.
+         *              Esta es la primera línea de defensa para asegurar que solo
+         *              ejecutemos en el sitio correcto.
+         * 
+         * @implementation
+         * Utiliza window.location.hostname para verificar que contenga 'tiktok.com',
+         * lo que incluye subdominios como www.tiktok.com, m.tiktok.com, etc.
+         * 
+         * @returns {boolean} true si estamos en TikTok, false en caso contrario
+         * 
+         * @example
+         * // En https://www.tiktok.com/...
+         * ContextModule.isOnTikTok(); // returns true
+         * 
+         * // En https://youtube.com/...
+         * ContextModule.isOnTikTok(); // returns false
+         * 
+         * @security
+         * • No utiliza regex complejo para evitar vulnerabilidades
+         * • Método simple y confiable de verificación de dominio
+         * • Incluye subdominios oficiales de TikTok
+         */
+        isOnTikTok() {
+            return window.location.hostname.includes('tiktok.com');
+        },
         
-        // CONTROL DE INTERFAZ ARRASTRABLE
-        isDragging: false,      // Bandera que indica si el usuario está arrastrando la ventana flotante
-        currentX: 0,           // Posición X actual del mouse durante el arrastre
-        currentY: 0,           // Posición Y actual del mouse durante el arrastre  
-        initialX: 0,           // Posición X inicial cuando comenzó el arrastre
-        initialY: 0,           // Posición Y inicial cuando comenzó el arrastre
-        xOffset: 0,            // Desplazamiento X acumulado de la ventana flotante
-        yOffset: 0,            // Desplazamiento Y acumulado de la ventana flotante
+        /**
+         * Verifica si estamos en una página de Live de TikTok
+         * 
+         * @method isOnTikTokLive
+         * @description Determina específicamente si la URL actual corresponde a una
+         *              transmisión en vivo de TikTok. Esta validación es crucial para
+         *              activar la funcionalidad completa de la extensión.
+         * 
+         * @algorithm
+         * 1. Verificar primero que estemos en TikTok (seguridad)
+         * 2. Extraer pathname de la URL actual
+         * 3. Aplicar patrón regex específico para Live streams
+         * 4. Retornar resultado de la validación
+         * 
+         * @regex-pattern /^\/@[^\/]+\/live(?:\/[^?]*)?$/
+         * - ^           : Inicio de string
+         * - \/@         : Literal "/@" 
+         * - [^\/]+      : Uno o más caracteres que no sean "/"
+         * - \/live      : Literal "/live"
+         * - (?:\/[^?]*) : Grupo no capturador opcional con "/" + chars hasta "?"
+         * - ?           : El grupo anterior es opcional
+         * - $           : Final de string
+         * 
+         * @returns {boolean} true si estamos en un Live de TikTok
+         * 
+         * @example
+         * // URL: https://www.tiktok.com/@usuario/live
+         * ContextModule.isOnTikTokLive(); // returns true
+         * 
+         * // URL: https://www.tiktok.com/@usuario/video/12345
+         * ContextModule.isOnTikTokLive(); // returns false
+         * 
+         * @performance O(1) - Operación de regex simple
+         * @dependency Depende de isOnTikTok() para validación previa
+         */
+        isOnTikTokLive() {
+            if (!this.isOnTikTok()) return false;
+            
+            const pathname = window.location.pathname;
+            const livePattern = /^\/@[^\/]+\/live(?:\/[^?]*)?$/;
+            return livePattern.test(pathname);
+        },
         
-        // SISTEMA DE REACTIVACIÓN AUTOMÁTICA POR CHAT
-        chatTimeout: null,      // Referencia al setTimeout para reactivar después de usar el chat
-        tiempoReactivacion: 10, // Tiempo en segundos que espera antes de reactivar automáticamente
-        pausadoPorChat: false,  // Indica si el sistema se pausó automáticamente por detectar uso del chat
-        apagadoManualmente: false, // Indica si el usuario apagó manualmente (no reactivar automáticamente)
+        /**
+         * Obtiene el contexto actual completo del usuario
+         * 
+         * @method getCurrentContext
+         * @description Proporciona un objeto con el estado contextual completo,
+         *              incluyendo si estamos en TikTok y específicamente en un Live.
+         *              Este método es usado por otros módulos para tomar decisiones
+         *              de funcionamiento.
+         * 
+         * @returns {Object} Objeto con propiedades de contexto
+         * @returns {boolean} returns.enTikTok - true si estamos en TikTok
+         * @returns {boolean} returns.enLive - true si estamos en un Live de TikTok
+         * 
+         * @example
+         * const contexto = ContextModule.getCurrentContext();
+         * if (contexto.enLive) {
+         *     // Activar funcionalidad completa
+         * } else if (contexto.enTikTok) {
+         *     // Modo básico de TikTok
+         * } else {
+         *     // No ejecutar nada
+         * }
+         * 
+         * @usage
+         * • Usado en inicialización para determinar modo de operación
+         * • Consultado por NavigationModule en cambios de URL
+         * • Referenciado por MessagingModule para reportar estado
+         * • Utilizado por background script para icon badge
+         * 
+         * @performance O(1) - Reutiliza métodos de verificación ya optimizados
+         */
+        getCurrentContext() {
+            const enTikTok = this.isOnTikTok();
+            const enLive = enTikTok && this.isOnTikTokLive();
+            
+            return { enTikTok, enLive };
+        },
         
-        // SISTEMA DE NOTIFICACIONES DE CUENTA REGRESIVA
-        notificacionCuentaRegresiva: null, // Referencia a la notificación de cuenta regresiva activa
-        limpiarCuentaRegresiva: null,       // Función para limpiar cuenta regresiva
-        
-        // MODO HUMANO - VARIABLES ALEATORIAS Y TIMERS
-        modoHumano: {
-            activo: false,              // Indica si el modo humano está activo
-            frecuenciaSesion: 0,        // Duración de sesión activa (2750-7835 ms)
-            frecuenciaTapTap: 0,        // Velocidad de tap-tap durante sesión (200-485 ms)
-            cooldownSesion: 0,          // Tiempo de cooldown entre sesiones (3565-9295 ms)
-            enSesion: false,            // Indica si está en sesión activa o en cooldown
-            tiempoSesionRestante: 0,    // Tiempo restante de la sesión actual
-            tiempoCooldownRestante: 0,  // Tiempo restante del cooldown actual
-            pausadoPorChat: false,      // Indica si fue pausado por chat en modo humano
-            timerSesion: null,          // Timer para duración de sesión
-            timerCooldown: null,        // Timer para cooldown entre sesiones
-            inicioSesion: null,         // Timestamp de inicio de sesión (para cálculos precisos)
-            inicioCooldown: null        // Timestamp de inicio de cooldown (para cálculos precisos)
+        /**
+         * Verifica si la extensión ya está inyectada en la página
+         * 
+         * @method isAlreadyInjected
+         * @description Previene la inyección múltiple del content script verificando
+         *              la existencia de un elemento marcador único en el DOM.
+         *              Esto es especialmente importante en SPAs como TikTok donde
+         *              la navegación no siempre recarga la página completa.
+         * 
+         * @implementation
+         * Busca un elemento con ID único 'tiktok-auto-taptap' que se crea durante
+         * la inicialización de la interfaz. Si existe, significa que la extensión
+         * ya está ejecutándose en esta página.
+         * 
+         * @returns {boolean} true si la extensión ya está inyectada
+         * 
+         * @security
+         * • Previene conflictos por ejecución múltiple
+         * • Evita duplicación de event listeners
+         * • Protege contra memory leaks
+         * • Mantiene un solo punto de control
+         * 
+         * @example
+         * if (ContextModule.isAlreadyInjected()) {
+         *     console.log('Extensión ya activa, abortando');
+         *     return;
+         * }
+         * 
+         * @see UIModule.crearInterfaz() - Donde se crea el elemento marcador
+         * @performance O(1) - Simple búsqueda por ID en el DOM
+         */
+        isAlreadyInjected() {
+            return !!document.getElementById('tiktok-auto-taptap');
         }
     };
     
     /**
-     * =============================================================================
-     * TIMERS GLOBALES PARA GESTIÓN DE CUENTA REGRESIVA Y CHAT
-     * =============================================================================
+     * ═══════════════════════════════════════════════════════════════════════════════
+     * 🗄️ MÓDULO DE ESTADO GLOBAL
+     * ═══════════════════════════════════════════════════════════════════════════════
      * 
-     * Objeto global que contiene todos los timers relacionados con el sistema
-     * de chat y cuenta regresiva para evitar problemas de scope.
+     * @module StateModule
+     * @description Módulo de gestión centralizada del estado global de la aplicación.
+     *              Actúa como una "base de datos" en memoria que mantiene toda la
+     *              información crítica del estado actual de la extensión.
+     * 
+     * @architecture
+     * Implementa un patrón de estado centralizado donde todos los módulos consultan
+     * y modifican el estado a través de este módulo central, evitando duplicación
+     * de datos y asegurando consistencia.
+     * 
+     * @categories
+     * ┌─────────────────────────────────────────────────────────────────────────┐
+     * │ CATEGORÍAS DE ESTADO                                                    │
+     * ├─────────────────────────────────────────────────────────────────────────┤
+     * │                                                                         │
+     * │ 🎯 Estado de Automatización                                             │
+     * │    • Control de intervalos y activación                                 │
+     * │    • Contador de tap-taps realizados                                    │
+     * │                                                                         │
+     * │ 🖱️ Estado de Interfaz Arrastrable                                       │
+     * │    • Posiciones y coordenadas de arrastre                               │
+     * │    • Estados de interacción del usuario                                 │
+     * │                                                                         │
+     * │ 💬 Sistema de Reactivación por Chat                                     │
+     * │    • Estados de pausa y reactivación                                    │
+     * │    • Timers y configuraciones de chat                                   │
+     * │                                                                         │
+     * │ 🔔 Sistema de Notificaciones                                            │
+     * │    • Referencias a notificaciones activas                               │
+     * │    • Funciones de limpieza y gestión                                    │
+     * │                                                                         │
+     * │ 🤖 Modo Humano Avanzado                                                 │
+     * │    • Variables aleatorias y configuraciones                             │
+     * │    • Estados de sesión y cooldown                                       │
+     * │    • Timers y referencias temporales                                    │
+     * │                                                                         │
+     * │ 🔧 Referencias Adicionales                                              │
+     * │    • Observers y sistemas de limpieza                                   │
+     * │    • Intervalos de verificación                                         │
+     * │                                                                         │
+     * └─────────────────────────────────────────────────────────────────────────┘
+     * 
+     * @data-integrity
+     * • Estado inmutable donde sea posible
+     * • Validación de tipos en propiedades críticas
+     * • Valores por defecto seguros
+     * • Cleanup automático de referencias obsoletas
+     * 
+     * @performance
+     * • Acceso O(1) a todas las propiedades
+     * • Estructura plana para eficiencia de memoria
+     * • Referencias directas en lugar de búsquedas
      */
-    const timers = {
-        typing: null,
-        chat: null,
-        countdown: null,
-        cuentaRegresiva: null,
-        // Timers específicos para modo humano
-        modoHumanoSesion: null,
-        modoHumanoCooldown: null,
+    const StateModule = {
+        // ═════════════════════════════════════════════════════════════════════════
+        // 🎯 ESTADO DE AUTOMATIZACIÓN
+        // ═════════════════════════════════════════════════════════════════════════
+        
+        /**
+         * @property {number|null} intervalo
+         * @description ID del intervalo principal de automatización. null cuando inactivo.
+         * @default null
+         * @usage Usado por AutomationModule e IntervalModule para control de ejecución
+         */
+        intervalo: null,
+        
+        /**
+         * @property {boolean} activo
+         * @description Estado principal de activación de la extensión.
+         * @default false
+         * @usage Consultado por todos los módulos para determinar funcionamiento
+         */
+        activo: false,
+        
+        /**
+         * @property {number} contador
+         * @description Número total de tap-taps realizados en la sesión actual.
+         * @default 0
+         * @persistence Se guarda en Chrome Storage para mantener entre sesiones
+         */
+        contador: 0,
+        
+        // ═════════════════════════════════════════════════════════════════════════
+        // 🖱️ ESTADO DE INTERFAZ ARRASTRABLE
+        // ═════════════════════════════════════════════════════════════════════════
+        
+        /**
+         * @property {boolean} isDragging
+         * @description Indica si la interfaz está siendo arrastrada actualmente.
+         * @default false
+         * @usage Usado por DragModule para gestionar eventos de arrastre
+         */
+        isDragging: false,
+        
+        /**
+         * @property {number} currentX
+         * @description Posición X actual durante el arrastre.
+         * @default 0
+         * @units Píxeles relativos al viewport
+         */
+        currentX: 0,
+        
+        /**
+         * @property {number} currentY
+         * @description Posición Y actual durante el arrastre.
+         * @default 0
+         * @units Píxeles relativos al viewport
+         */
+        currentY: 0,
+        
+        /**
+         * @property {number} initialX
+         * @description Posición X inicial cuando comenzó el arrastre.
+         * @default 0
+         * @usage Usado para calcular desplazamientos relativos
+         */
+        initialX: 0,
+        
+        /**
+         * @property {number} initialY
+         * @description Posición Y inicial cuando comenzó el arrastre.
+         * @default 0
+         * @usage Usado para calcular desplazamientos relativos
+         */
+        initialY: 0,
+        
+        /**
+         * @property {number} xOffset
+         * @description Desplazamiento total acumulado en X.
+         * @default 0
+         * @persistence Se guarda en storage para restaurar posición
+         */
+        xOffset: 0,
+        
+        /**
+         * @property {number} yOffset
+         * @description Desplazamiento total acumulado en Y.
+         * @default 0
+         * @persistence Se guarda en storage para restaurar posición
+         */
+        yOffset: 0,
+        
+        // ═════════════════════════════════════════════════════════════════════════
+        // 💬 SISTEMA DE REACTIVACIÓN POR CHAT
+        // ═════════════════════════════════════════════════════════════════════════
+        
+        /**
+         * @property {number|null} chatTimeout
+         * @description ID del timeout para reactivación automática tras chat.
+         * @default null
+         * @cleanup Se limpia automáticamente al ejecutarse o cancelarse
+         */
+        chatTimeout: null,
+        
+        /**
+         * @property {number} tiempoReactivacion
+         * @description Tiempo en segundos para reactivación automática tras chat.
+         * @default 10
+         * @range 10-60 segundos
+         * @configurable Usuario puede modificar desde interfaz
+         */
+        tiempoReactivacion: 10,
+        
+        /**
+         * @property {boolean} pausadoPorChat
+         * @description Indica si el sistema está pausado por interacción con chat.
+         * @default false
+         * @critical Estado crítico que afecta toda la automatización
+         */
+        pausadoPorChat: false,
+        
+        /**
+         * @property {boolean} apagadoManualmente
+         * @description Indica si el usuario desactivó manualmente la extensión.
+         * @default false
+         * @purpose Evita reactivación automática cuando el usuario lo desactivó
+         */
+        apagadoManualmente: false,
+        
+        // ═════════════════════════════════════════════════════════════════════════
+        // 🔔 SISTEMA DE NOTIFICACIONES
+        // ═════════════════════════════════════════════════════════════════════════
+        
+        /**
+         * @property {HTMLElement|null} notificacionCuentaRegresiva
+         * @description Referencia al elemento DOM de la notificación de cuenta regresiva.
+         * @default null
+         * @lifecycle Se crea/destruye dinámicamente durante cuenta regresiva
+         */
+        notificacionCuentaRegresiva: null,
+        
+        /**
+         * @property {Function|null} limpiarCuentaRegresiva
+         * @description Función de limpieza para la cuenta regresiva actual.
+         * @default null
+         * @usage Llamada para cancelar cuenta regresiva activa
+         */
+        limpiarCuentaRegresiva: null,
+        
+        // ═════════════════════════════════════════════════════════════════════════
+        // 🤖 MODO HUMANO AVANZADO
+        // ═════════════════════════════════════════════════════════════════════════
+        
+        /**
+         * @property {Object} modoHumano
+         * @description Configuración completa del modo humano con comportamiento aleatorio.
+         * 
+         * @property {boolean} modoHumano.activo
+         * @description Si el modo humano está actualmente activo.
+         * @default false
+         * 
+         * @property {number} modoHumano.frecuenciaSesion
+         * @description Duración en ms de una sesión activa de modo humano.
+         * @range 27500-78350 ms (27.5-78.35 segundos)
+         * @random Se genera aleatoriamente en cada sesión
+         * 
+         * @property {number} modoHumano.frecuenciaTapTap
+         * @description Intervalo en ms entre tap-taps durante sesión activa.
+         * @range 200-485 ms
+         * @random Se genera aleatoriamente en cada sesión
+         * 
+         * @property {number} modoHumano.cooldownSesion
+         * @description Duración en ms del cooldown entre sesiones.
+         * @range 3565-9295 ms (3.5-9.3 segundos)
+         * @random Se genera aleatoriamente en cada sesión
+         * 
+         * @property {boolean} modoHumano.enSesion
+         * @description Si actualmente está en una sesión activa (vs cooldown).
+         * @default false
+         * 
+         * @property {number} modoHumano.tiempoSesionRestante
+         * @description Tiempo restante en ms de la sesión actual.
+         * @default 0
+         * @usage Para reanudar correctamente tras pausas por chat
+         * 
+         * @property {number} modoHumano.tiempoCooldownRestante
+         * @description Tiempo restante en ms del cooldown actual.
+         * @default 0
+         * @usage Para reanudar correctamente tras pausas por chat
+         * 
+         * @property {boolean} modoHumano.pausadoPorChat
+         * @description Si el modo humano específicamente está pausado por chat.
+         * @default false
+         * @separate Del pausadoPorChat general para lógica específica
+         * 
+         * @property {number|null} modoHumano.timerSesion
+         * @description ID del timer de la sesión activa.
+         * @default null
+         * 
+         * @property {number|null} modoHumano.timerCooldown
+         * @description ID del timer del cooldown.
+         * @default null
+         * 
+         * @property {number|null} modoHumano.inicioSesion
+         * @description Timestamp de inicio de la sesión actual.
+         * @default null
+         * @usage Para calcular tiempo transcurrido y restante
+         * 
+         * @property {number|null} modoHumano.inicioCooldown
+         * @description Timestamp de inicio del cooldown actual.
+         * @default null
+         * @usage Para calcular tiempo transcurrido y restante
+         */
+        modoHumano: {
+            activo: false,
+            frecuenciaSesion: 0,
+            frecuenciaTapTap: 0,
+            cooldownSesion: 0,
+            enSesion: false,
+            tiempoSesionRestante: 0,
+            tiempoCooldownRestante: 0,
+            pausadoPorChat: false,
+            timerSesion: null,
+            timerCooldown: null,
+            inicioSesion: null,
+            inicioCooldown: null
+        },
+        
+        // ═════════════════════════════════════════════════════════════════════════
+        // 🔧 REFERENCIAS ADICIONALES
+        // ═════════════════════════════════════════════════════════════════════════
+        
+        /**
+         * @property {Object|null} chatObserver
+         * @description Instancia del MutationObserver para detectar aparición del chat.
+         * @default null
+         * @lifecycle Se crea al inicializar y se limpia al salir de Live
+         */
+        chatObserver: null,
+        
+        /**
+         * @property {Function|null} chatCleanup
+         * @description Función de limpieza para eventos del chat.
+         * @default null
+         * @usage Llamada para remover event listeners del chat
+         */
+        chatCleanup: null,
+        
+        /**
+         * @property {number|null} navigationCheckInterval
+         * @description ID del intervalo de verificación de navegación.
+         * @default null
+         * @purpose Detectar cuando el usuario sale de páginas Live
+         */
+        navigationCheckInterval: null,
+        
+        /**
+         * @property {MutationObserver|null} urlObserver
+         * @description Observer para detectar cambios de URL en SPA.
+         * @default null
+         * @purpose Detectar navegación sin recarga de página
+         */
+        urlObserver: null
+    };
+    
+    /**
+     * ═══════════════════════════════════════════════════════════════════════════════
+     * ⏰ MÓDULO DE GESTIÓN DE TIMERS
+     * ═══════════════════════════════════════════════════════════════════════════════
+     * 
+     * @module TimerModule
+     * @description Módulo centralizado para la gestión segura y eficiente de todos
+     *              los timers, timeouts e intervalos utilizados por la extensión.
+     *              Previene memory leaks y proporciona cleanup centralizado.
+     * 
+     * @purpose
+     * En una extensión compleja como esta, múltiples módulos crean y gestionan
+     * timers. Sin una gestión centralizada, es fácil que se produzcan memory leaks
+     * o timers órfanos que continúan ejecutándose después de que deberían haber
+     * sido limpiados.
+     * 
+     * @benefits
+     * • Prevención de memory leaks
+     * • Cleanup centralizado y confiable
+     * • Debugging simplificado de timers activos
+     * • Gestión de lifecycle consistente
+     * • Prevención de timers duplicados
+     * 
+     * @timer-categories
+     * ┌─────────────────────────────────────────────────────────────────────────┐
+     * │ CATEGORÍAS DE TIMERS                                                    │
+     * ├─────────────────────────────────────────────────────────────────────────┤
+     * │                                                                         │
+     * │ ⌨️  typing          → Timer de inactividad del chat                     │
+     * │ 💬 chat            → Timeout general del sistema de chat                │
+     * │ ⏱️  countdown       → Timer de cuenta regresiva visual                  │
+     * │ 🔄 cuentaRegresiva → Timer específico de reactivación                   │
+     * │ 🤖 modoHumanoSesion → Timer de sesión activa del modo humano            │
+     * │ 😴 modoHumanoCooldown → Timer de cooldown del modo humano               │
+     * │                                                                         │
+     * └─────────────────────────────────────────────────────────────────────────┘
+     * 
+     * @architecture
+     * Utiliza un Map central para rastrear todos los timers por categoría,
+     * permitiendo limpieza selectiva o total según las necesidades.
+     * 
+     * @thread-safety
+     * • Operaciones atómicas para evitar race conditions
+     * • Validación de existencia antes de cleanup
+     * • Manejo seguro de IDs nulos o inválidos
+     */
+    const TimerModule = {
+        /**
+         * @property {Object} timers
+         * @description Registro central de todos los timers activos categorizados.
+         * 
+         * @structure
+         * Cada propiedad mantiene el ID retornado por setTimeout/setInterval,
+         * o null cuando no hay timer activo de esa categoría.
+         * 
+         * @lifecycle
+         * • Se asigna un ID cuando se crea el timer
+         * • Se establece a null cuando se limpia
+         * • Se valida antes de cualquier operación de cleanup
+         */
+        timers: {
+            /**
+             * @property {number|null} typing
+             * @description Timer para detectar inactividad en el chat.
+             * @usage ChatModule lo usa para detectar cuando el usuario deja de escribir
+             */
+            typing: null,
+            
+            /**
+             * @property {number|null} chat
+             * @description Timeout general del sistema de chat.
+             * @usage Para reactivación automática después de interacción con chat
+             */
+            chat: null,
+            
+            /**
+             * @property {number|null} countdown
+             * @description Timer de cuenta regresiva visual genérica.
+             * @usage NotificationModule para mostrar cuenta regresiva visual
+             */
+            countdown: null,
+            
+            /**
+             * @property {number|null} cuentaRegresiva
+             * @description Timer específico de cuenta regresiva para reactivación.
+             * @usage Sistema de reactivación automática tras pausa por chat
+             */
+            cuentaRegresiva: null,
+            
+            /**
+             * @property {number|null} modoHumanoSesion
+             * @description Timer que controla la duración de sesiones activas en modo humano.
+             * @usage ModoHumanoModule para gestionar sesiones de tap-taps aleatorios
+             */
+            modoHumanoSesion: null,
+            
+            /**
+             * @property {number|null} modoHumanoCooldown
+             * @description Timer que controla los cooldowns entre sesiones de modo humano.
+             * @usage ModoHumanoModule para simular pausas naturales humanas
+             */
+            modoHumanoCooldown: null
+        },
+        
+        /**
+         * Ejecuta limpieza completa de todos los timers activos
+         * 
+         * @method cleanupAll
+         * @description Realiza una limpieza exhaustiva de todos los timers registrados
+         *              en el sistema. Es el método principal para cleanup durante
+         *              shutdown o cambio de contexto.
+         * 
+         * @algorithm
+         * 1. Iterar sobre todas las entradas del objeto timers
+         * 2. Para cada timer con un ID válido:
+         *    - Intentar clearTimeout() (funciona para ambos tipos)
+         *    - Intentar clearInterval() (por seguridad)
+         *    - Establecer la referencia a null
+         * 3. Ejecutar limpieza especializada de modo humano
+         * 4. Limpiar sistema de notificaciones
+         * 
+         * @safety
+         * • clearTimeout y clearInterval son operaciones seguras con IDs inválidos
+         * • Múltiples llamadas son seguras (operaciones idempotentes)
+         * • No lanza excepciones por timers ya limpiados
+         * 
+         * @side-effects
+         * • Detiene todos los timers activos inmediatamente
+         * • Puede interrumpir operaciones en progreso
+         * • Limpia referencias en StateModule.modoHumano
+         * • Ejecuta NotificationModule.limpiarCuentaRegresiva()
+         * 
+         * @usage
+         * • Llamado durante NavigationModule.cleanupExtensionResources()
+         * • Ejecutado en ExtensionModule.reload()
+         * • Usado en InitModule cleanup defensivo
+         * • Invocado durante shutdown completo
+         * 
+         * @performance O(n) donde n = número de categorías de timers
+         * @thread-safety Thread-safe para operaciones de cleanup
+         */
         cleanupAll() {
             console.log('🧹 Ejecutando cleanup completo de timers...');
-            Object.entries(this).forEach(([key, timer]) => {
+            
+            // Limpiar todos los timers registrados
+            Object.entries(this.timers).forEach(([key, timer]) => {
                 if (typeof timer === 'number') {
+                    // Limpiar tanto timeouts como intervals por seguridad
                     clearTimeout(timer);
                     clearInterval(timer);
-                    this[key] = null;
+                    this.timers[key] = null;
                 }
             });
             
-            // Limpiar modo humano si está activo
-            if (state.modoHumano && state.modoHumano.activo) {
+            // Limpieza especializada del modo humano
+            if (StateModule.modoHumano && StateModule.modoHumano.activo) {
                 console.log('🧹 Limpiando modo humano durante cleanup de timers');
-                // Limpiar timers específicos del modo humano
-                if (state.modoHumano.timerSesion) {
-                    clearTimeout(state.modoHumano.timerSesion);
-                    state.modoHumano.timerSesion = null;
-                }
-                if (state.modoHumano.timerCooldown) {
-                    clearTimeout(state.modoHumano.timerCooldown);
-                    state.modoHumano.timerCooldown = null;
-                }
+                ModoHumanoModule.limpiar();
             }
             
-            // También limpiar notificaciones de cuenta regresiva si existen
-            if (state.limpiarCuentaRegresiva && typeof state.limpiarCuentaRegresiva === 'function') {
-                try {
-                    state.limpiarCuentaRegresiva();
-                } catch (error) {
-                    console.warn('Error en cleanup de cuenta regresiva:', error);
-                }
+            // Limpiar sistema de notificaciones relacionado con timers
+            NotificationModule.limpiarCuentaRegresiva();
+        }
+    };
+    
+    /**
+     * ═══════════════════════════════════════════════════════════════════════════════
+     * 💾 MÓDULO DE ALMACENAMIENTO SEGURO
+     * ═══════════════════════════════════════════════════════════════════════════════
+     * 
+     * @module StorageModule
+     * @description Módulo especializado en operaciones seguras y robustas con
+     *              Chrome Storage API. Proporciona una capa de abstracción que
+     *              maneja errores, validaciones y reconexión automática.
+     * 
+     * @purpose
+     * Chrome Storage API puede fallar por múltiples razones: contexto invalidado,
+     * límites de cuota, extensión deshabilitada, etc. Este módulo encapsula
+     * toda la lógica de manejo de errores y recuperación automática.
+     * 
+     * @features
+     * • Validación de contexto antes de operaciones
+     * • Manejo robusto de errores de Chrome Runtime
+     * • Reconexión automática cuando el contexto se invalida
+     * • Operaciones con timeout para evitar colgarse
+     * • Logging detallado para debugging
+     * • Fallbacks seguros en caso de fallos
+     * 
+     * @error-handling
+     * ┌─────────────────────────────────────────────────────────────────────────┐
+     * │ TIPOS DE ERRORES MANEJADOS                                              │
+     * ├─────────────────────────────────────────────────────────────────────────┤
+     * │                                                                         │
+     * │ 🔌 Extension context invalidated                                        │
+     * │    → Activar ExtensionModule.reload()                                   │
+     * │                                                                         │
+     * │ 📡 Message channel closed                                               │
+     * │    → Intentar reconexión automática                                     │
+     * │                                                                         │
+     * │ 🚫 Chrome runtime not available                                         │
+     * │    → Fallar silenciosamente con warning                                 │
+     * │                                                                         │
+     * │ 🌐 CORS Policy errors                                                   │
+     * │    → Ignorar (operación en contexto válido)                             │
+     * │                                                                         │
+     * │ 💽 Quota exceeded                                                       │
+     * │    → Log error y continuar                                              │
+     * │                                                                         │
+     * └─────────────────────────────────────────────────────────────────────────┘
+     * 
+     * @storage-keys
+     * • intervalo: Velocidad seleccionada (200, 250, 500, 1000, 0)
+     * • totalTapTaps: Contador total de tap-taps
+     * • position: {x, y} Posición de la interfaz flotante
+     * • tiempoReactivacion: Segundos para reactivación tras chat
+     * 
+     * @api-wrapper
+     * Este módulo actúa como wrapper de chrome.storage.local proporcionando:
+     * • Promesas en lugar de callbacks
+     * • Validación automática de contexto
+     * • Manejo uniforme de errores
+     * • Logging y debugging mejorado
+     */
+    const StorageModule = {
+        /**
+         * Ejecuta una operación de almacenamiento de forma segura
+         * 
+         * @method safeOperation
+         * @description Wrapper que proporciona seguridad y validación para todas
+         *              las operaciones de almacenamiento. Verifica el contexto,
+         *              maneja errores y activa recuperación cuando es necesario.
+         * 
+         * @param {Function} operation - Función que realiza la operación de storage
+         * @returns {Promise} Promesa que resuelve con el resultado o rechaza con error
+         * 
+         * @validation
+         * Antes de ejecutar cualquier operación, verifica que estemos en un
+         * contexto válido (TikTok Live) para evitar operaciones innecesarias
+         * o problemáticas en páginas incorrectas.
+         * 
+         * @error-recovery
+         * Si detecta errores específicos del contexto de extensión invalidado,
+         * automáticamente activa el sistema de reconexión a través de
+         * ExtensionModule.reload().
+         * 
+         * @example
+         * const resultado = await StorageModule.safeOperation(() => {
+         *     return chrome.storage.local.get(['key']);
+         * });
+         * 
+         * @throws {Error} 'Not on TikTok Live page' si el contexto no es válido
+         * @throws {Error} Errores propagados de la operación si no son recuperables
+         */
+        safeOperation(operation) {
+            // Validación previa de contexto
+            if (!ContextModule.isOnTikTokLive()) {
+                console.warn('🚫 Operación de almacenamiento cancelada: No estamos en un Live de TikTok');
+                return Promise.reject(new Error('Not on TikTok Live page'));
             }
             
-            // Limpieza defensiva adicional de notificaciones persistentes
             try {
-                if (state.notificacionCuentaRegresiva) {
-                    removerNotificacion(state.notificacionCuentaRegresiva, true);
-                    state.notificacionCuentaRegresiva = null;
-                }
+                return operation();
             } catch (error) {
-                console.warn('Error en cleanup defensivo:', error);
+                console.warn('Error en operación de almacenamiento:', error);
+                
+                // Recuperación automática para errores de contexto
+                if (error.message.includes('Extension context invalidated')) {
+                    ExtensionModule.reload();
+                }
+                
+                return Promise.reject(error);
             }
-        }
-    };
-    
-    /**
-     * =============================================================================
-     * VARIABLE GLOBAL PARA EL LISTENER DE MENSAJES
-     * =============================================================================
-     * 
-     * Variable que almacena la referencia al listener de mensajes para poder
-     * limpiarlo correctamente cuando sea necesario.
-     */
-    let messageListener = null;
-    
-    /**
-     * =============================================================================
-     * CONFIGURACIÓN DE INTERVALOS Y VELOCIDADES
-     * =============================================================================
-     * 
-     * Define las opciones de velocidad disponibles para el usuario.
-     * Cada intervalo representa la pausa entre tap-taps consecutivos.
-     */
-    const config = {
-        // Array de opciones de velocidad con sus respectivos valores y descripciones
-        intervalos: [
-            { valor: 0, texto: 'Modo humano | [Variable]' },           // Modo humano con valores aleatorios
-            { valor: 200, texto: '200 milisegundos | [Muy rápido]' },  // 5 tap-taps por segundo
-            { valor: 250, texto: '250 milisegundos | [Rápido]' },      // 4 tap-taps por segundo
-            { valor: 500, texto: '500 milisegundos | [Normal]' },      // 2 tap-taps por segundo
-            { valor: 1000, texto: '1  segundo      | [Lento]' }        // 1 tap-tap por segundo
-        ],
-        defaultInterval: 200 // Intervalo predeterminado en milisegundos (velocidad más rápida)
-    };
-    
-    /**
-     * =============================================================================
-     * CONTENEDOR PARA REFERENCIAS A ELEMENTOS DOM
-     * =============================================================================
-     * 
-     * Objeto que almacenará todas las referencias a elementos DOM creados dinámicamente.
-     * Esto facilita el acceso y manipulación de la interfaz de usuario.
-     */
-    const elementos = {};
-    
-    /**
-     * =============================================================================
-     * FUNCIONES DE GESTIÓN SEGURA DE ALMACENAMIENTO Y EXTENSIÓN
-     * =============================================================================
-     */
-    
-    /**
-     * VERIFICAR SI ESTAMOS EN UNA PÁGINA DE LIVE DE TIKTOK
-     * 
-     * Función que verifica si la URL actual corresponde a una transmisión en vivo
-     * de TikTok. Esta verificación es crucial para evitar intentos de conexión
-     * innecesarios en otras partes de TikTok.
-     * 
-     * FORMATO DE URLs DE LIVE DE TIKTOK:
-     * - /@[usuario]/live - Formato estándar de live
-     * - /@[usuario]/live/[id] - Live con ID específico
-     * - /@[usuario]/live?[parámetros] - Live con parámetros de consulta
-     * - /@[usuario]/live/[id]?[parámetros] - Live con ID y parámetros
-     * 
-     * @returns {boolean} - true si estamos en una página de live, false en caso contrario
-     */
-    function isOnTikTokLive() {
-        const pathname = window.location.pathname;
-        const search = window.location.search;
-        const fullPath = pathname + search;
-        
-        // Patrón regex para detectar URLs de live de TikTok: /@[usuario]/live
-        // Acepta cualquier cosa después de /live (incluyendo parámetros de consulta)
-        const livePattern = /^\/@[^\/]+\/live(?:\/[^?]*)?(?:\?.*)?$/;
-        const isLive = livePattern.test(fullPath);
-        
-        console.log(`🎯 Verificación de ubicación: ${isLive ? '✅ En Live' : '❌ Fuera de Live'} - ${fullPath}`);
-        
-        // Log adicional para debugging del patrón
-        if (!isLive && (pathname.includes('live') || search.includes('live'))) {
-            console.log(`🔍 URL contiene 'live' pero no coincide con el patrón /@usuario/live`);
-        }
-        
-        return isLive;
-    }
-    
-    /**
-     * WRAPPER PARA OPERACIONES SEGURAS DE ALMACENAMIENTO
-     * 
-     * Envuelve operaciones que podrían fallar si el contexto de la extensión
-     * se invalida (por ejemplo, cuando la extensión se recarga o actualiza).
-     * 
-     * @param {Function} operation - Función que realiza la operación de almacenamiento
-     * @returns {Promise|any} - Resultado de la operación o error controlado
-     */
-    function safeStorageOperation(operation) {
-        // Verificar que estemos en un live antes de realizar operaciones
-        if (!isOnTikTokLive()) {
-            console.warn('🚫 Operación de almacenamiento cancelada: No estamos en un Live de TikTok');
-            return Promise.reject(new Error('Not on TikTok Live page'));
-        }
-        
-        try {
-            return operation();
-        } catch (error) {
-            console.warn('Error en operación de almacenamiento:', error);
-            // Si el contexto de la extensión se invalió, intentar reconectar solo si estamos en live
-            if (error.message.includes('Extension context invalidated')) {
-                reloadExtension();
-            }
-            return Promise.reject(error);
-        }
-    }
-
-    /**
-     * SISTEMA DE RECONEXIÓN AUTOMÁTICA DE LA EXTENSIÓN
-     * 
-     * Cuando el contexto de la extensión se invalida (por recarga, actualización, etc.),
-     * esta función intenta restaurar automáticamente el funcionamiento de la extensión
-     * sin que el usuario pierda su sesión o configuración actual.
-     * 
-     * PROCESO DE RECONEXIÓN:
-     * 1. Verifica que todavía estemos en una página de Live de TikTok
-     * 2. Limpia todos los timers y estados anteriores
-     * 3. Realiza múltiples intentos de reconexión con delays progresivos
-     * 4. Verifica la validez del contexto de Chrome extension APIs
-     * 5. Restaura el estado anterior si estaba activo
-     * 6. Reconfigura todos los event listeners
-     * 7. Sincroniza la configuración desde el almacenamiento
-     * 8. Si todos los intentos fallan, recarga la página como último recurso
-     */
-    function reloadExtension() {
-        console.log('🔄 Reconectando extensión...');
-        
-        // PASO 0: Verificar que todavía estemos en una página de Live de TikTok
-        if (!isOnTikTokLive()) {
-            console.warn('🚫 Reconexión cancelada: No estamos en un Live de TikTok');
-            // Limpiar todos los recursos y detener la extensión
-            if (state.intervalo) clearInterval(state.intervalo);
-            if (state.chatTimeout) clearTimeout(state.chatTimeout);
-            safeInterval.clearAll();
-            return;
-        }
-        
-        // PASO 1: Limpiar estado anterior para evitar conflictos
-        if (state.intervalo) clearInterval(state.intervalo);    // Detener tap-taps automáticos
-        if (state.chatTimeout) clearTimeout(state.chatTimeout); // Cancelar reactivación pendiente
-        
-        // PASO 2: Configurar sistema de reintentos con backoff progresivo
-        let intentosReconexion = 0;
-        const maxIntentos = 3;
+        },
         
         /**
-         * FUNCIÓN INTERNA DE REINTENTO
+         * Guarda datos en el almacenamiento local de Chrome
          * 
-         * Implementa el algoritmo de reconexión con múltiples intentos
-         * y delays progresivos para evitar sobrecargar el sistema.
+         * @method save
+         * @description Persiste datos de forma segura en chrome.storage.local con
+         *              manejo robusto de errores y validación de contexto.
+         * 
+         * @param {Object} data - Objeto con los datos a guardar
+         * @returns {Promise<void>} Promesa que resuelve cuando se completa el guardado
+         * 
+         * @implementation
+         * Utiliza el patrón Promise con callback clásico de Chrome API,
+         * proporcionando una interfaz moderna de Promesas para el resto
+         * de la aplicación.
+         * 
+         * @error-handling
+         * • Verifica chrome.runtime.lastError después de la operación
+         * • Rechaza la promesa si hay errores
+         * • Resuelve sin valor si la operación es exitosa
+         * 
+         * @example
+         * await StorageModule.save({
+         *     intervalo: 200,
+         *     contador: 150,
+         *     position: { x: 100, y: 50 }
+         * });
+         * 
+         * @performance
+         * • Operación asíncrona no bloqueante
+         * • Almacenamiento local (más rápido que sync)
+         * • Batch de múltiples propiedades en una sola llamada
          */
-        const intentarReconexion = () => {
-            // Verificar nuevamente que sigamos en un live antes de cada intento
-            if (!isOnTikTokLive()) {
-                console.warn('🚫 Reintento cancelado: Ya no estamos en un Live de TikTok');
-                return;
-            }
-            
-            // Si alcanzamos el máximo de intentos, recargar página como último recurso
-            if (intentosReconexion >= maxIntentos) {
-                console.warn('❌ Máximo de intentos de reconexión alcanzado, recargando página...');
-                window.location.reload();
-                return;
-            }
-            
-            intentosReconexion++;
-            console.log(`🔄 Intento de reconexión ${intentosReconexion}/${maxIntentos}...`);
-            
-            try {
-                // PASO 3: Verificar que el contexto de la extensión esté válido
-                chrome.runtime.getURL(''); // Operación simple para verificar contexto
-                
-                // PASO 4: Restaurar estado anterior si estaba funcionando
-                if (state.activo) {
-                    const intervalo = parseInt(elementos.selector.value);
-                    state.intervalo = setInterval(presionarL, intervalo);
-                    
-                    // Notificar al background script sobre el estado actual
-                    safeRuntimeMessage({ 
-                        action: 'started',
-                        contador: state.contador,
-                        enTikTok: true,
-                        enLive: true
-                    }).catch(error => console.warn('Error al notificar inicio:', error));
-                } else {
-                    safeRuntimeMessage({ 
-                        action: 'stopped',
-                        enTikTok: true,
-                        enLive: true
-                    }).catch(error => console.warn('Error al notificar parada:', error));
+        save(data) {
+            return this.safeOperation(() => {
+                return new Promise((resolve, reject) => {
+                    chrome.storage.local.set(data, () => {
+                        if (chrome.runtime.lastError) {
+                            reject(chrome.runtime.lastError);
+                        } else {
+                            resolve();
+                        }
+                    });
+                });
+            });
+        },
+        
+        /**
+         * Obtiene datos del almacenamiento local de Chrome
+         * 
+         * @method get
+         * @description Recupera datos guardados de forma segura desde chrome.storage.local
+         *              con manejo de errores y fallbacks apropiados.
+         * 
+         * @param {Array<string>|string} keys - Clave(s) a recuperar del almacenamiento
+         * @returns {Promise<Object>} Promesa que resuelve con los datos recuperados
+         * 
+         * @implementation
+         * Convierte la API de callback de Chrome en una Promise moderna,
+         * facilitando el uso con async/await en el resto de la aplicación.
+         * 
+         * @fallback-behavior
+         * Si una clave no existe en el almacenamiento, Chrome Storage devuelve
+         * un objeto vacío para esa clave. Este comportamiento se mantiene
+         * para consistencia con la API nativa.
+         * 
+         * @example
+         * // Obtener una sola clave
+         * const result = await StorageModule.get('intervalo');
+         * console.log(result.intervalo); // 200 o undefined
+         * 
+         * // Obtener múltiples claves
+         * const data = await StorageModule.get(['intervalo', 'contador', 'position']);
+         * console.log(data); // { intervalo: 200, contador: 150, position: {...} }
+         * 
+         * @performance
+         * • Operación asíncrona optimizada
+         * • Recuperación batch de múltiples claves
+         * • Almacenamiento local (acceso rápido)
+         * 
+         * @error-propagation
+         * Los errores se propagan hacia arriba para ser manejados por el
+         * código que llama, permitiendo decisiones contextuales sobre
+         * cómo manejar fallos de recuperación.
+         */
+        get(keys) {
+            return this.safeOperation(() => {
+                return new Promise((resolve, reject) => {
+                    chrome.storage.local.get(keys, (result) => {
+                        if (chrome.runtime.lastError) {
+                            reject(chrome.runtime.lastError);
+                        } else {
+                            resolve(result);
+                        }
+                    });
+                });
+            });
+        }
+    };
+    
+    /**
+     * ═══════════════════════════════════════════════════════════════════════════════
+     * 📡 MÓDULO DE MENSAJERÍA
+     * ═══════════════════════════════════════════════════════════════════════════════
+     * 
+     * @module MessagingModule
+     * @description Módulo especializado en la comunicación bidireccional entre el
+     *              content script y el background script. Maneja el protocolo de
+     *              mensajes, errores de conexión y modos de operación diferenciados.
+     * 
+     * @purpose
+     * La comunicación entre content script y background script es fundamental para:
+     * • Sincronizar estado con el popup de la extensión
+     * • Actualizar el badge del icono en tiempo real
+     * • Persistir configuraciones globales
+     * • Coordinar acciones entre diferentes tabs
+     * • Manejar reconexión cuando el contexto se invalida
+     * 
+     * @architecture
+     * ┌─────────────────────────────────────────────────────────────────────────┐
+     * │ ARQUITECTURA DE COMUNICACIÓN                                            │
+     * ├─────────────────────────────────────────────────────────────────────────┤
+     * │                                                                         │
+     * │ Content Script ←→ Background Script ←→ Popup                            │
+     * │                                                                         │
+     * │ • sendMessage()     → Envío seguro con timeout                          │
+     * │ • messageListener   → Recepción y procesamiento                         │
+     * │ • setupBasicListener() → Modo básico para páginas no-Live               │
+     * │ • setupFullListener()  → Modo completo para TikTok Live                 │
+     * │                                                                         │
+     * └─────────────────────────────────────────────────────────────────────────┘
+     * 
+     * @protocol
+     * MENSAJES ENVIADOS AL BACKGROUND:
+     * • started: { action, contador, enTikTok, enLive }
+     * • stopped: { action, enTikTok, enLive }
+     * • paused_by_chat: { action, enTikTok, enLive }
+     * • reactivated_from_chat: { action, contador, enTikTok, enLive }
+     * • updateContext: { action, enTikTok, enLive }
+     * • updateTapTaps: { action, count, enTikTok, enLive }
+     * 
+     * MENSAJES RECIBIDOS DEL POPUP:
+     * • getStatus: → Retorna estado actual completo
+     * • toggle: → Activa/desactiva automatización
+     * • updateReactivationTime: { tiempo } → Cambia tiempo de reactivación
+     * • updateTapTaps: { count } → Sincroniza contador
+     * 
+     * @error-handling
+     * • Extension context invalidated → ExtensionModule.reload()
+     * • Message channel closed → Reconexión automática
+     * • CORS policy errors → Ignorar silenciosamente
+     * • Timeout en mensajes → Reject con error específico
+     * • Background script no disponible → Fallback seguro
+     * 
+     * @reliability
+     * • Timeout de 1 segundo para evitar colgarse
+     * • Validación de contexto antes de enviar
+     * • Reconexión automática en errores críticos
+     * • Fallbacks seguros para todos los escenarios
+     */
+    const MessagingModule = {
+        /**
+         * @property {Function|null} messageListener
+         * @description Referencia al listener de mensajes activo para permitir
+         *              su remoción durante reconfiguración o cleanup.
+         * @lifecycle Se establece en setupFullListener/setupBasicListener
+         */
+        messageListener: null,
+        
+        /**
+         * Envía un mensaje seguro al background script
+         * 
+         * @method sendMessage
+         * @description Envía mensajes al background script con manejo robusto de
+         *              errores, timeout automático y reconexión en caso de fallos.
+         *              Es el método principal para comunicación content → background.
+         * 
+         * @param {Object} message - Objeto mensaje a enviar al background script
+         * @param {string} message.action - Acción específica a ejecutar
+         * @param {...*} message[key] - Propiedades adicionales según la acción
+         * @returns {Promise<Object>} Promesa que resuelve con la respuesta del background
+         * 
+         * @algorithm
+         * 1. Validar contexto (solo TikTok Live para modo completo)
+         * 2. Configurar timeout de 1 segundo para evitar colgarse
+         * 3. Enviar mensaje usando chrome.runtime.sendMessage
+         * 4. Manejar errores específicos con recuperación automática
+         * 5. Procesar respuesta y validar formato
+         * 6. Resolver/rechazar promesa según resultado
+         * 
+         * @error-recovery
+         * EXTENSION CONTEXT INVALIDATED:
+         * • Activa ExtensionModule.reload() automáticamente
+         * • Intenta reconectar la extensión
+         * 
+         * MESSAGE CHANNEL CLOSED:
+         * • Activa ExtensionModule.reload() automáticamente
+         * • Indica que el background script se desconectó
+         * 
+         * CORS POLICY ERRORS:
+         * • Se ignoran silenciosamente (false positive)
+         * • Común en ciertos contextos de TikTok
+         * 
+         * @timeout
+         * Implementa timeout de 1000ms para evitar que la aplicación se cuelgue
+         * esperando respuestas que nunca llegarán debido a contextos invalidados.
+         * 
+         * @example
+         * // Notificar inicio de automatización
+         * await MessagingModule.sendMessage({
+         *     action: 'started',
+         *     contador: 150,
+         *     enTikTok: true,
+         *     enLive: true
+         * });
+         * 
+         * // Actualizar contexto tras navegación
+         * await MessagingModule.sendMessage({
+         *     action: 'updateContext',
+         *     enTikTok: false,
+         *     enLive: false
+         * });
+         * 
+         * @performance
+         * • Timeout de 1s previene bloqueos indefinidos
+         * • Validación temprana evita llamadas innecesarias
+         * • Manejo eficiente de errores comunes
+         * 
+         * @thread-safety
+         * Cada llamada es independiente con su propio timeout y error handling.
+         * No hay estado compartido que pueda causar race conditions.
+         */
+        sendMessage(message) {
+            return new Promise((resolve, reject) => {
+                // Validación de contexto para mensajes desde modo completo
+                if (!ContextModule.isOnTikTokLive()) {
+                    console.warn('🚫 Mensaje cancelado: No estamos en un Live de TikTok');
+                    resolve({});
+                    return;
                 }
                 
-                // PASO 5: Reconfigurar los event listeners
-                setupMessageListener();
-                
-                // PASO 6: Sincronizar configuración desde almacenamiento
-                chrome.storage.local.get(['tiempoReactivacion'], result => {
-                    if (result.tiempoReactivacion) {
-                        state.tiempoReactivacion = result.tiempoReactivacion;
-                        // Actualizar la interfaz si existe
-                        if (elementos.reactivacionInput) {
-                            elementos.reactivacionInput.value = result.tiempoReactivacion;
+                // Configurar timeout para evitar colgarse
+                const timeout = setTimeout(() => {
+                    reject(new Error('Timeout al enviar mensaje'));
+                }, 1000);
+
+                try {
+                    chrome.runtime.sendMessage(message, response => {
+                        clearTimeout(timeout);
+
+                        // Manejar errores de Chrome Runtime
+                        if (chrome.runtime.lastError) {
+                            const error = chrome.runtime.lastError;
+                            
+                            // Errores críticos que requieren reconexión
+                            if (error.message.includes('Extension context invalidated') ||
+                                error.message.includes('message channel closed')) {
+                                ExtensionModule.reload();
+                            }
+                            
+                            // Ignorar errores de CORS (false positives en TikTok)
+                            if (!error.message.includes('CORS')) {
+                                reject(error);
+                            } else {
+                                resolve({});
+                            }
+                            return;
                         }
+
+                        // Manejar respuesta vacía (background no disponible)
+                        if (!response) {
+                            resolve({});
+                            return;
+                        }
+
+                        // Procesar errores en la respuesta
+                        if (response.error) {
+                            console.warn('🚨 Background script respondió con error:', response.error);
+                            
+                            // Errores conocidos que no requieren rechazo
+                            if (response.error.includes('Acción no reconocida')) {
+                                resolve({ error: response.error, handled: true });
+                                return;
+                            }
+                            
+                            reject(new Error(response.error));
+                            return;
+                        }
+
+                        // Respuesta exitosa
+                        resolve(response);
+                    });
+                } catch (error) {
+                    clearTimeout(timeout);
+                    console.warn('Error al enviar mensaje:', error);
+                    
+                    // Ignorar errores de CORS también en catch
+                    if (!error.message.includes('CORS')) {
+                        reject(error);
+                    } else {
+                        resolve({});
+                    }
+                }
+            });
+        },
+        
+        /**
+         * Configura el listener básico de mensajes para páginas no-Live
+         * 
+         * @method setupBasicListener
+         * @description Establece un listener minimalista para responder consultas
+         *              del popup cuando estamos en páginas de TikTok que no son Live.
+         *              Permite que el popup funcione mostrando estado inactivo.
+         * 
+         * @purpose
+         * Cuando el usuario está en TikTok pero no en una página Live, el popup
+         * aún necesita consultar el estado para mostrar información coherente.
+         * Este listener proporciona respuestas básicas sin activar funcionalidad.
+         * 
+         * @functionality
+         * MENSAJES SOPORTADOS:
+         * • getStatus → Responde con estado inactivo y contexto parcial
+         * • Cualquier otra acción → Error indicando que necesita ir a Live
+         * 
+         * @responses
+         * getStatus Response:
+         * {
+         *   activo: false,
+         *   contador: 0,
+         *   tiempoReactivacion: 10,
+         *   pausadoPorChat: false,
+         *   enTikTok: true,
+         *   enLive: false
+         * }
+         * 
+         * Other Actions Response:
+         * {
+         *   error: 'Funcionalidad no disponible. Ve a una página Live de TikTok.'
+         * }
+         * 
+         * @error-handling
+         * • Try-catch completo para prevenir fallos
+         * • Respuestas de error descriptivas
+         * • Logging detallado para debugging
+         * 
+         * @example
+         * // En página https://www.tiktok.com/@usuario (no Live)
+         * // Popup consulta estado
+         * // → Recibe { activo: false, enTikTok: true, enLive: false }
+         */
+        setupBasicListener() {
+            console.log('🔧 Configurando sistema de mensajería básico...');
+            
+            const basicMessageListener = (request, sender, sendResponse) => {
+                try {
+                    if (request.action === 'getStatus') {
+                        console.log('📡 Popup consultó estado - Respondiendo con estado inactivo (página TikTok no-Live)');
+                        
+                        sendResponse({
+                            activo: false,
+                            contador: 0,
+                            tiempoReactivacion: 10,
+                            pausadoPorChat: false,
+                            enTikTok: true,
+                            enLive: false
+                        });
+                        return true;
+                    }
+                    
+                    if (request.action) {
+                        console.log(`❌ Acción '${request.action}' no disponible en modo básico`);
+                        sendResponse({ 
+                            error: 'Funcionalidad no disponible. Ve a una página Live de TikTok.' 
+                        });
+                        return true;
+                    }
+                    
+                    console.log('🤷 Mensaje no reconocido en modo básico:', request);
+                    
+                } catch (error) {
+                    console.error('Error en listener básico:', error);
+                    sendResponse({ error: 'Error interno del content script' });
+                }
+                
+                return true;
+            };
+            
+            chrome.runtime.onMessage.addListener(basicMessageListener);
+            console.log('✅ Sistema de mensajería básico configurado correctamente');
+        },
+        
+        /**
+         * Configura el listener completo de mensajes para páginas Live
+         * 
+         * @method setupFullListener
+         * @description Establece el sistema completo de mensajería para cuando estamos
+         *              en una página Live de TikTok. Soporta todas las funcionalidades
+         *              y mantiene sincronización completa con popup y background.
+         * 
+         * @purpose
+         * Este es el listener principal que maneja toda la comunicación durante
+         * el funcionamiento normal de la extensión en páginas Live, incluyendo
+         * consultas de estado, comandos de control y sincronización de datos.
+         * 
+         * @message-handling
+         * ┌─────────────────────────────────────────────────────────────────────────┐
+         * │ ACCIONES SOPORTADAS                                                     │
+         * ├─────────────────────────────────────────────────────────────────────────┤
+         * │                                                                         │
+         * │ getStatus               → Estado completo actual                        │
+         * │ toggle                  → Activar/desactivar automatización             │
+         * │ updateReactivationTime  → Cambiar tiempo de reactivación (10-60s)       │
+         * │ updateTapTaps          → Sincronizar contador de tap-taps               │
+         * │                                                                         │
+         * └─────────────────────────────────────────────────────────────────────────┘
+         * 
+         * @state-synchronization
+         * getStatus devuelve el estado completo:
+         * {
+         *   activo: boolean,           // Si automatización está activa
+         *   contador: number,          // Tap-taps realizados
+         *   tiempoReactivacion: number, // Segundos para reactivar tras chat
+         *   pausadoPorChat: boolean,   // Si está pausado por chat
+         *   enTikTok: true,           // Siempre true en modo completo
+         *   enLive: true              // Siempre true en modo completo
+         * }
+         * 
+         * @validation
+         * • updateReactivationTime: valida rango 10-60 segundos
+         * • updateTapTaps: valida que count sea number válido
+         * • toggle: sin validación adicional (delegado a AutomationModule)
+         * 
+         * @error-handling
+         * • Try-catch completo alrededor de todo el procesamiento
+         * • Respuestas de error específicas para cada validación
+         * • Logging detallado para debugging
+         * • Siempre retorna true para mantener canal abierto
+         * 
+         * @integration
+         * • AutomationModule.toggle() para control principal
+         * • StateModule para sincronización de estado
+         * • UIModule.elementos para actualizar interfaz
+         * • Storage automático de configuraciones
+         * 
+         * @performance
+         * • Validaciones rápidas antes de operaciones costosas
+         * • Respuestas síncronas cuando es posible
+         * • Delegación eficiente a módulos especializados
+         */
+        setupFullListener() {
+            console.log('🔧 Configurando event listeners y sistema de mensajería...');
+            
+            // Remover listener anterior si existe
+            if (this.messageListener) {
+                chrome.runtime.onMessage.removeListener(this.messageListener);
+            }
+            
+            this.messageListener = (request, sender, sendResponse) => {
+                try {
+                    console.log('📨 Mensaje recibido:', request);
+                    
+                    switch (request.action) {
+                        case 'getStatus':
+                            sendResponse({
+                                activo: StateModule.activo,
+                                contador: StateModule.contador,
+                                tiempoReactivacion: StateModule.tiempoReactivacion,
+                                pausadoPorChat: StateModule.pausadoPorChat,
+                                enTikTok: true,
+                                enLive: true
+                            });
+                            break;
+                            
+                        case 'toggle':
+                            AutomationModule.toggle();
+                            sendResponse({ success: true });
+                            break;
+                            
+                        case 'updateReactivationTime':
+                            if (request.tiempo && request.tiempo >= 10 && request.tiempo <= 60) {
+                                StateModule.tiempoReactivacion = request.tiempo;
+                                if (UIModule.elementos.reactivacionInput) {
+                                    UIModule.elementos.reactivacionInput.value = request.tiempo;
+                                }
+                                sendResponse({ success: true });
+                            } else {
+                                sendResponse({ error: 'Tiempo inválido' });
+                            }
+                            break;
+                            
+                        case 'updateTapTaps':
+                            if (request.hasOwnProperty('count') && typeof request.count === 'number') {
+                                StateModule.contador = request.count;
+                                UIModule.actualizarContador();
+                                sendResponse({ success: true });
+                            } else {
+                                sendResponse({ error: 'Valor de contador inválido' });
+                            }
+                            break;
+                            
+                        default:
+                            console.log('🤷 Acción no reconocida:', request.action);
+                            sendResponse({ error: 'Acción no reconocida' });
+                            break;
+                    }
+                    
+                } catch (error) {
+                    console.error('Error procesando mensaje:', error);
+                    sendResponse({ error: 'Error interno del content script' });
+                }
+                
+                return true; // Mantener canal de mensaje abierto
+            };
+            
+            chrome.runtime.onMessage.addListener(this.messageListener);
+            console.log('✅ Sistema de mensajería configurado correctamente');
+        }
+    };
+    
+    /**
+     * =============================================================================
+     * MÓDULO DE AUTOMATIZACIÓN
+     * =============================================================================
+     * 
+     * Maneja la lógica principal de automatización de tap-taps
+     */
+    const AutomationModule = {
+        /**
+         * Simula un tap-tap presionando la tecla L
+         */
+        presionarL() {
+            const evento = new KeyboardEvent('keydown', {
+                key: 'l',
+                code: 'KeyL',
+                keyCode: 76,
+                which: 76,
+                bubbles: true,
+                cancelable: true
+            });
+            
+            document.dispatchEvent(evento);
+            StateModule.contador++;
+            UIModule.actualizarContador();
+            
+            setTimeout(() => {
+                this.guardarEstadisticas();
+                
+                MessagingModule.sendMessage({ 
+                    action: 'updateTapTaps', 
+                    count: StateModule.contador,
+                    enTikTok: true,
+                    enLive: true
+                }).catch(error => {
+                    if (!error.message.includes('Extension context invalidated') && 
+                        !error.message.includes('message channel closed') &&
+                        !error.message.includes('CORS')) {
+                        console.warn('Error al actualizar contador:', error);
                     }
                 });
-                
-                console.log('✅ Reconexión exitosa');
-                
-            } catch (error) {
-                console.warn(`❌ Error en intento ${intentosReconexion}:`, error);
-                // PASO 7: Esperar progresivamente más tiempo en cada intento fallido
-                // Intento 1: 1 segundo, Intento 2: 2 segundos, Intento 3: 3 segundos
-                setTimeout(intentarReconexion, 1000 * intentosReconexion);
-            }
-        };
+            }, 0);
+        },
         
-        // INICIAR EL PROCESO DE RECONEXIÓN
-        intentarReconexion();
-    }
+        /**
+         * Guarda las estadísticas en el almacenamiento
+         */
+        async guardarEstadisticas() {
+            try {
+                const result = await StorageModule.get(['totalTapTaps']);
+                await StorageModule.save({ 
+                    totalTapTaps: (result.totalTapTaps || 0) + 1 
+                });
+            } catch (error) {
+                console.warn('Error guardando estadísticas:', error);
+            }
+        },
+        
+        /**
+         * Alterna el estado de la automatización
+         * @param {boolean} fromChat - Si viene del sistema de chat
+         */
+        toggle(fromChat = false) {
+            console.log('🔄 Toggle Auto Tap-Tap:', {
+                fromChat,
+                estadoActual: StateModule.activo,
+                pausadoPorChat: StateModule.pausadoPorChat,
+                apagadoManualmente: StateModule.apagadoManualmente
+            });
 
-    /**
-     * SISTEMA DE COMUNICACIÓN SEGURA CON BACKGROUND SCRIPT
-     * 
-     * Envía mensajes al background script de forma segura, manejando todos los posibles
-     * errores que pueden ocurrir durante la comunicación entre content script y background.
-     * 
-     * PROBLEMAS MANEJADOS:
-     * - Timeouts de comunicación (máximo 1 segundo de espera)
-     * - Contexto de extensión invalidado (por recarga/actualización)
-     * - Canales de mensaje cerrados inesperadamente
-     * - Errores CORS que pueden ocurrir en ciertos contextos
-     * - Respuestas vacías o malformadas
-     * 
-     * @param {Object} message - Mensaje a enviar al background script
-     * @returns {Promise} - Promesa que resuelve con la respuesta o se rechaza con error
-     */
-    function safeRuntimeMessage(message) {
-        return new Promise((resolve, reject) => {
-            // VERIFICACIÓN PREVIA: Solo enviar mensajes si estamos en una página de Live
-            if (!isOnTikTokLive()) {
-                console.warn('🚫 Mensaje cancelado: No estamos en un Live de TikTok');
-                resolve({}); // Resolver con objeto vacío para evitar errores en el código que llama
-                return;
+            if (!fromChat) {
+                StateModule.apagadoManualmente = StateModule.activo;
             }
             
-            // TIMEOUT DE SEGURIDAD: Si el mensaje no se envía en 1 segundo, cancelar
-            const timeout = setTimeout(() => {
-                reject(new Error('Timeout al enviar mensaje'));
-            }, 1000);
+            const nuevoEstado = !StateModule.activo;
+            
+            if (StateModule.intervalo) {
+                console.log('🧹 Limpiando intervalo existente');
+                IntervalModule.clear(StateModule.intervalo);
+                StateModule.intervalo = null;
+            }
+            
+            StateModule.activo = nuevoEstado;
+            
+            if (nuevoEstado) {
+                this.activar(fromChat);
+            } else {
+                this.desactivar();
+            }
 
-            try {
-                /**
-                 * FUNCIÓN INTERNA PARA ENVÍO SEGURO DE MENSAJES
-                 * 
-                 * Maneja el envío real del mensaje con múltiples capas de protección
-                 * contra errores que pueden ocurrir durante la comunicación.
-                 */
-                const sendMessage = () => {
-                    try {
-                        chrome.runtime.sendMessage(message, response => {
-                            clearTimeout(timeout); // Cancelar timeout si llegó respuesta
-
-                            // MANEJO DE ERRORES DE RUNTIME DE CHROME
-                            if (chrome.runtime.lastError) {
-                                const error = chrome.runtime.lastError;
-                                
-                                // Errores críticos que requieren reconexión automática
-                                if (error.message.includes('Extension context invalidated') ||
-                                    error.message.includes('message channel closed')) {
-                                    reloadExtension();
-                                }
-                                
-                                // Para otros errores, solo rechazar si no son errores CORS
-                                // Los errores CORS son comunes y no críticos en este contexto
-                                if (!error.message.includes('CORS')) {
-                                    reject(error);
-                                } else {
-                                    // Para errores CORS, resolver con un objeto vacío
-                                    resolve({});
-                                }
-                                return;
-                            }
-
-                            if (!response) {
-                                resolve({}); // Resolver con objeto vacío si no hay respuesta
-                                return;
-                            }
-
-                            if (response.error) {
-                                console.warn('🚨 Background script respondió con error:', response.error);
-                                console.warn('Mensaje original:', message);
-                                
-                                // Para errores de "Acción no reconocida", resolver en lugar de rechazar
-                                // para evitar excepciones no capturadas
-                                if (response.error.includes('Acción no reconocida')) {
-                                    console.warn('⚠️ Resolviendo error de acción no reconocida silenciosamente');
-                                    resolve({ error: response.error, handled: true });
-                                    return;
-                                }
-                                
-                                reject(new Error(response.error));
-                                return;
-                            }
-
-                            resolve(response);
-                        });
-                    } catch (error) {
-                        // Ignorar errores específicos de CORS
-                        if (!error.message.includes('CORS')) {
-                            throw error;
-                        }
-                        resolve({}); // Resolver con objeto vacío para errores CORS
-                    }
-                };
-
-                // Intentar enviar el mensaje
-                sendMessage();
-            } catch (error) {
-                clearTimeout(timeout);
-                console.warn('Error al enviar mensaje:', error);
-                if (error.message.includes('Extension context invalidated')) {
-                    reloadExtension();
-                }
-                // Solo rechazar si no es un error CORS
-                if (!error.message.includes('CORS')) {
-                    reject(error);
-                } else {
-                    resolve({}); // Resolver con objeto vacío para errores CORS
+            console.log('Estado final:', {
+                activo: StateModule.activo,
+                pausadoPorChat: StateModule.pausadoPorChat,
+                apagadoManualmente: StateModule.apagadoManualmente,
+                tieneIntervalo: !!StateModule.intervalo
+            });
+        },
+        
+        /**
+         * Activa la automatización
+         * @param {boolean} fromChat - Si viene del sistema de chat
+         */
+        activar(fromChat) {
+            console.log('✨ Activando Auto Tap-Tap');
+            const intervalo = parseInt(UIModule.elementos.selector.value);
+            UIModule.elementos.selector.disabled = true;
+            UIModule.elementos.selector.style.opacity = '0.5';
+            
+            UIModule.actualizarColoresBoton();
+            
+            StateModule.apagadoManualmente = false;
+            
+            if (!fromChat && StateModule.pausadoPorChat) {
+                console.log('🔄 Reactivación manual desde pausa por chat');
+                StateModule.pausadoPorChat = false;
+                TimerModule.cleanupAll();
+                
+                if (StateModule.limpiarCuentaRegresiva && typeof StateModule.limpiarCuentaRegresiva === 'function') {
+                    StateModule.limpiarCuentaRegresiva();
                 }
             }
-        });
-    }
-
+            
+            if (!StateModule.pausadoPorChat) {
+                if (intervalo === 0) {
+                    console.log('🤖 Activando Modo Humano...');
+                    StateModule.modoHumano.activo = true;
+                    ModoHumanoModule.generarVariables();
+                    ModoHumanoModule.iniciarSesion();
+                    
+                    NotificationModule.agregar('🤖 Modo Humano activado con variables aleatorias', 'success', 4000);
+                } else {
+                    console.log('🚀 Iniciando intervalo de tap-taps normal');
+                    this.presionarL();
+                    StateModule.intervalo = IntervalModule.create(() => this.presionarL(), intervalo);
+                }
+                
+                MessagingModule.sendMessage({ 
+                    action: 'started',
+                    contador: StateModule.contador,
+                    enTikTok: true,
+                    enLive: true
+                }).catch(error => console.warn('Error al notificar estado:', error));
+            } else {
+                console.log('⏸️ No se inicia intervalo - pausado por chat');
+            }
+        },
+        
+        /**
+         * Desactiva la automatización
+         */
+        desactivar() {
+            console.log('🛑 Desactivando Auto Tap-Tap');
+            
+            if (StateModule.modoHumano.activo) {
+                console.log('🧹 Limpiando modo humano por desactivación manual');
+                ModoHumanoModule.limpiar();
+            }
+            
+            UIModule.elementos.selector.disabled = false;
+            UIModule.elementos.selector.style.opacity = '1';
+            
+            UIModule.actualizarColoresBoton();
+            
+            MessagingModule.sendMessage({ 
+                action: 'stopped',
+                enTikTok: true,
+                enLive: true
+            }).catch(error => console.warn('Error al notificar estado:', error));
+        }
+    };
+    
     /**
      * =============================================================================
-     * GESTIÓN SEGURA DE INTERVALOS
+     * MÓDULO DE GESTIÓN DE INTERVALOS
      * =============================================================================
      * 
-     * Objeto que proporciona métodos para crear y gestionar intervalos de forma segura,
-     * manteniendo un registro de todos los intervalos activos para poder limpiarlos
-     * correctamente y evitar memory leaks.
+     * Gestiona los intervalos de forma segura
      */
-    const safeInterval = {
-        // Map que almacena referencias a todos los intervalos activos
+    const IntervalModule = {
         intervals: new Map(),
         
         /**
-         * CREAR INTERVALO SEGURO
-         * 
-         * Crea un nuevo intervalo y lo registra en el Map para seguimiento.
-         * 
-         * @param {Function} callback - Función a ejecutar en cada intervalo
-         * @param {number} delay - Tiempo en milisegundos entre ejecuciones
-         * @returns {number} - ID del intervalo creado
+         * Crea un nuevo intervalo seguro
+         * @param {Function} callback - Función a ejecutar
+         * @param {number} delay - Tiempo entre ejecuciones
+         * @returns {number} ID del intervalo
          */
         create(callback, delay) {
             const id = setInterval(callback, delay);
@@ -633,11 +1606,8 @@ function setupBasicMessageListener() {
         },
         
         /**
-         * LIMPIAR INTERVALO ESPECÍFICO
-         * 
-         * Limpia un intervalo específico y lo elimina del registro.
-         * 
-         * @param {number} id - ID del intervalo a limpiar
+         * Limpia un intervalo específico
+         * @param {number} id - ID del intervalo
          */
         clear(id) {
             clearInterval(id);
@@ -645,945 +1615,258 @@ function setupBasicMessageListener() {
         },
         
         /**
-         * LIMPIAR TODOS LOS INTERVALOS
-         * 
-         * Función de emergencia para limpiar todos los intervalos registrados.
-         * Útil para evitar memory leaks durante reconexiones o errores.
+         * Limpia todos los intervalos
          */
         clearAll() {
             this.intervals.forEach((_, id) => this.clear(id));
         }
     };
-
+    
     /**
      * =============================================================================
-     * FUNCIÓN PRINCIPAL DE AUTOMATIZACIÓN - SIMULACIÓN DE TAP-TAP
+     * MÓDULO DE MODO HUMANO
      * =============================================================================
      * 
-     * Esta es la función core que simula el gesto de tap-tap (presionar la tecla 'L')
-     * que TikTok Live usa para mostrar corazones en pantalla durante las transmisiones.
-     * 
-     * FUNCIONAMIENTO:
-     * 1. Crea un evento de teclado sintético que simula presionar la tecla 'L'
-     * 2. Incrementa el contador de tap-taps realizados en la sesión
-     * 3. Actualiza la interfaz de usuario con el nuevo contador
-     * 4. Guarda las estadísticas en el almacenamiento local
-     * 5. Notifica al background script para actualizar el badge
-     * 
-     * NOTA TÉCNICA:
-     * TikTok Live está configurado para detectar la tecla 'L' como trigger para
-     * mostrar corazones/tap-taps durante las transmisiones en vivo.
+     * Gestiona el modo humano con variables aleatorias
      */
-    function presionarL() {
-        // PASO 1: Crear evento sintético de teclado para simular presión de tecla 'L'
-        const evento = new KeyboardEvent('keydown', {
-            key: 'l',           // Letra que se está "presionando"
-            code: 'KeyL',       // Código físico de la tecla
-            keyCode: 76,        // Código numérico legacy (para compatibilidad)
-            which: 76,          // Código alternativo legacy (para compatibilidad)
-            bubbles: true,      // El evento debe burbujear por el DOM
-            cancelable: true    // El evento puede ser cancelado
-        });
-        
-        // PASO 2: Disparar el evento en el documento para que TikTok lo detecte
-        document.dispatchEvent(evento);
-        
-        // PASO 3: Incrementar contador de tap-taps realizados
-        state.contador++;
-        
-        // PASO 4
-        actualizarContador();
-        
-        // PASO 5: Realizar operaciones de persistencia de forma asíncrona 
-        // para no bloquear la ejecución del siguiente tap-tap
-        setTimeout(() => {
-            // Guardar estadísticas en almacenamiento local
-            guardarEstadisticas();
+    const ModoHumanoModule = {
+        /**
+         * Genera variables aleatorias para el modo humano
+         */
+        generarVariables() {
+            console.log('🎲 Generando nuevas variables aleatorias para modo humano...');
             
-            // Actualizar badge del icono de extensión usando comunicación segura
-            safeRuntimeMessage({ 
-                action: 'updateTapTaps', 
-                count: state.contador,
-                enTikTok: true,
-                enLive: true
-            }).catch(error => {
-                // Solo registrar errores que no sean de CORS o contexto invalidado
-                if (!error.message.includes('Extension context invalidated') && 
-                    !error.message.includes('message channel closed') &&
-                    !error.message.includes('CORS')) {
-                    console.warn('Error al actualizar contador:', error);
-                }
+            StateModule.modoHumano.frecuenciaSesion = Math.floor(Math.random() * (78350 - 27500 + 1)) + 27500;
+            StateModule.modoHumano.frecuenciaTapTap = Math.floor(Math.random() * (485 - 200 + 1)) + 200;
+            StateModule.modoHumano.cooldownSesion = Math.floor(Math.random() * (9295 - 3565 + 1)) + 3565;
+            
+            console.log('🎯 Variables generadas:', {
+                frecuenciaSesion: `${StateModule.modoHumano.frecuenciaSesion}ms (${(StateModule.modoHumano.frecuenciaSesion / 1000).toFixed(1)}s)`,
+                frecuenciaTapTap: `${StateModule.modoHumano.frecuenciaTapTap}ms`,
+                cooldownSesion: `${StateModule.modoHumano.cooldownSesion}ms (${(StateModule.modoHumano.cooldownSesion / 1000).toFixed(1)}s)`
             });
-        }, 0); // setTimeout con 0ms para ejecutar en el siguiente ciclo del event loop
-    }
-    
-    /**
-     * ACTUALIZAR CONTADOR EN LA INTERFAZ
-     * 
-     * Función simple que actualiza el display visual del contador de tap-taps
-     * en la interfaz de usuario flotante.
-     */
-    function actualizarContador() {
-        if (elementos.contador) {
-            elementos.contador.textContent = state.contador;
-        }
-    }
-    
-    /**
-     * GUARDAR ESTADÍSTICAS EN ALMACENAMIENTO PERSISTENTE
-     * 
-     * Función que guarda el progreso del usuario en el almacenamiento local
-     * de Chrome para mantener las estadísticas entre sesiones.
-     */
-    function guardarEstadisticas() {
-        safeStorageOperation(() => {
-            chrome.storage.local.get(['totalTapTaps'], result => {
-                chrome.storage.local.set({ 
-                    totalTapTaps: (result.totalTapTaps || 0) + 1 
-                });
-            });
-        });
-    }
-    
-    /**
-     * =============================================================================
-     * SISTEMA DE MODO HUMANO - GESTIÓN DE VARIABLES ALEATORIAS Y CICLOS
-     * =============================================================================
-     */
-    
-    /**
-     * GENERAR VARIABLES ALEATORIAS PARA MODO HUMANO
-     * 
-     * Genera valores aleatorios dentro de los rangos especificados para
-     * simular comportamiento humano más realista.
-     * 
-     * RANGOS:
-     * - frecuenciaSesion: 27500-78350 ms (duración de sesión activa)
-     * - frecuenciaTapTap: 200-485 ms (velocidad durante sesión)
-     * - cooldownSesion: 3565-9295 ms (tiempo entre sesiones)
-     */
-    function generarVariablesModoHumano() {
-        console.log('🎲 Generando nuevas variables aleatorias para modo humano...');
+            
+            this.actualizarTextoSelector();
+        },
         
-        // Generar valores aleatorios dentro de los rangos especificados
-        state.modoHumano.frecuenciaSesion = Math.floor(Math.random() * (78350 - 27500 + 1)) + 27500;
-        state.modoHumano.frecuenciaTapTap = Math.floor(Math.random() * (485 - 200 + 1)) + 200;
-        state.modoHumano.cooldownSesion = Math.floor(Math.random() * (9295 - 3565 + 1)) + 3565;
+        /**
+         * Inicia una sesión activa del modo humano
+         */
+        iniciarSesion() {
+            console.log('🚀 Iniciando sesión activa en modo humano...');
+            
+            StateModule.modoHumano.enSesion = true;
+            StateModule.modoHumano.tiempoSesionRestante = StateModule.modoHumano.frecuenciaSesion;
+            StateModule.modoHumano.inicioSesion = Date.now();
+            
+            AutomationModule.presionarL();
+            StateModule.intervalo = IntervalModule.create(() => AutomationModule.presionarL(), StateModule.modoHumano.frecuenciaTapTap);
+            
+            TimerModule.timers.modoHumanoSesion = setTimeout(() => {
+                console.log('⏸️ Sesión de modo humano completada, iniciando cooldown...');
+                this.finalizarSesion();
+            }, StateModule.modoHumano.frecuenciaSesion);
+            
+            NotificationModule.agregar(
+                `🤖 Modo Humano: Sesión activa por ${(StateModule.modoHumano.frecuenciaSesion / 1000).toFixed(1)}s`, 
+                'info', 
+                3000
+            );
+        },
         
-        console.log('🎯 Variables generadas:', {
-            frecuenciaSesion: `${state.modoHumano.frecuenciaSesion}ms (${(state.modoHumano.frecuenciaSesion / 1000).toFixed(1)}s)`,
-            frecuenciaTapTap: `${state.modoHumano.frecuenciaTapTap}ms`,
-            cooldownSesion: `${state.modoHumano.cooldownSesion}ms (${(state.modoHumano.cooldownSesion / 1000).toFixed(1)}s)`
-        });
-        
-        // Actualizar texto del selector con las nuevas variables
-        actualizarTextoSelectorModoHumano();
-    }
-    
-    /**
-     * INICIAR SESIÓN ACTIVA EN MODO HUMANO
-     * 
-     * Inicia una sesión de tap-taps con la frecuencia calculada
-     * y programa el fin de la sesión.
-     */
-    function iniciarSesionModoHumano() {
-        console.log('🚀 Iniciando sesión activa en modo humano...');
-        console.log(`⏱️ Duración de sesión: ${state.modoHumano.frecuenciaSesion}ms (${(state.modoHumano.frecuenciaSesion / 1000).toFixed(1)}s)`);
-        console.log(`💓 Velocidad tap-tap: ${state.modoHumano.frecuenciaTapTap}ms`);
-        
-        state.modoHumano.enSesion = true;
-        state.modoHumano.tiempoSesionRestante = state.modoHumano.frecuenciaSesion;
-        state.modoHumano.inicioSesion = Date.now(); // Registrar timestamp de inicio
-        
-        // Iniciar tap-taps con la frecuencia calculada
-        presionarL(); // Ejecutar inmediatamente
-        state.intervalo = safeInterval.create(presionarL, state.modoHumano.frecuenciaTapTap);
-        
-        // Programar el fin de la sesión
-        timers.modoHumanoSesion = setTimeout(() => {
-            console.log('⏸️ Sesión de modo humano completada, iniciando cooldown...');
-            finalizarSesionModoHumano();
-        }, state.modoHumano.frecuenciaSesion);
-        
-        // Notificación de inicio de sesión
-        agregarNotificacion(
-            `🤖 Modo Humano: Sesión activa por ${(state.modoHumano.frecuenciaSesion / 1000).toFixed(1)}s`, 
-            'info', 
-            3000
-        );
-    }
-    
-    /**
-     * FINALIZAR SESIÓN Y COMENZAR COOLDOWN
-     * 
-     * Detiene los tap-taps e inicia el período de cooldown
-     * antes de la siguiente sesión.
-     */
-    function finalizarSesionModoHumano() {
-        console.log('🛑 Finalizando sesión de modo humano...');
-        
-        // Detener tap-taps
-        if (state.intervalo) {
-            safeInterval.clear(state.intervalo);
-            state.intervalo = null;
-        }
-        
-        // Limpiar timer de sesión
-        if (timers.modoHumanoSesion) {
-            clearTimeout(timers.modoHumanoSesion);
-            timers.modoHumanoSesion = null;
-        }
-        
-        state.modoHumano.enSesion = false;
-        state.modoHumano.tiempoCooldownRestante = state.modoHumano.cooldownSesion;
-        state.modoHumano.inicioCooldown = Date.now(); // Registrar timestamp de inicio del cooldown
-        
-        console.log(`😴 Iniciando cooldown por ${state.modoHumano.cooldownSesion}ms (${(state.modoHumano.cooldownSesion / 1000).toFixed(1)}s)`);
-        
-        // Programar el reinicio de la siguiente sesión
-        timers.modoHumanoCooldown = setTimeout(() => {
-            console.log('🔄 Cooldown completado, regenerando variables...');
-            if (state.modoHumano.activo && !state.modoHumano.pausadoPorChat && !state.apagadoManualmente) {
-                // Regenerar variables y comenzar nueva sesión
-                generarVariablesModoHumano();
-                iniciarSesionModoHumano();
+        /**
+         * Finaliza la sesión y comienza el cooldown
+         */
+        finalizarSesion() {
+            console.log('🛑 Finalizando sesión de modo humano...');
+            
+            if (StateModule.intervalo) {
+                IntervalModule.clear(StateModule.intervalo);
+                StateModule.intervalo = null;
             }
-        }, state.modoHumano.cooldownSesion);
-        
-        // Notificación de cooldown
-        agregarNotificacion(
-            `😴 Modo Humano: Cooldown por ${(state.modoHumano.cooldownSesion / 1000).toFixed(1)}s`, 
-            'warning', 
-            3000
-        );
-    }
-    
-    /**
-     * PAUSAR MODO HUMANO POR CHAT
-     * 
-     * Pausa los timers del modo humano sin regenerar variables,
-     * preservando el estado actual para reanudar después.
-     */
-    function pausarModoHumanoPorChat() {
-        console.log('💬 Pausando modo humano por interacción con chat...');
-        
-        state.modoHumano.pausadoPorChat = true;
-        
-        // Actualizar tiempos restantes antes de pausar
-        actualizarTiemposRestantesModoHumano();
-        
-        // Pausar tap-taps si está en sesión activa
-        if (state.modoHumano.enSesion && state.intervalo) {
-            safeInterval.clear(state.intervalo);
-            state.intervalo = null;
-        }
-        
-        // Pausar timers pero conservar tiempo restante
-        if (timers.modoHumanoSesion) {
-            clearTimeout(timers.modoHumanoSesion);
-            timers.modoHumanoSesion = null;
-        }
-        
-        if (timers.modoHumanoCooldown) {
-            clearTimeout(timers.modoHumanoCooldown);
-            timers.modoHumanoCooldown = null;
-        }
-        
-        console.log('⏸️ Timers de modo humano pausados, variables conservadas');
-    }
-    
-    /**
-     * REANUDAR MODO HUMANO DESPUÉS DEL CHAT
-     * 
-     * Reanuda los timers del modo humano desde donde se pausaron,
-     * sin regenerar las variables.
-     */
-    function reanudarModoHumanoDesdeChat() {
-        console.log('🔄 Reanudando modo humano desde pausa de chat...');
-        
-        state.modoHumano.pausadoPorChat = false;
-        
-        if (state.modoHumano.enSesion) {
-            // Reanudar sesión activa
-            console.log(`▶️ Reanudando sesión con ${state.modoHumano.tiempoSesionRestante}ms restantes`);
             
-            // Reanudar tap-taps
-            presionarL(); // Ejecutar inmediatamente
-            state.intervalo = safeInterval.create(presionarL, state.modoHumano.frecuenciaTapTap);
+            if (TimerModule.timers.modoHumanoSesion) {
+                clearTimeout(TimerModule.timers.modoHumanoSesion);
+                TimerModule.timers.modoHumanoSesion = null;
+            }
             
-            // Reanudar timer de sesión con tiempo restante
-            timers.modoHumanoSesion = setTimeout(() => {
-                console.log('⏸️ Sesión de modo humano completada tras reanudar, iniciando cooldown...');
-                finalizarSesionModoHumano();
-            }, state.modoHumano.tiempoSesionRestante);
+            StateModule.modoHumano.enSesion = false;
+            StateModule.modoHumano.tiempoCooldownRestante = StateModule.modoHumano.cooldownSesion;
+            StateModule.modoHumano.inicioCooldown = Date.now();
             
-        } else {
-            // Reanudar cooldown
-            console.log(`😴 Reanudando cooldown con ${state.modoHumano.tiempoCooldownRestante}ms restantes`);
+            console.log(`😴 Iniciando cooldown por ${StateModule.modoHumano.cooldownSesion}ms (${(StateModule.modoHumano.cooldownSesion / 1000).toFixed(1)}s)`);
             
-            // Reanudar timer de cooldown con tiempo restante
-            timers.modoHumanoCooldown = setTimeout(() => {
-                console.log('🔄 Cooldown completado tras reanudar, regenerando variables...');
-                if (state.modoHumano.activo && !state.modoHumano.pausadoPorChat && !state.apagadoManualmente) {
-                    generarVariablesModoHumano();
-                    iniciarSesionModoHumano();
+            TimerModule.timers.modoHumanoCooldown = setTimeout(() => {
+                console.log('🔄 Cooldown completado, regenerando variables...');
+                if (StateModule.modoHumano.activo && !StateModule.modoHumano.pausadoPorChat && !StateModule.apagadoManualmente) {
+                    this.generarVariables();
+                    this.iniciarSesion();
                 }
-            }, state.modoHumano.tiempoCooldownRestante);
-        }
-        
-        agregarNotificacion('🤖 Modo Humano reanudado desde chat', 'success', 3000);
-    }
-    
-    /**
-     * ACTUALIZAR TIEMPOS RESTANTES EN MODO HUMANO
-     * 
-     * Función helper que calcula y actualiza los tiempos restantes
-     * de sesión o cooldown para una pausa más precisa.
-     */
-    function actualizarTiemposRestantesModoHumano() {
-        if (!state.modoHumano.activo) return;
-        
-        const ahora = Date.now();
-        
-        if (state.modoHumano.enSesion && state.modoHumano.inicioSesion) {
-            const tiempoTranscurrido = ahora - state.modoHumano.inicioSesion;
-            state.modoHumano.tiempoSesionRestante = Math.max(0, state.modoHumano.frecuenciaSesion - tiempoTranscurrido);
-            console.log(`⏱️ Tiempo de sesión restante: ${state.modoHumano.tiempoSesionRestante}ms`);
-        } else if (!state.modoHumano.enSesion && state.modoHumano.inicioCooldown) {
-            const tiempoTranscurrido = ahora - state.modoHumano.inicioCooldown;
-            state.modoHumano.tiempoCooldownRestante = Math.max(0, state.modoHumano.cooldownSesion - tiempoTranscurrido);
-            console.log(`⏱️ Tiempo de cooldown restante: ${state.modoHumano.tiempoCooldownRestante}ms`);
-        }
-    }
-    
-    /**
-     * ACTUALIZAR TEXTO DINÁMICO DEL SELECTOR PARA MODO HUMANO
-     * 
-     * Actualiza el texto del selector de velocidad para mostrar las variables
-     * actuales del modo humano cuando está activo.
-     */
-    function actualizarTextoSelectorModoHumano() {
-        if (!elementos.selector) return;
-        
-        const opcionModoHumano = elementos.selector.querySelector('option[value="0"]');
-        if (!opcionModoHumano) return;
-        
-        if (state.modoHumano.activo) {
-            // Mostrar variables actuales
-            const sesionS = (state.modoHumano.frecuenciaSesion / 1000).toFixed(1);
-            const cooldownS = (state.modoHumano.cooldownSesion / 1000).toFixed(1);
-            const tapMs = state.modoHumano.frecuenciaTapTap;
+            }, StateModule.modoHumano.cooldownSesion);
             
-            opcionModoHumano.textContent = `Modo humano | Sesión:${sesionS}s Tap:${tapMs}ms Cooldown:${cooldownS}s`;
-        } else {
-            // Mostrar texto por defecto
-            opcionModoHumano.textContent = 'Modo humano | [Variable]';
-        }
-    }
-    
-    /**
-     * LIMPIAR COMPLETAMENTE EL MODO HUMANO
-     * 
-     * Limpia todos los timers y resetea todas las variables
-     * del modo humano. Se usa cuando se desactiva manualmente.
-     */
-    function limpiarModoHumano() {
-        console.log('🧹 Limpiando completamente el modo humano...');
+            NotificationModule.agregar(
+                `😴 Modo Humano: Cooldown por ${(StateModule.modoHumano.cooldownSesion / 1000).toFixed(1)}s`, 
+                'warning', 
+                3000
+            );
+        },
         
-        // Limpiar timers
-        if (timers.modoHumanoSesion) {
-            clearTimeout(timers.modoHumanoSesion);
-            timers.modoHumanoSesion = null;
-        }
-        
-        if (timers.modoHumanoCooldown) {
-            clearTimeout(timers.modoHumanoCooldown);
-            timers.modoHumanoCooldown = null;
-        }
-        
-        // Resetear variables
-        state.modoHumano.activo = false;
-        state.modoHumano.frecuenciaSesion = 0;
-        state.modoHumano.frecuenciaTapTap = 0;
-        state.modoHumano.cooldownSesion = 0;
-        state.modoHumano.enSesion = false;
-        state.modoHumano.tiempoSesionRestante = 0;
-        state.modoHumano.tiempoCooldownRestante = 0;
-        state.modoHumano.pausadoPorChat = false;
-        state.modoHumano.inicioSesion = null;
-        state.modoHumano.inicioCooldown = null;
-        
-        // Restaurar texto original del selector
-        actualizarTextoSelectorModoHumano();
-        
-        console.log('✅ Modo humano completamente limpiado');
-    }
-    
-    /**
-     * =============================================================================
-     * FUNCIONES DE PAUSA Y REACTIVACIÓN CON INTEGRACIÓN DE MODO HUMANO
-     * =============================================================================
-     */
-
-    /**
-     * PAUSAR AUTO TAP-TAP POR INTERACCIÓN CON CHAT
-     * 
-     * Pausa el sistema cuando el usuario interactúa con el chat.
-     * Integra soporte para modo humano pausando los timers específicos.
-     * 
-     * @returns {boolean} - true si se pausó exitosamente, false si no era necesario
-     */
-    function pausarPorChat() {
-        console.log('💬 Pausando por interacción con chat...');
-        
-        // Verificar que el sistema esté activo
-        if (!state.activo || state.pausadoPorChat) {
-            console.log('⚠️ Sistema ya pausado o inactivo');
-            return false;
-        }
-        
-        // Marcar como pausado por chat
-        state.pausadoPorChat = true;
-        
-        // PAUSA ESPECÍFICA PARA MODO HUMANO
-        if (state.modoHumano.activo) {
-            console.log('🤖 Pausando modo humano por chat...');
-            pausarModoHumanoPorChat();
-        } else {
-            // PAUSA PARA MODO NORMAL
-            console.log('⏸️ Pausando modo normal por chat...');
-            if (state.intervalo) {
-                safeInterval.clear(state.intervalo);
-                state.intervalo = null;
+        /**
+         * Pausa el modo humano por interacción con chat
+         */
+        pausarPorChat() {
+            console.log('💬 Pausando modo humano por interacción con chat...');
+            
+            StateModule.modoHumano.pausadoPorChat = true;
+            
+            this.actualizarTiemposRestantes();
+            
+            if (StateModule.modoHumano.enSesion && StateModule.intervalo) {
+                IntervalModule.clear(StateModule.intervalo);
+                StateModule.intervalo = null;
             }
-        }
-        
-        // Notificar al background script
-        safeRuntimeMessage({
-            action: 'paused_by_chat',
-            enTikTok: true,
-            enLive: true
-        }).catch(error => console.warn('Error al notificar pausa por chat:', error));
-        
-        console.log('✅ Pausado exitosamente por chat');
-        return true;
-    }
-
-    /**
-     * REACTIVAR AUTO TAP-TAP DESPUÉS DE PAUSA POR CHAT
-     * 
-     * Reactiva el sistema después de una pausa por chat.
-     * Integra soporte para modo humano reanudando desde donde se pausó.
-     * 
-     * @param {boolean} fromManual - Si la reactivación es manual o automática
-     * @returns {boolean} - true si se reactivó exitosamente, false si no era necesario
-     */
-    function reactivarAutoTapTap(fromManual = false) {
-        console.log('🔄 Reactivando Auto Tap-Tap...', { fromManual });
-        
-        // Verificar que esté pausado por chat
-        if (!state.pausadoPorChat) {
-            console.log('⚠️ No estaba pausado por chat');
-            return false;
-        }
-        
-        // Verificar que no esté apagado manualmente
-        if (state.apagadoManualmente) {
-            console.log('⚠️ Está apagado manualmente, no reactivar');
-            return false;
-        }
-        
-        // Marcar como no pausado por chat
-        state.pausadoPorChat = false;
-        
-        // REACTIVACIÓN ESPECÍFICA PARA MODO HUMANO
-        if (state.modoHumano.activo) {
-            console.log('🤖 Reanudando modo humano desde chat...');
-            reanudarModoHumanoDesdeChat();
-        } else {
-            // REACTIVACIÓN PARA MODO NORMAL
-            console.log('▶️ Reanudando modo normal desde chat...');
-            const intervalo = parseInt(elementos.selector.value);
-            if (intervalo > 0) {
-                presionarL(); // Ejecutar inmediatamente
-                state.intervalo = safeInterval.create(presionarL, intervalo);
+            
+            if (TimerModule.timers.modoHumanoSesion) {
+                clearTimeout(TimerModule.timers.modoHumanoSesion);
+                TimerModule.timers.modoHumanoSesion = null;
             }
-        }
-        
-        // Actualizar colores del botón
-        actualizarColoresBoton();
-        
-        // Notificar al background script
-        safeRuntimeMessage({
-            action: 'reactivated_from_chat',
-            contador: state.contador,
-            enTikTok: true,
-            enLive: true
-        }).catch(error => console.warn('Error al notificar reactivación:', error));
-        
-        console.log('✅ Reactivado exitosamente desde chat');
-        return true;
-    }
-    
-    /**
-     * =============================================================================
-     * FUNCIÓN PRINCIPAL DE CONTROL - ALTERNAR AUTO TAP-TAP
-     * =============================================================================
-     * 
-     * Esta es la función central que controla el encendido/apagado del sistema
-     * de automatización. Maneja tanto interacciones manuales del usuario como
-     * activaciones/desactivaciones automáticas del sistema de chat.
-     * 
-     * PARÁMETROS:
-     * @param {boolean} fromChat - Indica si el toggle viene del sistema de chat
-     *                            o de una interacción manual del usuario
-     * 
-     * LÓGICA DE FUNCIONAMIENTO:
-     * - Interacciones manuales (fromChat=false): El usuario controla directamente
-     * - Interacciones de chat (fromChat=true): Sistema automático por uso del chat
-     * - Gestiona el estado de "apagado manual" vs "pausa automática por chat"
-     * - Actualiza la interfaz visual y los intervalos de automatización
-     */
-    function toggleAutoTapTap(fromChat = false) {
-        console.log('🔄 Toggle Auto Tap-Tap:', {
-            fromChat,
-            estadoActual: state.activo,
-            pausadoPorChat: state.pausadoPorChat,
-            apagadoManualmente: state.apagadoManualmente
-        });
-
-        // PASO 1: Gestión del estado "apagado manualmente"
-        // Solo actualizar cuando es una interacción directa del usuario con el botón
-        if (!fromChat) {
-            // Marcar como apagado manual solo cuando el usuario APAGA el sistema
-            // Si está activo y va a desactivarse = apagado manual
-            // Si está inactivo y va a activarse = NO es apagado manual
-            state.apagadoManualmente = state.activo; // true solo cuando se apaga manualmente
-        }
-        
-        // PASO 2: Determinar el nuevo estado (invertir estado actual)
-        const nuevoEstado = !state.activo;
-        
-        // PASO 3: Limpiar intervalos existentes para evitar duplicados
-        if (state.intervalo) {
-            console.log('🧹 Limpiando intervalo existente');
-            safeInterval.clear(state.intervalo);
-            state.intervalo = null;
-        }
-        
-        // PASO 4: Actualizar estado central
-        state.activo = nuevoEstado;
-        
-        // PASO 5A: LÓGICA DE ACTIVACIÓN
-        if (nuevoEstado) {
-            console.log('✨ Activando Auto Tap-Tap');
-            const intervalo = parseInt(elementos.selector.value);
-            elementos.selector.disabled = true;
-            elementos.selector.style.opacity = '0.5';
             
-            // Actualizar colores dinámicamente
-            actualizarColoresBoton();
+            if (TimerModule.timers.modoHumanoCooldown) {
+                clearTimeout(TimerModule.timers.modoHumanoCooldown);
+                TimerModule.timers.modoHumanoCooldown = null;
+            }
             
-            // Al activar manualmente, resetear el estado de apagado manual y pausa por chat
-            state.apagadoManualmente = false;
+            console.log('⏸️ Timers de modo humano pausados, variables conservadas');
+        },
+        
+        /**
+         * Reanuda el modo humano después del chat
+         */
+        reanudarDesdeChat() {
+            console.log('🔄 Reanudando modo humano desde pausa de chat...');
             
-            // Si es activación manual y estaba pausado por chat, limpiar ese estado
-            if (!fromChat && state.pausadoPorChat) {
-                console.log('🔄 Reactivación manual desde pausa por chat');
-                state.pausadoPorChat = false;
-                // Limpiar timers de chat si existen
-                timers.cleanupAll();
+            StateModule.modoHumano.pausadoPorChat = false;
+            
+            if (StateModule.modoHumano.enSesion) {
+                console.log(`▶️ Reanudando sesión con ${StateModule.modoHumano.tiempoSesionRestante}ms restantes`);
                 
-                // Limpiar específicamente cualquier cuenta regresiva activa
-                if (state.limpiarCuentaRegresiva && typeof state.limpiarCuentaRegresiva === 'function') {
-                    state.limpiarCuentaRegresiva();
-                }
+                AutomationModule.presionarL();
+                StateModule.intervalo = IntervalModule.create(() => AutomationModule.presionarL(), StateModule.modoHumano.frecuenciaTapTap);
                 
-                if (inactivityTimer) {
-                    clearTimeout(inactivityTimer);
-                    inactivityTimer = null;
-                }
-            }
-            
-            // Iniciar intervalo si no está pausado por chat
-            if (!state.pausadoPorChat) {
-                // DETECTAR Y ACTIVAR MODO HUMANO
-                if (intervalo === 0) {
-                    console.log('🤖 Activando Modo Humano...');
-                    state.modoHumano.activo = true;
-                    generarVariablesModoHumano();
-                    iniciarSesionModoHumano();
-                    
-                    // Mostrar notificación especial para modo humano
-                    agregarNotificacion('🤖 Modo Humano activado con variables aleatorias', 'success', 4000);
-                } else {
-                    // Modo normal
-                    console.log('🚀 Iniciando intervalo de tap-taps normal');
-                    presionarL(); // Ejecutar el primer tap-tap inmediatamente
-                    state.intervalo = safeInterval.create(presionarL, intervalo);
-                }
+                TimerModule.timers.modoHumanoSesion = setTimeout(() => {
+                    console.log('⏸️ Sesión de modo humano completada tras reanudar, iniciando cooldown...');
+                    this.finalizarSesion();
+                }, StateModule.modoHumano.tiempoSesionRestante);
                 
-                // Notificar al background script sobre el estado activo
-                safeRuntimeMessage({ 
-                    action: 'started',
-                    contador: state.contador,
-                    enTikTok: true,
-                    enLive: true
-                })
-                    .catch(error => console.warn('Error al notificar estado:', error));
             } else {
-                console.log('⏸️ No se inicia intervalo - pausado por chat');
-            }
-        } else {
-            // PASO 5B: LÓGICA DE DESACTIVACIÓN
-            console.log('🛑 Desactivando Auto Tap-Tap');
-            
-            // Limpiar modo humano si está activo
-            if (state.modoHumano.activo) {
-                console.log('🧹 Limpiando modo humano por desactivación manual');
-                limpiarModoHumano();
-            }
-            
-            elementos.selector.disabled = false;
-            elementos.selector.style.opacity = '1';
-            
-            // Actualizar colores dinámicamente
-            actualizarColoresBoton();
-            
-            // Notificar al background script sobre el estado inactivo
-            safeRuntimeMessage({ 
-                action: 'stopped',
-                enTikTok: true,
-                enLive: true
-            })
-                .catch(error => console.warn('Error al notificar estado:', error));
-        }
-
-        // PASO 6: Log del estado final para debugging
-        console.log('Estado final:', {
-            activo: state.activo,
-            pausadoPorChat: state.pausadoPorChat,
-            apagadoManualmente: state.apagadoManualmente,
-            tieneIntervalo: !!state.intervalo
-        });
-    }
-    
-    /**
-     * =============================================================================
-     * CONFIGURACIÓN DE EVENT LISTENERS Y SISTEMA DE MENSAJERÍA
-     * =============================================================================
-     * 
-     * Esta función configura todos los event listeners necesarios para la interfaz
-     * de usuario y establece el sistema de comunicación con el background script.
-     */
-    function setupMessageListener() {
-        console.log('🔧 Configurando event listeners y sistema de mensajería...');
-        
-        // CONFIGURAR EVENT LISTENERS DE LA INTERFAZ
-        
-        // Botón principal de toggle
-        elementos.boton.addEventListener('click', () => {
-            toggleAutoTapTap();
-        });
-        
-        // Selector de velocidad
-        elementos.selector.addEventListener('change', () => {
-            const nuevoIntervalo = parseInt(elementos.selector.value);
-            // Si está activo, reiniciar con nuevo intervalo
-            if (state.activo) {
-                // Limpiar intervalo actual
-                if (state.intervalo) {
-                    safeInterval.clear(state.intervalo);
-                }
+                console.log(`😴 Reanudando cooldown con ${StateModule.modoHumano.tiempoCooldownRestante}ms restantes`);
                 
-                // Si estaba en modo humano, limpiarlo primero
-                if (state.modoHumano.activo) {
-                    console.log('🔄 Cambiando desde modo humano a intervalo normal');
-                    limpiarModoHumano();
-                }
-                
-                // Configurar nuevo modo
-                if (nuevoIntervalo === 0) {
-                    // Cambiar a modo humano
-                    console.log('🤖 Cambiando a Modo Humano...');
-                    state.modoHumano.activo = true;
-                    generarVariablesModoHumano();
-                    iniciarSesionModoHumano();
-                    agregarNotificacion('🤖 Modo Humano activado', 'success', 3000);
-                } else {
-                    // Modo normal
-                    presionarL(); // Ejecutar inmediatamente
-                    state.intervalo = safeInterval.create(presionarL, nuevoIntervalo);
-                }
+                TimerModule.timers.modoHumanoCooldown = setTimeout(() => {
+                    console.log('🔄 Cooldown completado tras reanudar, regenerando variables...');
+                    if (StateModule.modoHumano.activo && !StateModule.modoHumano.pausadoPorChat && !StateModule.apagadoManualmente) {
+                        this.generarVariables();
+                        this.iniciarSesion();
+                    }
+                }, StateModule.modoHumano.tiempoCooldownRestante);
             }
             
-            // Guardar configuración
-            safeStorageOperation(() => {
-                chrome.storage.local.set({ 
-                    intervalo: nuevoIntervalo 
-                });
-            });
-        });
-        
-        // Botón de reset del contador
-        elementos.botonReset.addEventListener('click', () => {
-            state.contador = 0;
-            actualizarContador();
-            safeStorageOperation(() => {
-                chrome.storage.local.set({ 
-                    totalTapTaps: 0 
-                });
-            });
-        });
-        
-        // Input de tiempo de reactivación
-        elementos.reactivacionInput.addEventListener('change', () => {
-            const nuevoTiempo = parseInt(elementos.reactivacionInput.value);
-            if (nuevoTiempo >= 10 && nuevoTiempo <= 60) {
-                state.tiempoReactivacion = nuevoTiempo;
-                safeStorageOperation(() => {
-                    chrome.storage.local.set({ 
-                        tiempoReactivacion: nuevoTiempo 
-                    });
-                });
-            }
-        });
-        
-        // Botón minimizar
-        elementos.botonMinimizar.addEventListener('click', () => {
-            const controles = [
-                elementos.boton,
-                elementos.selectorLabel,
-                elementos.selector,
-                elementos.contadorDiv,
-                elementos.botonReset,
-                elementos.configDiv,
-                elementos.copyrightDiv
-            ];
-            
-            const isMinimized = elementos.boton.style.display === 'none';
-            controles.forEach(el => {
-                if (el) el.style.display = isMinimized ? 'block' : 'none';
-            });
-            
-            elementos.botonMinimizar.textContent = isMinimized ? '−' : '+';
-        });
-        
-        // CONFIGURAR SISTEMA DE ARRASTRE
-        elementos.barraArrastre.addEventListener('mousedown', dragStart);
-        elementos.barraArrastre.addEventListener('touchstart', dragStart, { passive: false });
-        
-        // CONFIGURAR SISTEMA DE MENSAJERÍA CON BACKGROUND SCRIPT
-        if (messageListener) {
-            chrome.runtime.onMessage.removeListener(messageListener);
-        }
-        
-        messageListener = (request, sender, sendResponse) => {
-            try {
-                console.log('📨 Mensaje recibido:', request);
-                
-                switch (request.action) {
-                    case 'getStatus':
-                        sendResponse({
-                            activo: state.activo,
-                            contador: state.contador,
-                            tiempoReactivacion: state.tiempoReactivacion,
-                            pausadoPorChat: state.pausadoPorChat,
-                            enTikTok: true,
-                            enLive: true
-                        });
-                        break;
-                        
-                    case 'toggle':
-                        toggleAutoTapTap();
-                        sendResponse({ success: true });
-                        break;
-                        
-                    case 'updateReactivationTime':
-                        if (request.tiempo && request.tiempo >= 10 && request.tiempo <= 60) {
-                            state.tiempoReactivacion = request.tiempo;
-                            if (elementos.reactivacionInput) {
-                                elementos.reactivacionInput.value = request.tiempo;
-                            }
-                            sendResponse({ success: true });
-                        } else {
-                            sendResponse({ error: 'Tiempo inválido' });
-                        }
-                        break;
-                        
-                    case 'updateTapTaps':
-                        // Actualizar contador desde popup (principalmente para reset)
-                        if (request.hasOwnProperty('count') && typeof request.count === 'number') {
-                            state.contador = request.count;
-                            if (elementos.contadorDiv) {
-                                elementos.contadorDiv.textContent = `Tap-Taps: ${state.contador}`;
-                            }
-                            sendResponse({ success: true });
-                        } else {
-                            sendResponse({ error: 'Valor de contador inválido' });
-                        }
-                        break;
-                        
-                    default:
-                        console.log('🤷 Acción no reconocida:', request.action);
-                        sendResponse({ error: 'Acción no reconocida' });
-                        break;
-                }
-                
-            } catch (error) {
-                console.error('Error procesando mensaje:', error);
-                sendResponse({ error: 'Error interno del content script' });
-            }
-            
-            return true; // Mantener canal abierto para respuesta asíncrona
-        };
-        
-        chrome.runtime.onMessage.addListener(messageListener);
-        console.log('✅ Sistema de mensajería configurado correctamente');
-    }
-    
-    /**
-     * FUNCIONES DE ARRASTRE PARA INTERFAZ MÓVIL
-     * 
-     * Funciones que manejan el arrastre de la ventana flotante.
-     */
-    function dragStart(e) {
-        state.isDragging = true;
-        
-        if (e.type === 'touchstart') {
-            state.initialX = e.touches[0].clientX - state.xOffset;
-            state.initialY = e.touches[0].clientY - state.yOffset;
-        } else {
-            state.initialX = e.clientX - state.xOffset;
-            state.initialY = e.clientY - state.yOffset;
-        }
-        
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('touchmove', drag, { passive: false });
-        document.addEventListener('mouseup', dragEnd);
-        document.addEventListener('touchend', dragEnd);
-    }
-    
-    function drag(e) {
-        if (!state.isDragging) return;
-        
-        e.preventDefault();
-        
-        if (e.type === 'touchmove') {
-            state.currentX = e.touches[0].clientX - state.initialX;
-            state.currentY = e.touches[0].clientY - state.initialY;
-        } else {
-            state.currentX = e.clientX - state.initialX;
-            state.currentY = e.clientY - state.initialY;
-        }
-        
-        state.xOffset = state.currentX;
-        state.yOffset = state.currentY;
-        
-        elementos.contenedor.style.transform = `translate3d(${state.currentX}px, ${state.currentY}px, 0)`;
-    }
-    
-    function dragEnd() {
-        state.isDragging = false;
-        
-        document.removeEventListener('mousemove', drag);
-        document.removeEventListener('touchmove', drag);
-        document.removeEventListener('mouseup', dragEnd);
-        document.removeEventListener('touchend', dragEnd);
-        
-        // Guardar posición
-        safeStorageOperation(() => {
-            chrome.storage.local.set({
-                position: {
-                    x: state.xOffset,
-                    y: state.yOffset
-                }
-            });
-        });
-    }
-
-    /**
-     * =============================================================================
-     * SISTEMA DE DETECCIÓN Y MANEJO DEL CHAT DE TIKTOK
-     * =============================================================================
-     * 
-     * Este sistema es uno de los componentes más sofisticados de la extensión.
-     * Se encarga de detectar automáticamente cuando el usuario interactúa con
-     * el chat de TikTok Live y pausar/reactivar el auto tap-tap inteligentemente.
-     * 
-     * FUNCIONALIDADES PRINCIPALES:
-     * - Búsqueda dinámica del elemento de chat en el DOM
-     * - Observación de cambios en la estructura de la página
-     * - Detección de interacciones del usuario con el chat
-     * - Pausa automática durante escritura en el chat
-     * - Reactivación automática tras período de inactividad
-     * - Sistema de timers y cancelación inteligente
-     */
-    
-    /**
-     * FUNCIÓN PRINCIPAL DE MANEJO DE INTERACCIONES DE CHAT
-     * 
-     * Coordina todo el sistema de detección del chat. Primero intenta encontrar
-     * el elemento de chat inmediatamente, y si no lo encuentra, configura un
-     * observer para detectarlo cuando aparezca dinámicamente.
-     * 
-     * PROCESO:
-     * 1. Búsqueda inmediata del elemento de chat
-     * 2. Si no se encuentra, configurar MutationObserver
-     * 3. Una vez encontrado, configurar todos los event listeners
-     * 4. Devolver función de limpieza para cleanup posterior
-     * 
-     * @returns {Object} - Objeto con función de cleanup del observer
-     */
-    function manejarInteraccionChat() {
-        console.log('🔍 Iniciando búsqueda del chat...');
-        
-        let chatInput = null;
+            NotificationModule.agregar('🤖 Modo Humano reanudado desde chat', 'success', 3000);
+        },
         
         /**
-         * OBJETO DE CONTROL DEL MUTATION OBSERVER
-         * 
-         * Encapsula la lógica del observer que vigila cambios en el DOM
-         * para detectar cuando aparece dinámicamente el elemento de chat.
+         * Actualiza los tiempos restantes del modo humano
          */
-        const chatObserver = {
-            observer: null,
-            active: false,
+        actualizarTiemposRestantes() {
+            if (!StateModule.modoHumano.activo) return;
             
-            /**
-             * Función de limpieza que desconecta el observer y marca como inactivo
-             */
-            cleanup() {
-                if (this.observer) {
-                    this.observer.disconnect();
-                    this.active = false;
-                }
+            const ahora = Date.now();
+            
+            if (StateModule.modoHumano.enSesion && StateModule.modoHumano.inicioSesion) {
+                const tiempoTranscurrido = ahora - StateModule.modoHumano.inicioSesion;
+                StateModule.modoHumano.tiempoSesionRestante = Math.max(0, StateModule.modoHumano.frecuenciaSesion - tiempoTranscurrido);
+                console.log(`⏱️ Tiempo de sesión restante: ${StateModule.modoHumano.tiempoSesionRestante}ms`);
+            } else if (!StateModule.modoHumano.enSesion && StateModule.modoHumano.inicioCooldown) {
+                const tiempoTranscurrido = ahora - StateModule.modoHumano.inicioCooldown;
+                StateModule.modoHumano.tiempoCooldownRestante = Math.max(0, StateModule.modoHumano.cooldownSesion - tiempoTranscurrido);
+                console.log(`⏱️ Tiempo de cooldown restante: ${StateModule.modoHumano.tiempoCooldownRestante}ms`);
             }
-        };
-
+        },
+        
         /**
-         * FUNCIÓN AUXILIAR PARA BÚSQUEDA INTELIGENTE DEL CHAT
-         * 
-         * Utiliza múltiples estrategias para encontrar el elemento de input del chat
-         * en diferentes versiones y estados de la interfaz de TikTok Live.
-         * 
-         * ESTRATEGIAS DE BÚSQUEDA:
-         * 1. Selectores específicos priorizados por confiabilidad
-         * 2. Búsqueda alternativa por atributos contenteditable
-         * 3. Validación de elementos encontrados
-         * 
-         * @returns {Element|null} - Elemento de chat encontrado o null
+         * Actualiza el texto del selector para modo humano
          */
-        const buscarChatInput = () => {
-            // Lista priorizada de selectores CSS para diferentes versiones de TikTok
+        actualizarTextoSelector() {
+            if (!UIModule.elementos.selector) return;
+            
+            const opcionModoHumano = UIModule.elementos.selector.querySelector('option[value="0"]');
+            if (!opcionModoHumano) return;
+            
+            if (StateModule.modoHumano.activo) {
+                const sesionS = (StateModule.modoHumano.frecuenciaSesion / 1000).toFixed(1);
+                const cooldownS = (StateModule.modoHumano.cooldownSesion / 1000).toFixed(1);
+                const tapMs = StateModule.modoHumano.frecuenciaTapTap;
+                
+                opcionModoHumano.textContent = `Modo humano | Sesión:${sesionS}s Tap:${tapMs}ms Cooldown:${cooldownS}s`;
+            } else {
+                opcionModoHumano.textContent = 'Modo humano | [Variable]';
+            }
+        },
+        
+        /**
+         * Limpia completamente el modo humano
+         */
+        limpiar() {
+            console.log('🧹 Limpiando completamente el modo humano...');
+            
+            if (TimerModule.timers.modoHumanoSesion) {
+                clearTimeout(TimerModule.timers.modoHumanoSesion);
+                TimerModule.timers.modoHumanoSesion = null;
+            }
+            
+            if (TimerModule.timers.modoHumanoCooldown) {
+                clearTimeout(TimerModule.timers.modoHumanoCooldown);
+                TimerModule.timers.modoHumanoCooldown = null;
+            }
+            
+            StateModule.modoHumano.activo = false;
+            StateModule.modoHumano.frecuenciaSesion = 0;
+            StateModule.modoHumano.frecuenciaTapTap = 0;
+            StateModule.modoHumano.cooldownSesion = 0;
+            StateModule.modoHumano.enSesion = false;
+            StateModule.modoHumano.tiempoSesionRestante = 0;
+            StateModule.modoHumano.tiempoCooldownRestante = 0;
+            StateModule.modoHumano.pausadoPorChat = false;
+            StateModule.modoHumano.inicioSesion = null;
+            StateModule.modoHumano.inicioCooldown = null;
+            
+            this.actualizarTextoSelector();
+            
+            console.log('✅ Modo humano completamente limpiado');
+        }
+    };
+    
+    /**
+     * =============================================================================
+     * MÓDULO DE GESTIÓN DE CHAT
+     * =============================================================================
+     * 
+     * Maneja la detección y respuesta a interacciones con el chat
+     */
+    const ChatModule = {
+        inactivityTimer: null,
+        
+        /**
+         * Busca el elemento de input del chat
+         * @returns {Element|null} Elemento del chat
+         */
+        buscarChatInput() {
             const selectores = [
-                'div[contenteditable="plaintext-only"][maxlength="150"]',    // Selector más específico
-                'div[contenteditable="plaintext-only"][placeholder="Di algo bonito"]', // Con placeholder específico
-                'div[contenteditable="plaintext-only"]',                     // Genérico contenteditable
-                'input[placeholder="Di algo bonito"]'                       // Fallback para input tradicional
+                'div[contenteditable="plaintext-only"][maxlength="150"]',
+                'div[contenteditable="plaintext-only"][placeholder="Di algo bonito"]',
+                'div[contenteditable="plaintext-only"]',
+                'input[placeholder="Di algo bonito"]'
             ];
 
-            // Intentar cada selector en orden de prioridad
             for (const selector of selectores) {
                 const elemento = document.querySelector(selector);
                 if (elemento) {
@@ -1592,1411 +1875,1535 @@ function setupBasicMessageListener() {
                 }
             }
 
-            // ESTRATEGIA ALTERNATIVA: Búsqueda manual por atributos
-            // Si los selectores específicos fallan, buscar manualmente
             const posiblesChatInputs = Array.from(document.querySelectorAll('div[contenteditable]'));
             return posiblesChatInputs.find(el => el.getAttribute('contenteditable') === 'plaintext-only');
-        };
-
+        },
+        
         /**
-         * INICIALIZAR MUTATION OBSERVER PARA DETECCIÓN DINÁMICA
-         * 
-         * Configura un observer que vigila cambios en el DOM para detectar
-         * cuando el elemento de chat aparece dinámicamente (por ejemplo,
-         * después de que se carga completamente la interfaz de TikTok).
+         * Pausa el sistema por interacción con chat
+         * @returns {boolean} true si se pausó exitosamente
          */
-        const iniciarObservador = () => {
-            // Evitar múltiples observers activos
-            if (chatObserver.active) return;
-
-            // Limpiar cualquier observer previo
-            chatObserver.cleanup();
+        pausarPorChat() {
+            console.log('💬 Pausando por interacción con chat...');
             
-            // Crear nuevo MutationObserver
-            chatObserver.observer = new MutationObserver(() => {
-                // Si ya encontramos el chat, no seguir buscando
-                if (chatInput) return;
-
-                // Intentar encontrar el chat en cada mutación del DOM
-                chatInput = buscarChatInput();
-                if (chatInput) {
-                    console.log('🎉 Chat encontrado por el observador!');
-                    chatObserver.cleanup(); // Limpiar observer una vez encontrado
-                    configurarEventosChat(chatInput); // Configurar eventos del chat
-                }
-            });
-
-            // Configurar el observer para vigilar cambios en todo el documento
-            chatObserver.observer.observe(document.body, {
-                childList: true, // Vigilar adición/eliminación de nodos
-                subtree: true    // Vigilar cambios en todo el subárbol
-            });
-            chatObserver.active = true;
-        };
-
-        // PASO 1: Búsqueda inmediata del elemento de chat
-        chatInput = buscarChatInput();
-        if (chatInput) {
-            console.log('✨ Chat encontrado inmediatamente!');
-            configurarEventosChat(chatInput);
-        } else {
-            console.log('⏳ Chat no encontrado inicialmente, iniciando observador...');
-            iniciarObservador();
-        }
-        
-        // PASO 2: Guardar referencia del observador en el estado global para limpieza posterior
-        state.chatObserver = chatObserver;
-        
-        return chatObserver;
-    }
-
-    function configurarEventosChat(chatInput) {
-        console.log('🔄 Configurando eventos del chat...');
-
-        // Variables para el manejo de inactividad
-        let inactivityTimer = null;
-        
-        // Función para manejar la actividad del usuario
-        const handleActivity = () => {
-            
-            // Limpiar el timer existente de inactividad
-            if (inactivityTimer) {
-                clearTimeout(inactivityTimer);
-            }
-
-            // Si estamos pausados por chat y no hay texto, configurar nuevo timer
-            if (state.pausadoPorChat && !chatInput.textContent.trim()) {
-                inactivityTimer = setTimeout(() => {
-                    console.log('⏳ Inactividad detectada en chat vacío');
-                    iniciarCuentaRegresiva();
-                }, 2000); // 2 segundos de inactividad
-            }
-        };
-
-        // Manejador para cuando el usuario está escribiendo o deja de escribir
-        const handleInput = () => {
-            console.log('✍️ Actividad en chat detectada');
-            timers.cleanupAll();
-            handleActivity();
-            
-            if (state.pausadoPorChat) {
-                if (chatInput.textContent.trim() !== '') {
-                    console.log('💭 Usuario escribiendo, cancelando reactivación');
-                    timers.cleanupAll();
-                    if (inactivityTimer) {
-                        clearTimeout(inactivityTimer);
-                        inactivityTimer = null;
-                    }
-                } else {
-                    console.log('📝 Chat vacío, esperando inactividad...');
-                    handleActivity();
-                }
-            }
-        };
-
-        // Función para iniciar la cuenta regresiva
-        const iniciarCuentaRegresiva = () => {
-            if (state.pausadoPorChat && !state.apagadoManualmente && !chatInput.textContent.trim()) {
-                console.log('🔄 Iniciando cuenta regresiva por inactividad en chat');
-                
-                // Verificar que no hay una cuenta regresiva ya activa
-                if (!timers.cuentaRegresiva) {
-                    // Limpiar timers específicos sin tocar cuenta regresiva activa
-                    if (timers.typing) {
-                        clearTimeout(timers.typing);
-                        timers.typing = null;
-                    }
-                    if (timers.chat) {
-                        clearTimeout(timers.chat);
-                        timers.chat = null;
-                    }
-                    if (timers.countdown) {
-                        clearTimeout(timers.countdown);
-                        timers.countdown = null;
-                    }
-                    
-                    // Limpiar timer de inactividad existente
-                    if (inactivityTimer) {
-                        clearTimeout(inactivityTimer);
-                        inactivityTimer = null;
-                    }
-                    
-                    // Usar timeout con delay para evitar race conditions
-                    timers.chat = setTimeout(() => {
-                        // Verificar nuevamente que las condiciones siguen siendo válidas
-                        if (state.pausadoPorChat && !state.apagadoManualmente && !chatInput.textContent.trim()) {
-                            mostrarCuentaRegresiva(`⏳ Reactivando en ${state.tiempoReactivacion}s...`);
-                        }
-                    }, 100); // Pequeño delay para estabilidad
-                } else {
-                    console.log('⚠️ Ya hay una cuenta regresiva activa, no creando duplicado');
-                }
-            }
-        };
-
-        // Pausar cuando el usuario interactúa con el chat
-        const onFocus = (e) => {
-            console.log('👆 Interacción detectada con el chat:', e.type);
-            console.log('Estado actual:', {
-                activo: state.activo,
-                apagadoManualmente: state.apagadoManualmente,
-                pausadoPorChat: state.pausadoPorChat
-            });
-
-            if (state.activo && !state.apagadoManualmente) {
-                console.log('🛑 Pausando Auto Tap-Tap por interacción con chat');
-                
-                // Limpiar cualquier timer existente
-                timers.cleanupAll();
-                if (inactivityTimer) {
-                    clearTimeout(inactivityTimer);
-                    inactivityTimer = null;
-                }
-                
-                // Pausar específicamente por chat
-                const pausado = pausarPorChat();
-                
-                if (pausado) {
-                    // Mostrar notificación
-                    mostrarNotificacionChat('✍️ Auto Tap-Tap pausado mientras escribes...', 'warning');
-                    
-                    // Iniciar manejo de inactividad
-                    handleActivity();
-                }
-                
-                // Prevenir la propagación del evento
-                e.stopPropagation();
-            }
-        };
-
-        // Configurar eventos del chat
-        chatInput.addEventListener('focus', onFocus, true);
-        chatInput.addEventListener('click', onFocus, true);
-        chatInput.addEventListener('mousedown', onFocus, true);
-        chatInput.addEventListener('touchstart', onFocus, { passive: true, capture: true });
-        chatInput.addEventListener('input', handleInput, true);
-
-        // Eventos específicos para detectar inactividad
-        if (chatInput.getAttribute('contenteditable')) {
-            chatInput.addEventListener('keydown', (e) => {
-                if (!state.pausadoPorChat) onFocus(e);
-                handleActivity();
-            }, true);
-            
-            chatInput.addEventListener('keyup', () => {
-                setTimeout(handleInput, 50);
-            }, true);
-            
-            chatInput.addEventListener('paste', () => {
-                setTimeout(handleInput, 50);
-            }, true);
-            
-            // Monitorear actividad del mouse
-            chatInput.addEventListener('mousemove', handleActivity, { passive: true });
-            chatInput.addEventListener('mouseenter', handleActivity, { passive: true });
-        }
-
-        // Click fuera del chat
-        const handleClickOutside = (e) => {
-            // Encontrar el contenedor del chat de manera más robusta
-            const chatContainer = chatInput.closest([
-                'div[class*="chat"]',
-                'div[class*="message"]',
-                'div[data-e2e*="chat"]',
-                'div[data-e2e*="message"]',
-                'div[contenteditable="plaintext-only"]',
-                'div[contenteditable][maxlength="150"]',
-                'div[contenteditable][role="textbox"]'
-            ].join(',')) || chatInput.parentElement;
-
-            console.log('🔍 Click detectado:', {
-                target: e.target,
-                isOutside: !chatContainer.contains(e.target),
-                pausadoPorChat: state.pausadoPorChat,
-                apagadoManualmente: state.apagadoManualmente
-            });
-
-            if (!chatContainer.contains(e.target) && state.pausadoPorChat && !state.apagadoManualmente) {
-                console.log('🎯 Click fuera del chat detectado - Iniciando cuenta regresiva');
-                
-                // Verificar que no hay una cuenta regresiva ya activa para evitar duplicados
-                if (!timers.cuentaRegresiva) {
-                    // Limpiar timers ESPECÍFICAMENTE excluyendo cuenta regresiva para evitar race conditions
-                    if (timers.typing) {
-                        clearTimeout(timers.typing);
-                        timers.typing = null;
-                    }
-                    if (timers.chat) {
-                        clearTimeout(timers.chat);
-                        timers.chat = null;
-                    }
-                    if (timers.countdown) {
-                        clearTimeout(timers.countdown);
-                        timers.countdown = null;
-                    }
-                    
-                    // Limpiar timer de inactividad si existe
-                    if (inactivityTimer) {
-                        clearTimeout(inactivityTimer);
-                        inactivityTimer = null;
-                    }
-                    
-                    // Iniciar cuenta regresiva de forma segura
-                    setTimeout(() => {
-                        mostrarCuentaRegresiva(`⏳ Reactivando en ${state.tiempoReactivacion}s...`);
-                    }, 100); // Pequeño delay para asegurar que la limpieza se complete
-                } else {
-                    console.log('⚠️ Ya hay una cuenta regresiva activa, no creando duplicado');
-                }
-            }
-        };
-
-        document.addEventListener('click', handleClickOutside, true);
-        document.addEventListener('touchend', handleClickOutside, true);
-
-        // Función de limpieza
-        const cleanup = () => {
-            console.log('🧹 Limpiando eventos del chat');
-            timers.cleanupAll();
-            document.removeEventListener('click', handleClickOutside, true);
-            document.removeEventListener('touchend', handleClickOutside, true);
-        };
-        
-        // Guardar la función de limpieza
-        state.chatCleanup = cleanup;
-        
-        return cleanup;
-    }
-
-    // Función para mostrar notificaciones del chat
-    function mostrarNotificacionChat(mensaje, tipo = 'info') {
-        // Usar el nuevo sistema de notificaciones integradas
-        agregarNotificacion(mensaje, tipo, 3000);
-    }
-    
-    // Función para mostrar cuenta regresiva de reactivación
-    function mostrarCuentaRegresiva(mensajeInicial) {
-        console.log(`🚀 Iniciando mostrarCuentaRegresiva: "${mensajeInicial}"`);
-        
-        // Verificación defensiva: asegurar que las condiciones son correctas
-        if (!state.pausadoPorChat || state.apagadoManualmente || state.activo) {
-            console.log('⚠️ Condiciones no válidas para cuenta regresiva:', {
-                pausadoPorChat: state.pausadoPorChat,
-                apagadoManualmente: state.apagadoManualmente,
-                activo: state.activo
-            });
-            return;
-        }
-        
-        // Verificar si ya hay una cuenta regresiva activa
-        if (timers.cuentaRegresiva) {
-            console.log('⚠️ Ya hay una cuenta regresiva activa, cancelando nueva');
-            return;
-        }
-        
-        // Limpiar timer anterior de cuenta regresiva si existe
-        if (timers.cuentaRegresiva) {
-            clearInterval(timers.cuentaRegresiva);
-            timers.cuentaRegresiva = null;
-        }
-        
-        // Limpiar notificación anterior si existe
-        if (state.notificacionCuentaRegresiva) {
-            removerNotificacion(state.notificacionCuentaRegresiva);
-            state.notificacionCuentaRegresiva = null;
-        }
-        
-        // Variables para la cuenta regresiva
-        let tiempoRestante = state.tiempoReactivacion;
-        
-        // Crear notificación inicial con duración 0 (permanente hasta que la removamos)
-        state.notificacionCuentaRegresiva = agregarNotificacion(`⏳ Reactivando en ${tiempoRestante}s...`, 'countdown', 0);
-        
-        // Función de limpieza para la cuenta regresiva
-        const limpiarCuentaRegresiva = () => {
-            console.log('🧹 Limpiando cuenta regresiva...');
-            
-            // Limpiar timer
-            if (timers.cuentaRegresiva) {
-                clearInterval(timers.cuentaRegresiva);
-                timers.cuentaRegresiva = null;
+            if (!StateModule.activo || StateModule.pausadoPorChat) {
+                console.log('⚠️ Sistema ya pausado o inactivo');
+                return false;
             }
             
-            // Limpiar notificación con remoción inmediata para evitar persistence
-            if (state.notificacionCuentaRegresiva) {
-                try {
-                    removerNotificacion(state.notificacionCuentaRegresiva, true); // immediate = true
-                    state.notificacionCuentaRegresiva = null;
-                } catch (error) {
-                    console.warn('Error al limpiar notificación de cuenta regresiva:', error);
-                    state.notificacionCuentaRegresiva = null;
-                }
-            }
+            StateModule.pausadoPorChat = true;
             
-            // Limpieza adicional defensiva: buscar cualquier notificación huérfana de countdown
-            try {
-                if (elementos.contenedorNotificaciones) {
-                    const notificacionesCountdown = Array.from(elementos.contenedorNotificaciones.children)
-                        .filter(el => el.textContent && el.textContent.includes('Reactivando en'));
-                    
-                    if (notificacionesCountdown.length > 0) {
-                        console.log(`🗑️ Limpiando ${notificacionesCountdown.length} notificaciones huérfanas de countdown`);
-                        notificacionesCountdown.forEach(el => {
-                            try {
-                                el.parentNode.removeChild(el);
-                            } catch (err) {
-                                console.warn('Error limpiando notificación huérfana:', err);
-                            }
-                        });
-                    }
-                }
-            } catch (error) {
-                console.warn('Error en limpieza defensiva:', error);
-            }
-        };
-        
-        // Iniciar cuenta regresiva
-        timers.cuentaRegresiva = setInterval(() => {
-            // Verificar que aún estamos pausados por chat y no apagados manualmente
-            if (!state.pausadoPorChat || state.apagadoManualmente || state.activo) {
-                console.log('⚠️ Cancelando cuenta regresiva - estado cambió:', {
-                    pausadoPorChat: state.pausadoPorChat,
-                    apagadoManualmente: state.apagadoManualmente,
-                    activo: state.activo
-                });
-                limpiarCuentaRegresiva();
-                return;
-            }
-            
-            tiempoRestante--;
-            
-            if (tiempoRestante > 0) {
-                // Actualizar el texto de la notificación existente
-                if (state.notificacionCuentaRegresiva && state.notificacionCuentaRegresiva.parentNode) {
-                    state.notificacionCuentaRegresiva.textContent = `⏳ Reactivando en ${tiempoRestante}s...`;
-                    
-                    // Cambiar color cuando quedan pocos segundos
-                    if (tiempoRestante <= 3) {
-                elementos.cuentaRegresivaDiv = null;
- } else {
-                        state.notificacionCuentaRegresiva.style.color = '#ff8c00';
-                    }
-                }
+            if (StateModule.modoHumano.activo) {
+                console.log('🤖 Pausando modo humano por chat...');
+                ModoHumanoModule.pausarPorChat();
             } else {
-                // Tiempo agotado, reactivar sistema
-                console.log('⏰ Tiempo de cuenta regresiva agotado, reactivando sistema...');
-                state.contador = 0; // Reiniciar contador al reactivar
-                actualizarContador();
-                reactivarAutoTapTap(true);
-                limpiarCuentaRegresiva();
-            }
-        }, 1000);
-    }
-
-    /**
-     * =============================================================================
-     * SISTEMA DE GESTIÓN DE NOTIFICACIONES INTEGRADAS
-     * =============================================================================
-     * 
-     * Sistema que gestiona las notificaciones dentro del div flotante principal,
-     * permitiendo que se apilen verticalmente en la esquina inferior derecha.
-     */
-    
-    /**
-     * AGREGAR NOTIFICACIÓN AL CONTENEDOR INTEGRADO
-     * 
-     * Crea y agrega una nueva notificación al contenedor de notificaciones
-     * del div flotante principal.
-     * 
-     * @param {string} mensaje - Texto a mostrar en la notificación
-     * @param {string} tipo - Tipo de notificación ('success', 'warning', 'info', 'countdown')
-     * @param {number} duracion - Duración en milisegundos (0 = permanente)
-     * @returns {HTMLElement} - Elemento de la notificación creada
-     */
-    function agregarNotificacion(mensaje, tipo = 'info', duracion = 3000) {
-        if (!elementos.contenedorNotificaciones) {
-            console.warn('Contenedor de notificaciones no disponible');
-            return null;
-        }
-        
-        // Crear elemento de notificación
-        const notificacion = document.createElement('div');
-        notificacion.style.cssText = `
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-            font-weight: bold;
-            opacity: 0;
-            transform: translateX(20px);
-            transition: all 0.3s ease;
-            text-align: center;
-            box-sizing: border-box;
-            max-width: 250px;
-            word-wrap: break-word;
-            pointer-events: auto;
-            margin-bottom: 4px;
-        `;
-        
-        // Establecer estilos según el tipo de notificación
-        const estilos = {
-            success: {
-                background: 'rgba(14, 79, 2, 0.95)',
-                color: '#fff',
-                border: '1px solid rgb(24, 80, 2)',
-                boxShadow: '0 2px 8px rgba(66, 224, 4, 0.2)'
-            },
-            warning: {
-                background: 'rgba(255, 0, 80, 0.95)',
-                color: '#fff',
-                border: '1px solid #ff0050',
-                boxShadow: '0 2px 8px rgba(255, 0, 80, 0.2)'
-            },
-            info: {
-                background: 'rgba(0, 0, 0, 0.95)',
-                color: '#fff',
-                border: '1px solid #666',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
-            },
-            countdown: {
-                background: 'rgba(255, 165, 0, 0.95)',
-                color: '#fff',
-                border: '1px solid #ff8c00',
-                boxShadow: '0 2px 8px rgba(255, 165, 0, 0.3)'
-            }
-        };
-        
-        // Aplicar estilos según tipo
-        Object.assign(notificacion.style, estilos[tipo]);
-        notificacion.textContent = mensaje;
-        
-        // Agregar al contenedor
-        elementos.contenedorNotificaciones.appendChild(notificacion);
-        
-        // Animar entrada
-        setTimeout(() => {
-            notificacion.style.opacity = '1';
-            notificacion.style.transform = 'translateX(0)';
-        }, 10);
-        
-        // Auto-eliminar si tiene duración especificada
-        if (duracion > 0) {
-            setTimeout(() => {
-                removerNotificacion(notificacion);
-            }, duracion);
-        }
-        
-        return notificacion;
-    }
-    
-    /**
-     * REMOVER NOTIFICACIÓN DEL CONTENEDOR
-     * 
-     * Remueve una notificación específica con animación de salida.
-     * 
-     * @param {HTMLElement} notificacion - Elemento de notificación a remover
-     * @param {boolean} immediate - Si debe removerse inmediatamente sin animación
-     */
-    function removerNotificacion(notificacion, immediate = false) {
-        if (!notificacion) return;
-        
-        try {
-            if (immediate || !notificacion.parentNode) {
-                // Remover inmediatamente sin animación
-                if (notificacion.parentNode) {
-                    notificacion.parentNode.removeChild(notificacion);
+                console.log('⏸️ Pausando modo normal por chat...');
+                if (StateModule.intervalo) {
+                    IntervalModule.clear(StateModule.intervalo);
+                    StateModule.intervalo = null;
                 }
+            }
+            
+            MessagingModule.sendMessage({
+                action: 'paused_by_chat',
+                enTikTok: true,
+                enLive: true
+            }).catch(error => console.warn('Error al notificar pausa por chat:', error));
+            
+            console.log('✅ Pausado exitosamente por chat');
+            return true;
+        },
+        
+        /**
+         * Reactiva el sistema después de pausa por chat
+         * @param {boolean} fromManual - Si es reactivación manual
+         * @returns {boolean} true si se reactivó exitosamente
+         */
+        reactivarAutoTapTap(fromManual = false) {
+            console.log('🔄 Reactivando Auto Tap-Tap...', { fromManual });
+            
+            if (!StateModule.pausadoPorChat) {
+                console.log('⚠️ No estaba pausado por chat');
+                return false;
+            }
+            
+            if (StateModule.apagadoManualmente) {
+                console.log('⚠️ Está apagado manualmente, no reactivar');
+                return false;
+            }
+            
+            StateModule.pausadoPorChat = false;
+            
+            if (StateModule.modoHumano.activo) {
+                console.log('🤖 Reanudando modo humano desde chat...');
+                ModoHumanoModule.reanudarDesdeChat();
+            } else {
+                console.log('▶️ Reanudando modo normal desde chat...');
+                const intervalo = parseInt(UIModule.elementos.selector.value);
+                if (intervalo > 0) {
+                    AutomationModule.presionarL();
+                    StateModule.intervalo = IntervalModule.create(() => AutomationModule.presionarL(), intervalo);
+                }
+            }
+            
+            UIModule.actualizarColoresBoton();
+            
+            MessagingModule.sendMessage({
+                action: 'reactivated_from_chat',
+                contador: StateModule.contador,
+                enTikTok: true,
+                enLive: true
+            }).catch(error => console.warn('Error al notificar reactivación:', error));
+            
+            console.log('✅ Reactivado exitosamente desde chat');
+            return true;
+        },
+        
+        /**
+         * Configura los eventos del chat
+         * @param {Element} chatInput - Elemento del chat
+         * @returns {Function} Función de limpieza
+         */
+        configurarEventos(chatInput) {
+            console.log('🔄 Configurando eventos del chat...');
+
+            const handleActivity = () => {
+                if (this.inactivityTimer) {
+                    clearTimeout(this.inactivityTimer);
+                }
+
+                if (StateModule.pausadoPorChat && !chatInput.textContent.trim()) {
+                    this.inactivityTimer = setTimeout(() => {
+                        console.log('⏳ Inactividad detectada en chat vacío');
+                        NotificationModule.mostrarCuentaRegresiva(`⏳ Reactivando en ${StateModule.tiempoReactivacion}s...`);
+                    }, 2000);
+                }
+            };
+
+            const handleInput = () => {
+                console.log('✍️ Actividad en chat detectada');
+                TimerModule.cleanupAll();
+                handleActivity();
+                
+                if (StateModule.pausadoPorChat) {
+                    if (chatInput.textContent.trim() !== '') {
+                        console.log('💭 Usuario escribiendo, cancelando reactivación');
+                        TimerModule.cleanupAll();
+                        if (this.inactivityTimer) {
+                            clearTimeout(this.inactivityTimer);
+                            this.inactivityTimer = null;
+                        }
+                    } else {
+                        console.log('📝 Chat vacío, esperando inactividad...');
+                        handleActivity();
+                    }
+                }
+            };
+
+            const onFocus = (e) => {
+                console.log('👆 Interacción detectada con el chat:', e.type);
+
+                if (StateModule.activo && !StateModule.apagadoManualmente) {
+                    console.log('🛑 Pausando Auto Tap-Tap por interacción con chat');
+                    
+                    TimerModule.cleanupAll();
+                    if (this.inactivityTimer) {
+                        clearTimeout(this.inactivityTimer);
+                        this.inactivityTimer = null;
+                    }
+                    
+                    const pausado = this.pausarPorChat();
+                    
+                    if (pausado) {
+                        NotificationModule.agregar('✍️ Auto Tap-Tap pausado mientras escribes...', 'warning', 3000);
+                        handleActivity();
+                    }
+                    
+                    e.stopPropagation();
+                }
+            };
+
+            const handleClickOutside = (e) => {
+                const chatContainer = chatInput.closest([
+                    'div[class*="chat"]',
+                    'div[class*="message"]',
+                    'div[data-e2e*="chat"]',
+                    'div[data-e2e*="message"]',
+                    'div[contenteditable="plaintext-only"]',
+                    'div[contenteditable][maxlength="150"]',
+                    'div[contenteditable][role="textbox"]'
+                ].join(',')) || chatInput.parentElement;
+
+                console.log('🔍 Click detectado:', {
+                    target: e.target,
+                    isOutside: !chatContainer.contains(e.target),
+                    pausadoPorChat: StateModule.pausadoPorChat,
+                    apagadoManualmente: StateModule.apagadoManualmente
+                });
+
+                if (!chatContainer.contains(e.target) && StateModule.pausadoPorChat && !StateModule.apagadoManualmente) {
+                    console.log('🎯 Click fuera del chat detectado - Iniciando cuenta regresiva');
+                    
+                    if (!TimerModule.timers.cuentaRegresiva) {
+                        setTimeout(() => {
+                            NotificationModule.mostrarCuentaRegresiva(`⏳ Reactivando en ${StateModule.tiempoReactivacion}s...`);
+                        }, 100);
+                    } else {
+                        console.log('⚠️ Ya hay una cuenta regresiva activa, no creando duplicado');
+                    }
+                }
+            };
+
+            // Configurar eventos
+            chatInput.addEventListener('focus', onFocus, true);
+            chatInput.addEventListener('click', onFocus, true);
+            chatInput.addEventListener('mousedown', onFocus, true);
+            chatInput.addEventListener('touchstart', onFocus, { passive: true, capture: true });
+            chatInput.addEventListener('input', handleInput, true);
+
+            if (chatInput.getAttribute('contenteditable')) {
+                chatInput.addEventListener('keydown', (e) => {
+                    if (!StateModule.pausadoPorChat) onFocus(e);
+                    handleActivity();
+                }, true);
+                
+                chatInput.addEventListener('keyup', () => {
+                    setTimeout(handleInput, 50);
+                }, true);
+                
+                chatInput.addEventListener('paste', () => {
+                    setTimeout(handleInput, 50);
+                }, true);
+                
+                chatInput.addEventListener('mousemove', handleActivity, { passive: true });
+                chatInput.addEventListener('mouseenter', handleActivity, { passive: true });
+            }
+
+            document.addEventListener('click', handleClickOutside, true);
+            document.addEventListener('touchend', handleClickOutside, true);
+
+            // Función de limpieza
+            const cleanup = () => {
+                console.log('🧹 Limpiando eventos del chat');
+                TimerModule.cleanupAll();
+                document.removeEventListener('click', handleClickOutside, true);
+                document.removeEventListener('touchend', handleClickOutside, true);
+            };
+            
+            StateModule.chatCleanup = cleanup;
+            
+            return cleanup;
+        },
+        
+        /**
+         * Maneja la búsqueda e inicialización del chat
+         * @returns {Object} Objeto con función de cleanup
+         */
+        manejarInteraccion() {
+            console.log('🔍 Iniciando búsqueda del chat...');
+            
+            let chatInput = null;
+            
+            const chatObserver = {
+                observer: null,
+                active: false,
+                
+                cleanup() {
+                    if (this.observer) {
+                        this.observer.disconnect();
+                        this.active = false;
+                    }
+                }
+            };
+
+            const iniciarObservador = () => {
+                if (chatObserver.active) return;
+
+                chatObserver.cleanup();
+                
+                chatObserver.observer = new MutationObserver(() => {
+                    if (chatInput) return;
+
+                    chatInput = this.buscarChatInput();
+                    if (chatInput) {
+                        console.log('🎉 Chat encontrado por el observador!');
+                        chatObserver.cleanup();
+                        this.configurarEventos(chatInput);
+                    }
+                });
+
+                chatObserver.observer.observe(document.body, {
+                    childList: true,
+                    subtree: true
+                });
+                chatObserver.active = true;
+            };
+
+            chatInput = this.buscarChatInput();
+            if (chatInput) {
+                console.log('✨ Chat encontrado inmediatamente!');
+                this.configurarEventos(chatInput);
+            } else {
+                console.log('⏳ Chat no encontrado inicialmente, iniciando observador...');
+                iniciarObservador();
+            }
+            
+            StateModule.chatObserver = chatObserver;
+            
+            return chatObserver;
+        }
+    };
+    
+    /**
+     * =============================================================================
+     * MÓDULO DE NOTIFICACIONES
+     * =============================================================================
+     * 
+     * Gestiona el sistema de notificaciones de la extensión
+     */
+    const NotificationModule = {
+        /**
+         * Agrega una notificación al contenedor
+         * @param {string} mensaje - Texto a mostrar
+         * @param {string} tipo - Tipo de notificación
+         * @param {number} duracion - Duración en ms (0 = permanente)
+         * @returns {HTMLElement} Elemento de notificación
+         */
+        agregar(mensaje, tipo = 'info', duracion = 3000) {
+            if (!UIModule.elementos.contenedorNotificaciones) {
+                console.warn('Contenedor de notificaciones no disponible');
+                return null;
+            }
+            
+            const notificacion = document.createElement('div');
+            notificacion.style.cssText = `
+                padding: 8px 12px;
+                border-radius: 6px;
+                font-family: Arial, sans-serif;
+                font-size: 12px;
+                font-weight: bold;
+                opacity: 0;
+                transform: translateX(20px);
+                transition: all 0.3s ease;
+                text-align: center;
+                box-sizing: border-box;
+                max-width: 250px;
+                word-wrap: break-word;
+                pointer-events: auto;
+                margin-bottom: 4px;
+            `;
+            
+            const estilos = {
+                success: {
+                    background: 'rgba(14, 79, 2, 0.95)',
+                    color: '#fff',
+                    border: '1px solid rgb(24, 80, 2)',
+                    boxShadow: '0 2px 8px rgba(66, 224, 4, 0.2)'
+                },
+                warning: {
+                    background: 'rgba(255, 0, 80, 0.95)',
+                    color: '#fff',
+                    border: '1px solid #ff0050',
+                    boxShadow: '0 2px 8px rgba(255, 0, 80, 0.2)'
+                },
+                info: {
+                    background: 'rgba(0, 0, 0, 0.95)',
+                    color: '#fff',
+                    border: '1px solid #666',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+                },
+                countdown: {
+                    background: 'rgba(255, 165, 0, 0.95)',
+                    color: '#fff',
+                    border: '1px solid #ff8c00',
+                    boxShadow: '0 2px 8px rgba(255, 165, 0, 0.3)'
+                }
+            };
+            
+            Object.assign(notificacion.style, estilos[tipo]);
+            notificacion.textContent = mensaje;
+            
+            UIModule.elementos.contenedorNotificaciones.appendChild(notificacion);
+            
+            setTimeout(() => {
+                notificacion.style.opacity = '1';
+                notificacion.style.transform = 'translateX(0)';
+            }, 10);
+            
+            if (duracion > 0) {
+                setTimeout(() => {
+                    this.remover(notificacion);
+                }, duracion);
+            }
+            
+            return notificacion;
+        },
+        
+        /**
+         * Remueve una notificación específica
+         * @param {HTMLElement} notificacion - Elemento a remover
+         * @param {boolean} immediate - Si debe removerse inmediatamente
+         */
+        remover(notificacion, immediate = false) {
+            if (!notificacion) return;
+            
+            try {
+                if (immediate || !notificacion.parentNode) {
+                    if (notificacion.parentNode) {
+                        notificacion.parentNode.removeChild(notificacion);
+                    }
+                    return;
+                }
+                
+                if (notificacion.parentNode) {
+                    notificacion.style.opacity = '0';
+                    notificacion.style.transform = 'translateX(20px)';
+                    
+                    setTimeout(() => {
+                        try {
+                            if (notificacion.parentNode) {
+                                notificacion.parentNode.removeChild(notificacion);
+                            }
+                        } catch (error) {
+                            console.warn('Error al remover notificación:', error);
+                        }
+                    }, 300);
+                }
+            } catch (error) {
+                console.warn('Error en removerNotificacion:', error);
+            }
+        },
+        
+        /**
+         * Muestra cuenta regresiva de reactivación
+         * @param {string} mensajeInicial - Mensaje inicial
+         */
+        mostrarCuentaRegresiva(mensajeInicial) {
+            console.log(`🚀 Iniciando mostrarCuentaRegresiva: "${mensajeInicial}"`);
+            
+            if (!StateModule.pausadoPorChat || StateModule.apagadoManualmente || StateModule.activo) {
+                console.log('⚠️ Condiciones no válidas para cuenta regresiva');
+                console.log('Estado actual:', {
+                    pausadoPorChat: StateModule.pausadoPorChat,
+                    apagadoManualmente: StateModule.apagadoManualmente,
+                    activo: StateModule.activo
+                });
                 return;
             }
             
-            // Animar salida solo si el elemento aún está en el DOM
-            if (notificacion.parentNode) {
-                notificacion.style.opacity = '0';
-                notificacion.style.transform = 'translateX(20px)';
-                
-                // Remover del DOM después de la animación
-                setTimeout(() => {
-                    try {
-                        if (notificacion.parentNode) {
-                            notificacion.parentNode.removeChild(notificacion);
-                        }
-                    } catch (error) {
-                        console.warn('Error al remover notificación:', error);
-                    }
-                }, 300);
-            }
-        } catch (error) {
-            console.warn('Error en removerNotificacion:', error);
-        }
-    }
-    
-    /**
-     * LIMPIAR TODAS LAS NOTIFICACIONES
-     * 
-     * Remueve todas las notificaciones del contenedor.
-     */
-    function limpiarTodasLasNotificaciones() {
-        if (elementos.contenedorNotificaciones) {
-            const notificaciones = elementos.contenedorNotificaciones.children;
-            Array.from(notificaciones).forEach(notificacion => {
-                removerNotificacion(notificacion);
-            });
-        }
-    }
-
-    /**
-     * LIMPIAR NOTIFICACIONES FLOTANTES (VERSIÓN ROBUSTA)
-     * 
-     * Realiza una limpieza completa y robusta de todas las notificaciones flotantes
-     * usando múltiples estrategias para garantizar la limpieza completa.
-     * Esta función es más agresiva que limpiarTodasLasNotificaciones para casos críticos.
-     */
-    function limpiarNotificacionesFlotantes() {
-        console.log('🧹 Iniciando limpieza completa de notificaciones flotantes...');
-        
-        try {
-            // ESTRATEGIA 1: Limpieza individual usando la función existente
-            if (elementos.contenedorNotificaciones) {
-                const notificaciones = elementos.contenedorNotificaciones.children;
-                console.log(`📊 Encontradas ${notificaciones.length} notificaciones para limpiar`);
-                
-                // Limpiar cada notificación individualmente con try-catch
-                Array.from(notificaciones).forEach((notificacion, index) => {
-                    try {
-                        removerNotificacion(notificacion, true); // immediate = true para limpieza rápida
-                    } catch (error) {
-                        console.warn(`⚠️ Error al remover notificación ${index}:`, error);
-                    }
-                });
+            if (TimerModule.timers.cuentaRegresiva) {
+                console.log('⚠️ Ya hay una cuenta regresiva activa, cancelando nueva');
+                return;
             }
             
-            // ESTRATEGIA 2: Limpieza directa del contenedor (fallback)
-            if (elementos.contenedorNotificaciones && elementos.contenedorNotificaciones.children.length > 0) {
-                console.log('🔄 Aplicando limpieza fallback con innerHTML...');
+            if (StateModule.notificacionCuentaRegresiva) {
+                this.remover(StateModule.notificacionCuentaRegresiva);
+                StateModule.notificacionCuentaRegresiva = null;
+            }
+            
+            let tiempoRestante = StateModule.tiempoReactivacion;
+            
+            StateModule.notificacionCuentaRegresiva = this.agregar(`⏳ Reactivando en ${tiempoRestante}s...`, 'countdown', 0);
+            
+            const limpiarCuentaRegresiva = () => {
+                console.log('🧹 Limpiando cuenta regresiva...');
+                
+                if (TimerModule.timers.cuentaRegresiva) {
+                    clearInterval(TimerModule.timers.cuentaRegresiva);
+                    TimerModule.timers.cuentaRegresiva = null;
+                }
+                
+                if (StateModule.notificacionCuentaRegresiva) {
+                    try {
+                        this.remover(StateModule.notificacionCuentaRegresiva, true);
+                        StateModule.notificacionCuentaRegresiva = null;
+                    } catch (error) {
+                        console.warn('Error al limpiar notificación de cuenta regresiva:', error);
+                        StateModule.notificacionCuentaRegresiva = null;
+                    }
+                }
+                
+                // Limpieza defensiva adicional
                 try {
-                    elementos.contenedorNotificaciones.innerHTML = '';
-                } catch (error) {
-                    console.warn('⚠️ Error en limpieza fallback:', error);
-                }
-            }
-            
-            // ESTRATEGIA 3: Limpieza extrema - buscar elementos huérfanos
-            try {
-                const elementosHuerfanos = document.querySelectorAll('.tiktok-notification, .auto-taptap-notification, [class*="notification"]');
-                elementosHuerfanos.forEach((elemento, index) => {
-                    try {
-                        // Solo remover si parece ser una notificación de nuestra extensión
-                        if (elemento.textContent && (
-                            elemento.textContent.includes('Modo Humano') ||
-                            elemento.textContent.includes('Auto Tap-Tap') ||
-                            elemento.textContent.includes('Chat detectado') ||
-                            elemento.textContent.includes('Reactivando')
-                        )) {
-                            elemento.remove();
-                            console.log(`🗑️ Elemento huérfano removido: ${index}`);
+                    if (UIModule.elementos.contenedorNotificaciones) {
+                        const notificacionesCountdown = Array.from(UIModule.elementos.contenedorNotificaciones.children)
+                            .filter(el => el.textContent && el.textContent.includes('Reactivando en'));
+                        
+                        if (notificacionesCountdown.length > 0) {
+                            console.log(`🗑️ Limpiando ${notificacionesCountdown.length} notificaciones huérfanas de countdown`);
+                            notificacionesCountdown.forEach(el => {
+                                try {
+                                    el.parentNode.removeChild(el);
+                                } catch (err) {
+                                    console.warn('Error limpiando notificación huérfana:', err);
+                                }
+                            });
                         }
-                    } catch (error) {
-                        console.warn(`⚠️ Error al remover elemento huérfano ${index}:`, error);
                     }
-                });
-            } catch (error) {
-                console.warn('⚠️ Error en limpieza extrema:', error);
-            }
-            
-            // ESTRATEGIA 4: Limpiar referencias en el estado
-            try {
-                if (state.notificacionCuentaRegresiva) {
-                    state.notificacionCuentaRegresiva = null;
+                } catch (error) {
+                    console.warn('Error en limpieza defensiva:', error);
                 }
-                if (state.limpiarCuentaRegresiva && typeof state.limpiarCuentaRegresiva === 'function') {
-                    state.limpiarCuentaRegresiva();
-                    state.limpiarCuentaRegresiva = null;
-                }
-            } catch (error) {
-                console.warn('⚠️ Error al limpiar referencias de estado:', error);
-            }
-            
-            console.log('✅ Limpieza completa de notificaciones flotantes completada');
-            
-        } catch (error) {
-            console.error('❌ Error crítico en limpieza de notificaciones:', error);
-            // Fallback extremo: intentar remover el contenedor completo y recrearlo
-            try {
-                if (elementos.contenedorNotificaciones && elementos.contenedorNotificaciones.parentNode) {
-                    const parent = elementos.contenedorNotificaciones.parentNode;
-                    parent.removeChild(elementos.contenedorNotificaciones);
-                    // Recrear contenedor básico
-                    elementos.contenedorNotificaciones = document.createElement('div');
-                    elementos.contenedorNotificaciones.id = 'tiktok-notifications-container';
-                    elementos.contenedorNotificaciones.style.cssText = `
-                        position: fixed;
-                        top: 20px;
-                        right: 20px;
-                        z-index: 10001;
-                        pointer-events: none;
-                    `;
-                    parent.appendChild(elementos.contenedorNotificaciones);
-                    console.log('🔄 Contenedor de notificaciones recreado');
-                }
-            } catch (recreateError) {
-                console.error('❌ Error crítico en recreación de contenedor:', recreateError);
-            }
-        }
-    }
-
-    /**
-     * =============================================================================
-     * SISTEMA DE DETECCIÓN DE CONTEXTO PARA BADGE CONTEXTUAL
-     * =============================================================================
-     * 
-     * Sistema que detecta el contexto actual del usuario para mostrar el badge
-     * apropiado según dónde se encuentre.
-     */
-    
-    /**
-     * DETECTAR SI ESTAMOS EN TIKTOK
-     * 
-     * Verifica si la página actual pertenece al dominio de TikTok.
-     * 
-     * @returns {boolean} - true si estamos en TikTok, false en caso contrario
-     */
-    function isOnTikTok() {
-        return window.location.hostname.includes('tiktok.com');
-    }
-    
-    /**
-     * DETECTAR SI ESTAMOS EN UN LIVE DE TIKTOK
-     * 
-     * Verifica si la página actual es una transmisión en vivo de TikTok.
-     * 
-     * @returns {boolean} - true si estamos en un Live, false en caso contrario
-     */
-    function isOnTikTokLive() {
-        if (!isOnTikTok()) return false;
-        
-        const pathname = window.location.pathname;
-        const livePattern = /^\/@[^\/]+\/live(?:\/[^?]*)?$/;
-        return livePattern.test(pathname);
-       }
-    
-    /**
-     * OBTENER CONTEXTO ACTUAL
-     * 
-     * Función helper que retorna el contexto actual del usuario.
-     * 
-     * @returns {Object} - Objeto con enTikTok y enLive
-     */
-    function getCurrentContext() {
-        const enTikTok = isOnTikTok();
-        const enLive = enTikTok && isOnTikTokLive();
-        
-        return { enTikTok, enLive };
-    }
-    
-    /**
-     * NOTIFICAR CAMBIO DE CONTEXTO AL BACKGROUND
-     * 
-     * Envía un mensaje al background script para actualizar el contexto
-     * y cambiar el badge apropiadamente.
-     * 
-     * @param {boolean} enTikTok - Si estamos en TikTok
-     * @param {boolean} enLive - Si estamos en Live
-     */
-    function notifyContextChange(enTikTok, enLive) {
-        console.log('🔄 Notificando cambio de contexto:', { enTikTok, enLive });
-        
-        safeRuntimeMessage({
-            action: 'updateContext',
-            enTikTok: enTikTok,
-            enLive: enLive
-        }).catch(error => {
-            console.warn('Error al notificar cambio de contexto:', error);
-        });
-    }
-
-    /**
-     * =============================================================================
-     * FUNCIÓN HELPER PARA ACTUALIZAR COLORES DINÁMICAMENTE
-     * =============================================================================
-     * 
-     * Actualiza los colores del botón y efectos hover según el estado actual
-     * para mantener consistencia visual con los colores de TikTok.
-     * 
-     * COLORES UTILIZADOS:
-     * - Estado OFF (desactivado): #ff0050 (magenta de TikTok)
-     * - Estado ON (activado): #00f2ea (cyan de TikTok)
-     * 
-     * @description Actualiza colores del botón según estado activo/inactivo
-     */
-    function actualizarColoresBoton() {
-        if (!elementos.boton) return;
-        
-        const isActive = state.activo && !state.pausadoPorChat;
-        
-        if (isActive) {
-            // Estado activado - cyan de TikTok
-            elementos.boton.style.background = '#00f2ea';
-            elementos.boton.textContent = '❤️ Auto Tap-Tap: ON';
-            
-            // Actualizar eventos hover para estado activo
-            elementos.boton.onmouseenter = function() {
-                this.style.transform = 'translateY(-1px)';
-                this.style.boxShadow = '0 4px 12px rgba(0, 242, 234, 0.3)';
             };
-        } else {
-            // Estado desactivado - magenta de TikTok  
-            elementos.boton.style.background = '#ff0050';
-            elementos.boton.textContent = '❤️ Auto Tap-Tap: OFF';
             
-            // Actualizar eventos hover para estado inactivo
-            elementos.boton.onmouseenter = function() {
-                this.style.transform = 'translateY(-1px)';
-                this.style.boxShadow = '0 4px 12px rgba(255, 0, 80, 0.3)';
-            };
-        }
-        
-        // El evento mouseleave es el mismo para ambos estados
-        elementos.boton.onmouseleave = function() {
-            this.style.transform = 'translateY(0)';
-            this.style.boxShadow = 'none';
-        };
-    }
-
-    /**
-     * =============================================================================
-     * FUNCIÓN DE CREACIÓN DE INTERFAZ FLOTANTE
-     * =============================================================================
-     * 
-     * Crea dinámicamente todos los elementos DOM necesarios para la interfaz
-     * flotante de usuario. Construye una ventana draggable con controles
-     * completos para la automatización.
-     * 
-     * ELEMENTOS CREADOS:
-     * - Contenedor principal draggable
-     * - Barra de arrastre con título y botón minimizar
-     * - Botón principal de toggle ON/OFF
-     * - Selector de velocidad/intervalo
-     * - Display de contador de tap-taps
-     * - Botón de reset del contador
-     * - Configuración de tiempo de reactivación
-     * - Información de copyright
-     * 
-     * @description Construye la interfaz visual completa de la extensión
-     */
-    function crearInterfaz() {
-        // CREAR CONTENEDOR PRINCIPAL
-        elementos.contenedor = document.createElement('div');
-        elementos.contenedor.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            width: 280px;
-            background: rgba(0, 0, 0, 0.95);
-            color: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            z-index: 999999;
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-            user-select: none;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        `;
-        
-        // CREAR BARRA DE ARRASTRE
-        elementos.barraArrastre = document.createElement('div');
-        elementos.barraArrastre.style.cssText = `
-            background: linear-gradient(135deg, #ff0050, #ff3366);
-            color: white;
-            padding: 12px 15px;
-            border-radius: 12px 12px 0 0;
-            cursor: move;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: bold;
-        `;
-        elementos.barraArrastre.innerHTML = `
-            <span>❤️ Auto Tap-Tap TikTok</span>
-        `;
-        
-        // CREAR BOTÓN MINIMIZAR
-        elementos.botonMinimizar = document.createElement('button');
-        elementos.botonMinimizar.textContent = '−';
-        elementos.botonMinimizar.style.cssText = `
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: none;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 16px;
-            line-height: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        `;
-        elementos.barraArrastre.appendChild(elementos.botonMinimizar);
-        
-        // CREAR CONTENIDO PRINCIPAL
-        const contenidoPrincipal = document.createElement('div');
-        contenidoPrincipal.style.cssText = `
-            padding: 15px;
-        `;
-        
-        // CREAR BOTÓN PRINCIPAL DE TOGGLE
-        elementos.boton = document.createElement('button');
-        elementos.boton.textContent = '❤️ Auto Tap-Tap: OFF';
-        elementos.boton.style.cssText = `
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            background: #ff0050;
-            color: white;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
-        `;
-        
-        // CREAR SELECTOR DE VELOCIDAD
-        const selectorContainer = document.createElement('div');
-        selectorContainer.style.cssText = `
-            margin-bottom: 15px;
-        `;
-        
-        elementos.selectorLabel = document.createElement('label');
-        elementos.selectorLabel.textContent = '⚡ Velocidad:';
-        elementos.selectorLabel.style.cssText = `
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #00f2ea;
-        `;
-        
-        elementos.selector = document.createElement('select');
-        elementos.selector.style.cssText = `
-            width: 100%;
-            padding: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            font-size: 14px;
-        `;
-        
-        // Poblar selector con opciones de velocidad
-        config.intervalos.forEach(opcion => {
-            const option = document.createElement('option');
-            option.value = opcion.valor;
-            option.textContent = opcion.texto;
-            option.style.cssText = `
-                background: #333;
-                color: white;
-            `;
-            elementos.selector.appendChild(option);
-        });
-        elementos.selector.value = config.defaultInterval;
-        
-        selectorContainer.appendChild(elementos.selectorLabel);
-        selectorContainer.appendChild(elementos.selector);
-        
-        // CREAR DISPLAY DEL CONTADOR
-        elementos.contadorDiv = document.createElement('div');
-        elementos.contadorDiv.style.cssText = `
-            background: rgba(255, 255, 255, 0.1);
-            padding: 12px;
-            border-radius: 8px;
-            text-align: center;
-            margin-bottom: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        `;
-        
-        const contadorLabel = document.createElement('div');
-        contadorLabel.textContent = '📊 Tap-Taps en esta sesión:';
-        contadorLabel.style.cssText = `
-            font-size: 12px;
-            color: #ccc;
-            margin-bottom: 5px;
-        `;
-        
-        elementos.contador = document.createElement('div');
-        elementos.contador.textContent = '0';
-        elementos.contador.style.cssText = `
-            font-size: 24px;
-            font-weight: bold;
-            color: #00f2ea;
-        `;
-        
-        elementos.contadorDiv.appendChild(contadorLabel);
-        elementos.contadorDiv.appendChild(elementos.contador);
-        
-        // CREAR BOTÓN DE RESET
-        elementos.botonReset = document.createElement('button');
-        elementos.botonReset.textContent = '🔄 Reset Contador';
-        elementos.botonReset.style.cssText = `
-            width: 100%;
-            padding: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            font-size: 14px;
-            cursor: pointer;
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
-        `;
-        
-        // CREAR CONFIGURACIÓN DE REACTIVACIÓN
-        elementos.configDiv = document.createElement('div');
-        elementos.configDiv.style.cssText = `
-            background: rgba(255, 255, 255, 0.05);
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        `;
-        
-        const configLabel = document.createElement('div');
-        configLabel.textContent = '⚙️ Tiempo de reactivación (chat):';
-        configLabel.style.cssText = `
-            font-size: 12px;
-            color: #ccc;
-            margin-bottom: 8px;
-        `;
-        
-        const inputContainer = document.createElement('div');
-        inputContainer.style.cssText = `
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        `;
-        
-        elementos.reactivacionInput = document.createElement('input');
-        elementos.reactivacionInput.type = 'number';
-        elementos.reactivacionInput.min = '10';
-        elementos.reactivacionInput.max = '60';
-        elementos.reactivacionInput.value = '10';
-        elementos.reactivacionInput.style.cssText = `
-            flex: 1;
-            padding: 6px 8px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            font-size: 14px;
-        `;
-        
-        const unidadLabel = document.createElement('span');
-        unidadLabel.textContent = 'segundos';
-        unidadLabel.style.cssText = `
-            font-size: 12px;
-            color: #ccc;
-        `;
-        
-        inputContainer.appendChild(elementos.reactivacionInput);
-        inputContainer.appendChild(unidadLabel);
-        elementos.configDiv.appendChild(configLabel);
-        elementos.configDiv.appendChild(inputContainer);
-        
-        // CREAR INFORMACIÓN DE COPYRIGHT
-        elementos.copyrightDiv = document.createElement('div');
-        elementos.copyrightDiv.style.cssText = `
-            text-align: center;
-            font-size: 11px;
-            color: #666;
-            padding-top: 10px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        `;
-        elementos.copyrightDiv.innerHTML = `
-            © 2025 <a href="https://newagecoding.org/" target="_blank" style="color: #00f2ea; text-decoration: none;">New Age Coding</a><br>
-            Por <a href="https://github.com/EmerickVar" target="_blank" style="color: #00f2ea; text-decoration: none;">@EmerickVar</a>
-        `;
-        
-        // CREAR CONTENEDOR DE NOTIFICACIONES
-        elementos.contenedorNotificaciones = document.createElement('div');
-        elementos.contenedorNotificaciones.style.cssText = `
-            position: absolute;
-            bottom: -10px;
-            right: 0;
-            width: 100%;
-            z-index: 1000002;
-            pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 8px;
-        `;
-        
-        // ENSAMBLAR TODOS LOS ELEMENTOS
-        contenidoPrincipal.appendChild(elementos.boton);
-        contenidoPrincipal.appendChild(selectorContainer);
-        contenidoPrincipal.appendChild(elementos.contadorDiv);
-        contenidoPrincipal.appendChild(elementos.botonReset);
-        contenidoPrincipal.appendChild(elementos.configDiv);
-        contenidoPrincipal.appendChild(elementos.copyrightDiv);
-        
-        elementos.contenedor.appendChild(elementos.barraArrastre);
-        elementos.contenedor.appendChild(contenidoPrincipal);
-        elementos.contenedor.appendChild(elementos.contenedorNotificaciones);
-        
-        // INSERTAR EN EL DOM
-        document.body.appendChild(elementos.contenedor);
-        
-        // APLICAR EFECTOS HOVER DINÁMICOS
-        actualizarColoresBoton();
-        
-        elementos.botonReset.addEventListener('mouseenter', function() {
-            this.style.background = 'rgba(255, 255, 255, 0.2)';
-        });
-        
-        elementos.botonReset.addEventListener('mouseleave', function() {
-            this.style.background = 'rgba(255, 255, 255, 0.1)';
-        });
-    }
-
-    /**
-     * =============================================================================
-
-     * FUNCIÓN PRINCIPAL DE INICIALIZACIÓN - COORDINA TODO EL PROCESO DE ARRANQUE
-     * =============================================================================
-     * 
-     * Esta función orquesta el proceso completo de inicialización de la extensión,
-     * asegurando que todos los componentes se configuren correctamente antes de
-     * que el usuario pueda interactuar con la interfaz.
-     * 
-     * FASES DE INICIALIZACIÓN:
-     * 1. CREACIÓN DE INTERFAZ: Construye y posiciona la UI flotante
-     * 2. RESTAURACIÓN DE ESTADO: Carga configuraciones persistentes
-     * 3. CONFIGURACIÓN DE EVENTOS: Establece todos los event listeners
-     * 4. SISTEMA DE CHAT: Activa detección de interacciones de chat
-     * 
-     * @description Inicializa todos los componentes de la extensión en orden correcto
-     */
-    function init() {
-        // FASE 1: Crear la interfaz de usuario flotante
-        crearInterfaz();
-        
-        // FASE 2: Cargar y restaurar estado persistente desde chrome.storage
-        safeStorageOperation(() => {
-            chrome.storage.local.get([
-                'intervalo',           // Velocidad de tap-taps configurada
-                'totalTapTaps',        // Contador total acumulativo
-                'position',            // Posición de ventana flotante
-                'tiempoReactivacion'   // Tiempo de espera para reactivación
-            ], result => {
-                // Restaurar intervalo de velocidad si existe configuración previa
-                if (result.intervalo) {
-                    elementos.selector.value = result.intervalo;
-                    // Nota: No iniciar intervalo automáticamente al cargar
-                    // El usuario debe activar manualmente el Auto Tap-Tap
+            StateModule.limpiarCuentaRegresiva = limpiarCuentaRegresiva;
+            
+            TimerModule.timers.cuentaRegresiva = setInterval(() => {
+                if (!StateModule.pausadoPorChat || StateModule.apagadoManualmente || StateModule.activo) {
+                    console.log('⚠️ Cancelando cuenta regresiva - estado cambió');
+                    limpiarCuentaRegresiva();
+                    return;
                 }
                 
-                // Restaurar contador total de sesiones anteriores
-                if (result.totalTapTaps) {
-                    state.contador = result.totalTapTaps;
-                    actualizarContador();
-                }
+                tiempoRestante--;
                 
-                // Restaurar posición de ventana flotante
-                if (result.position) {
-                    const { x, y } = result.position;
-                    state.xOffset = x;
-                    state.yOffset = y;
-                    // Aplicar posición con transform3d para mejor rendimiento
-                    elementos.contenedor.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+                if (tiempoRestante > 0) {
+                    if (StateModule.notificacionCuentaRegresiva && StateModule.notificacionCuentaRegresiva.parentNode) {
+                        StateModule.notificacionCuentaRegresiva.textContent = `⏳ Reactivando en ${tiempoRestante}s...`;
+                        
+                        if (tiempoRestante <= 3) {
+                            StateModule.notificacionCuentaRegresiva.style.color = '#ffff00';
+                        } else {
+                            StateModule.notificacionCuentaRegresiva.style.color = '#ff8c00';
+                        }
+                    }
+                } else {
+                    console.log('⏰ Tiempo de cuenta regresiva agotado, reactivando sistema...');
+                    StateModule.contador = 0;
+                    UIModule.actualizarContador();
+                    ChatModule.reactivarAutoTapTap(true);
+                    limpiarCuentaRegresiva();
                 }
-                
-                // Restaurar tiempo de reactivación personalizado
-                if (result.tiempoReactivacion) {
-                    state.tiempoReactivacion = result.tiempoReactivacion;
-                    elementos.reactivacionInput.value = result.tiempoReactivacion;
-                }
-            });
-        });
-        
-        // FASE 3: Configurar todos los event listeners y sistemas de comunicación
-        setupMessageListener();
-        
-        // FASE 4: Activar sistema de detección de interacciones de chat
-        manejarInteraccionChat();
-        
-        // FASE 5: Sistema de detección de navegación fuera del live
-        setupNavigationDetection();
-        
-        // FASE 6: Notificar contexto inicial al background
-        const { enTikTok, enLive } = getCurrentContext();
-        console.log('🎯 Inicializando con contexto:', { enTikTok, enLive });
-        notifyContextChange(enTikTok, enLive);
-    }
-    
-    /**
-     * SISTEMA DE DETECCIÓN DE NAVEGACIÓN
-     * 
-     * Implementa un sistema que detecta cuando el usuario navega fuera de una página de live
-     * y limpia automáticamente todos los recursos de la extensión para evitar intentos
-     * innecesarios de reconexión.
-     * 
-     * FUNCIONALIDADES:
-     * - Detecta cambios de URL usando MutationObserver
-     * - Monitorea eventos de navegación (popstate, beforeunload)
-     * - Limpia recursos cuando se sale del live
-     * - Previene reconexiones innecesarias
-     */
-    function setupNavigationDetection() {
-        console.log('🔍 Configurando sistema de detección de navegación...');
-        
-        let lastUrl = window.location.href;
+            }, 1000);
+        },
         
         /**
-         * FUNCIÓN DE LIMPIEZA COMPLETA DE RECURSOS
-         * 
-         * Limpia todos los recursos de la extensión cuando se detecta
-         * que el usuario ya no está en un live de TikTok.
+         * Limpia la cuenta regresiva actual
          */
-        const cleanupExtensionResources = () => {
+        limpiarCuentaRegresiva() {
+            if (StateModule.limpiarCuentaRegresiva && typeof StateModule.limpiarCuentaRegresiva === 'function') {
+                try {
+                    StateModule.limpiarCuentaRegresiva();
+                } catch (error) {
+                    console.warn('Error en cleanup de cuenta regresiva:', error);
+                }
+            }
+            
+            try {
+                if (StateModule.notificacionCuentaRegresiva) {
+                    this.remover(StateModule.notificacionCuentaRegresiva, true);
+                    StateModule.notificacionCuentaRegresiva = null;
+                }
+            } catch (error) {
+                console.warn('Error en cleanup defensivo:', error);
+            }
+        },
+        
+        /**
+         * Limpia todas las notificaciones flotantes
+         */
+        limpiarTodasLasNotificaciones() {
+            console.log('🧹 Iniciando limpieza completa de notificaciones flotantes...');
+            
+            try {
+                if (UIModule.elementos.contenedorNotificaciones) {
+                    const notificaciones = UIModule.elementos.contenedorNotificaciones.children;
+                    console.log(`📊 Encontradas ${notificaciones.length} notificaciones para limpiar`);
+                    
+                    Array.from(notificaciones).forEach((notificacion, index) => {
+                        try {
+                            this.remover(notificacion, true);
+                        } catch (error) {
+                            console.warn(`⚠️ Error al remover notificación ${index}:`, error);
+                        }
+                    });
+                }
+                
+                if (UIModule.elementos.contenedorNotificaciones && UIModule.elementos.contenedorNotificaciones.children.length > 0) {
+                    console.log('🔄 Aplicando limpieza fallback con innerHTML...');
+                    try {
+                        UIModule.elementos.contenedorNotificaciones.innerHTML = '';
+                    } catch (error) {
+                        console.warn('⚠️ Error en limpieza fallback:', error);
+                    }
+                }
+                
+                try {
+                    const elementosHuerfanos = document.querySelectorAll('.tiktok-notification, .auto-taptap-notification, [class*="notification"]');
+                    elementosHuerfanos.forEach((elemento, index) => {
+                        try {
+                            if (elemento.textContent && (
+                                elemento.textContent.includes('Modo Humano') ||
+                                elemento.textContent.includes('Auto Tap-Tap') ||
+                                elemento.textContent.includes('Chat detectado') ||
+                                elemento.textContent.includes('Reactivando')
+                            )) {
+                                elemento.remove();
+                                console.log(`🗑️ Elemento huérfano removido: ${index}`);
+                            }
+                        } catch (error) {
+                            console.warn(`⚠️ Error al remover elemento huérfano ${index}:`, error);
+                        }
+                    });
+                } catch (error) {
+                    console.warn('⚠️ Error en limpieza extrema:', error);
+                }
+                
+                this.limpiarCuentaRegresiva();
+                
+                console.log('✅ Limpieza completa de notificaciones flotantes completada');
+                
+            } catch (error) {
+                console.error('❌ Error crítico en limpieza de notificaciones:', error);
+            }
+        }
+    };
+    
+    /**
+     * =============================================================================
+     * MÓDULO DE INTERFAZ DE USUARIO
+     * =============================================================================
+     * 
+     * Gestiona la creación y actualización de la interfaz
+     */
+    const UIModule = {
+        elementos: {},
+        
+        config: {
+            intervalos: [
+                { valor: 0, texto: 'Modo humano | [Variable]' },
+                { valor: 200, texto: '200 milisegundos | [Muy rápido]' },
+                { valor: 250, texto: '250 milisegundos | [Rápido]' },
+                { valor: 500, texto: '500 milisegundos | [Normal]' },
+                { valor: 1000, texto: '1  segundo      | [Lento]' }
+            ],
+            defaultInterval: 200
+        },
+        
+        /**
+         * Actualiza el contador en la interfaz
+         */
+        actualizarContador() {
+            if (this.elementos.contador) {
+                this.elementos.contador.textContent = StateModule.contador;
+            }
+        },
+        
+        /**
+         * Actualiza los colores del botón según el estado
+         */
+        actualizarColoresBoton() {
+            if (!this.elementos.boton) return;
+            
+            const isActive = StateModule.activo && !StateModule.pausadoPorChat;
+            
+            if (isActive) {
+                this.elementos.boton.style.background = '#00f2ea';
+                this.elementos.boton.textContent = '❤️ Auto Tap-Tap: ON';
+                
+                this.elementos.boton.onmouseenter = function() {
+                    this.style.transform = 'translateY(-1px)';
+                    this.style.boxShadow = '0 4px 12px rgba(0, 242, 234, 0.3)';
+                };
+            } else {
+                this.elementos.boton.style.background = '#ff0050';
+                this.elementos.boton.textContent = '❤️ Auto Tap-Tap: OFF';
+                
+                this.elementos.boton.onmouseenter = function() {
+                    this.style.transform = 'translateY(-1px)';
+                    this.style.boxShadow = '0 4px 12px rgba(255, 0, 80, 0.3)';
+                };
+            }
+            
+            this.elementos.boton.onmouseleave = function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = 'none';
+            };
+        },
+        
+        /**
+         * Crea la interfaz flotante completa
+         */
+        crearInterfaz() {
+            this.elementos.contenedor = document.createElement('div');
+            this.elementos.contenedor.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                width: 280px;
+                background: rgba(0, 0, 0, 0.95);
+                color: white;
+                border-                radius: 12px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+                z-index: 999999;
+                font-family: Arial, sans-serif;
+                font-size: 14px;
+                user-select: none;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            `;
+            
+            // Crear barra de arrastre
+            this.elementos.barraArrastre = document.createElement('div');
+            this.elementos.barraArrastre.style.cssText = `
+                background: linear-gradient(135deg, #ff0050, #ff3366);
+                color: white;
+                padding: 12px 15px;
+                border-radius: 12px 12px 0 0;
+                cursor: move;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                font-weight: bold;
+            `;
+            this.elementos.barraArrastre.innerHTML = `
+                <span>❤️ Auto Tap-Tap TikTok</span>
+            `;
+            
+            // Crear botón minimizar
+            this.elementos.botonMinimizar = document.createElement('button');
+            this.elementos.botonMinimizar.textContent = '−';
+            this.elementos.botonMinimizar.style.cssText = `
+                background: rgba(255, 255, 255, 0.2);
+                color: white;
+                border: none;
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+                cursor: pointer;
+                font-size: 16px;
+                line-height: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `;
+            this.elementos.barraArrastre.appendChild(this.elementos.botonMinimizar);
+            
+            // Crear contenido principal
+            const contenidoPrincipal = document.createElement('div');
+            contenidoPrincipal.style.cssText = `padding: 15px;`;
+            
+            // Crear elementos individuales
+            this.crearBotonPrincipal(contenidoPrincipal);
+            this.crearSelectorVelocidad(contenidoPrincipal);
+            this.crearContador(contenidoPrincipal);
+            this.crearBotonReset(contenidoPrincipal);
+            this.crearConfiguracionReactivacion(contenidoPrincipal);
+            this.crearCopyright(contenidoPrincipal);
+            
+            // Crear contenedor de notificaciones
+            this.elementos.contenedorNotificaciones = document.createElement('div');
+            this.elementos.contenedorNotificaciones.style.cssText = `
+                position: absolute;
+                bottom: -10px;
+                right: 0;
+                width: 100%;
+                z-index: 1000002;
+                pointer-events: none;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-end;
+                gap: 8px;
+            `;
+            
+            // Ensamblar elementos
+            this.elementos.contenedor.appendChild(this.elementos.barraArrastre);
+            this.elementos.contenedor.appendChild(contenidoPrincipal);
+            this.elementos.contenedor.appendChild(this.elementos.contenedorNotificaciones);
+            
+            // Insertar en el DOM
+            document.body.appendChild(this.elementos.contenedor);
+            
+            // Configurar eventos
+            this.configurarEventosUI();
+            
+            // Aplicar efectos iniciales
+            this.actualizarColoresBoton();
+        },
+        
+        /**
+         * Crea el botón principal de toggle
+         * @param {HTMLElement} contenedor - Contenedor padre
+         */
+        crearBotonPrincipal(contenedor) {
+            this.elementos.boton = document.createElement('button');
+            this.elementos.boton.textContent = '❤️ Auto Tap-Tap: OFF';
+            this.elementos.boton.style.cssText = `
+                width: 100%;
+                padding: 12px;
+                border: none;
+                border-radius: 8px;
+                background: #ff0050;
+                color: white;
+                font-size: 16px;
+                font-weight: bold;
+                cursor: pointer;
+                margin-bottom: 15px;
+                transition: all 0.3s ease;
+            `;
+            contenedor.appendChild(this.elementos.boton);
+        },
+        
+        /**
+         * Crea el selector de velocidad
+         * @param {HTMLElement} contenedor - Contenedor padre
+         */
+        crearSelectorVelocidad(contenedor) {
+            const selectorContainer = document.createElement('div');
+            selectorContainer.style.cssText = `margin-bottom: 15px;`;
+            
+            this.elementos.selectorLabel = document.createElement('label');
+            this.elementos.selectorLabel.textContent = '⚡️ Velocidad:';
+            this.elementos.selectorLabel.style.cssText = `
+                display: block;
+                margin-bottom: 8px;
+                font-weight: bold;
+                color: #00f2ea;
+            `;
+            
+            this.elementos.selector = document.createElement('select');
+            this.elementos.selector.style.cssText = `
+                width: 100%;
+                padding: 8px;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                border-radius: 6px;
+                background: rgba(255, 255, 255, 0.1);
+                color: white;
+                font-size: 14px;
+            `;
+            
+            // Poblar opciones
+            this.config.intervalos.forEach(opcion => {
+                const option = document.createElement('option');
+                option.value = opcion.valor;
+                option.textContent = opcion.texto;
+                option.style.cssText = `
+                    background: #333;
+                    color: white;
+                `;
+                this.elementos.selector.appendChild(option);
+            });
+            this.elementos.selector.value = this.config.defaultInterval;
+            
+            selectorContainer.appendChild(this.elementos.selectorLabel);
+            selectorContainer.appendChild(this.elementos.selector);
+            contenedor.appendChild(selectorContainer);
+        },
+        
+        /**
+         * Crea el contador de tap-taps
+         * @param {HTMLElement} contenedor - Contenedor padre
+         */
+        crearContador(contenedor) {
+            this.elementos.contadorDiv = document.createElement('div');
+            this.elementos.contadorDiv.style.cssText = `
+                background: rgba(255, 255, 255, 0.1);
+                padding: 12px;
+                border-radius: 8px;
+                text-align: center;
+                margin-bottom: 15px;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+            `;
+            
+            const contadorLabel = document.createElement('div');
+            contadorLabel.textContent = '📊 Tap-Taps en esta sesión:';
+            contadorLabel.style.cssText = `
+                font-size: 12px;
+                color: #ccc;
+                margin-bottom: 5px;
+            `;
+            
+            this.elementos.contador = document.createElement('div');
+            this.elementos.contador.textContent = '0';
+            this.elementos.contador.style.cssText = `
+                font-size: 24px;
+                font-weight: bold;
+                color: #00f2ea;
+            `;
+            
+            this.elementos.contadorDiv.appendChild(contadorLabel);
+            this.elementos.contadorDiv.appendChild(this.elementos.contador);
+            contenedor.appendChild(this.elementos.contadorDiv);
+        },
+        
+        /**
+         * Crea el botón de reset
+         * @param {HTMLElement} contenedor - Contenedor padre
+         */
+        crearBotonReset(contenedor) {
+            this.elementos.botonReset = document.createElement('button');
+            this.elementos.botonReset.textContent = '🔄 Reset Contador';
+            this.elementos.botonReset.style.cssText = `
+                width: 100%;
+                padding: 8px;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                border-radius: 6px;
+                background: rgba(255, 255, 255, 0.1);
+                color: white;
+                font-size: 14px;
+                cursor: pointer;
+                margin-bottom: 15px;
+                transition: all 0.3s ease;
+            `;
+            
+            this.elementos.botonReset.addEventListener('mouseenter', function() {
+                this.style.background = 'rgba(255, 255, 255, 0.2)';
+            });
+            
+            this.elementos.botonReset.addEventListener('mouseleave', function() {
+                this.style.background = 'rgba(255, 255, 255, 0.1)';
+            });
+            
+            contenedor.appendChild(this.elementos.botonReset);
+        },
+        
+        /**
+         * Crea la configuración de reactivación
+         * @param {HTMLElement} contenedor - Contenedor padre
+         */
+        crearConfiguracionReactivacion(contenedor) {
+            this.elementos.configDiv = document.createElement('div');
+            this.elementos.configDiv.style.cssText = `
+                background: rgba(255, 255, 255, 0.05);
+                padding: 12px;
+                border-radius: 8px;
+                margin-bottom: 15px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            `;
+            
+            const configLabel = document.createElement('div');
+            configLabel.textContent = '⚙️ Tiempo de reactivación (chat):';
+            configLabel.style.cssText = `
+                font-size: 12px;
+                color: #ccc;
+                margin-bottom: 8px;
+            `;
+            
+            const inputContainer = document.createElement('div');
+            inputContainer.style.cssText = `
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            `;
+            
+            this.elementos.reactivacionInput = document.createElement('input');
+            this.elementos.reactivacionInput.type = 'number';
+            this.elementos.reactivacionInput.min = '10';
+            this.elementos.reactivacionInput.max = '60';
+            this.elementos.reactivacionInput.value = '10';
+            this.elementos.reactivacionInput.style.cssText = `
+                flex: 1;
+                padding: 6px 8px;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                border-radius: 4px;
+                background: rgba(255, 255, 255, 0.1);
+                color: white;
+                font-size: 14px;
+            `;
+            
+            const unidadLabel = document.createElement('span');
+            unidadLabel.textContent = 'segundos';
+            unidadLabel.style.cssText = `
+                font-size: 12px;
+                color: #ccc;
+            `;
+            
+            inputContainer.appendChild(this.elementos.reactivacionInput);
+            inputContainer.appendChild(unidadLabel);
+            this.elementos.configDiv.appendChild(configLabel);
+            this.elementos.configDiv.appendChild(inputContainer);
+            contenedor.appendChild(this.elementos.configDiv);
+        },
+        
+        /**
+         * Crea la información de copyright
+         * @param {HTMLElement} contenedor - Contenedor padre
+         */
+        crearCopyright(contenedor) {
+            this.elementos.copyrightDiv = document.createElement('div');
+            this.elementos.copyrightDiv.style.cssText = `
+                text-align: center;
+                font-size: 11px;
+                color: #666;
+                padding-top: 10px;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            `;
+            this.elementos.copyrightDiv.innerHTML = `
+                © 2025 <a href="https://newagecoding.org/" target="_blank" style="color: #00f2ea; text-decoration: none;">New Age Coding Organization</a><br>
+                Por <a href="https://github.com/EmerickVar" target="_blank" style="color: #00f2ea; text-decoration: none;">@EmerickVar</a>
+            `;
+            contenedor.appendChild(this.elementos.copyrightDiv);
+        },
+        
+        /**
+         * Configura los eventos de la interfaz
+         */
+        configurarEventosUI() {
+            // Botón principal
+            this.elementos.boton.addEventListener('click', () => {
+                AutomationModule.toggle();
+            });
+            
+            // Selector de velocidad
+            this.elementos.selector.addEventListener('change', () => {
+                const nuevoIntervalo = parseInt(this.elementos.selector.value);
+                
+                if (StateModule.activo) {
+                    if (StateModule.intervalo) {
+                        IntervalModule.clear(StateModule.intervalo);
+                    }
+                    
+                    if (StateModule.modoHumano.activo) {
+                        console.log('🔄 Cambiando desde modo humano a intervalo normal');
+                        ModoHumanoModule.limpiar();
+                    }
+                    
+                    if (nuevoIntervalo === 0) {
+                        console.log('🤖 Cambiando a Modo Humano...');
+                        StateModule.modoHumano.activo = true;
+                        ModoHumanoModule.generarVariables();
+                        ModoHumanoModule.iniciarSesion();
+                        NotificationModule.agregar('🤖 Modo Humano activado', 'success', 3000);
+                    } else {
+                        AutomationModule.presionarL();
+                        StateModule.intervalo = IntervalModule.create(() => AutomationModule.presionarL(), nuevoIntervalo);
+                    }
+                }
+                
+                StorageModule.save({ intervalo: nuevoIntervalo });
+            });
+            
+            // Botón reset
+            this.elementos.botonReset.addEventListener('click', () => {
+                StateModule.contador = 0;
+                this.actualizarContador();
+                StorageModule.save({ totalTapTaps: 0 });
+            });
+            
+            // Input de reactivación
+            this.elementos.reactivacionInput.addEventListener('change', () => {
+                const nuevoTiempo = parseInt(this.elementos.reactivacionInput.value);
+                if (nuevoTiempo >= 10 && nuevoTiempo <= 60) {
+                    StateModule.tiempoReactivacion = nuevoTiempo;
+                    StorageModule.save({ tiempoReactivacion: nuevoTiempo });
+                }
+            });
+            
+            // Botón minimizar
+            this.elementos.botonMinimizar.addEventListener('click', () => {
+                const controles = [
+                    this.elementos.boton,
+                    this.elementos.selectorLabel,
+                    this.elementos.selector,
+                    this.elementos.contadorDiv,
+                    this.elementos.botonReset,
+                    this.elementos.configDiv,
+                    this.elementos.copyrightDiv
+                ];
+                
+                const isMinimized = this.elementos.boton.style.display === 'none';
+                controles.forEach(el => {
+                    if (el) el.style.display = isMinimized ? 'block' : 'none';
+                });
+                
+                this.elementos.botonMinimizar.textContent = isMinimized ? '−' : '+';
+            });
+            
+            // Sistema de arrastre
+            DragModule.configurar(this.elementos.barraArrastre, this.elementos.contenedor);
+        }
+    };
+    
+    /**
+     * =============================================================================
+     * MÓDULO DE ARRASTRE
+     * =============================================================================
+     * 
+     * Gestiona el sistema de arrastre de la ventana flotante
+     */
+    const DragModule = {
+        /**
+         * Configura el sistema de arrastre
+         * @param {HTMLElement} handle - Elemento de agarre
+         * @param {HTMLElement} container - Contenedor a mover
+         */
+        configurar(handle, container) {
+            handle.addEventListener('mousedown', (e) => this.dragStart(e, container));
+            handle.addEventListener('touchstart', (e) => this.dragStart(e, container), { passive: false });
+        },
+        
+        /**
+         * Inicia el arrastre
+         * @param {Event} e - Evento de inicio
+         * @param {HTMLElement} container - Contenedor a mover
+         */
+        dragStart(e, container) {
+            StateModule.isDragging = true;
+            
+            if (e.type === 'touchstart') {
+                StateModule.initialX = e.touches[0].clientX - StateModule.xOffset;
+                StateModule.initialY = e.touches[0].clientY - StateModule.yOffset;
+            } else {
+                StateModule.initialX = e.clientX - StateModule.xOffset;
+                StateModule.initialY = e.clientY - StateModule.yOffset;
+            }
+            
+            const dragHandler = (e) => this.drag(e, container);
+            const dragEndHandler = () => this.dragEnd(dragHandler, dragEndHandler);
+            
+            document.addEventListener('mousemove', dragHandler);
+            document.addEventListener('touchmove', dragHandler, { passive: false });
+            document.addEventListener('mouseup', dragEndHandler);
+            document.addEventListener('touchend', dragEndHandler);
+        },
+        
+        /**
+         * Maneja el movimiento durante el arrastre
+         * @param {Event} e - Evento de movimiento
+         * @param {HTMLElement} container - Contenedor a mover
+         */
+        drag(e, container) {
+            if (!StateModule.isDragging) return;
+            
+            e.preventDefault();
+            
+            if (e.type === 'touchmove') {
+                StateModule.currentX = e.touches[0].clientX - StateModule.initialX;
+                StateModule.currentY = e.touches[0].clientY - StateModule.initialY;
+            } else {
+                StateModule.currentX = e.clientX - StateModule.initialX;
+                StateModule.currentY = e.clientY - StateModule.initialY;
+            }
+            
+            StateModule.xOffset = StateModule.currentX;
+            StateModule.yOffset = StateModule.currentY;
+            
+            container.style.transform = `translate3d(${StateModule.currentX}px, ${StateModule.currentY}px, 0)`;
+        },
+        
+        /**
+         * Finaliza el arrastre
+         * @param {Function} dragHandler - Handler de movimiento
+         * @param {Function} dragEndHandler - Handler de fin
+         */
+        dragEnd(dragHandler, dragEndHandler) {
+            StateModule.isDragging = false;
+            
+            document.removeEventListener('mousemove', dragHandler);
+            document.removeEventListener('touchmove', dragHandler);
+            document.removeEventListener('mouseup', dragEndHandler);
+            document.removeEventListener('touchend', dragEndHandler);
+            
+            // Guardar posición
+            StorageModule.save({
+                position: {
+                    x: StateModule.xOffset,
+                    y: StateModule.yOffset
+                }
+            });
+        }
+    };
+    
+    /**
+     * =============================================================================
+     * MÓDULO DE NAVEGACIÓN
+     * =============================================================================
+     * 
+     * Gestiona la detección de cambios de navegación
+     */
+    const NavigationModule = {
+        lastUrl: window.location.href,
+        
+        /**
+         * Configura la detección de navegación
+         */
+        configurar() {
+            console.log('🔍 Configurando sistema de detección de navegación...');
+            
+            // Observer para cambios de URL
+            const urlObserver = new MutationObserver(() => {
+                setTimeout(() => this.checkUrlChange(), 100);
+            });
+            
+            urlObserver.observe(document, {
+                subtree: true,
+                childList: true
+            });
+            
+            // Eventos de navegación
+            window.addEventListener('popstate', () => {
+                console.log('📍 Evento popstate detectado');
+                setTimeout(() => this.checkUrlChange(), 100);
+            });
+            
+            window.addEventListener('beforeunload', () => {
+                console.log('🚪 Página being unloaded');
+                this.cleanupExtensionResources();
+            });
+            
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    console.log('👁️ Página oculta');
+                } else {
+                    console.log('👁️ Página visible, verificando ubicación...');
+                    setTimeout(() => this.checkUrlChange(), 500);
+                }
+            });
+            
+            // Verificación periódica
+            const navigationCheckInterval = setInterval(() => {
+                if (!ContextModule.isOnTikTokLive()) {
+                    console.log('⏰ Verificación periódica: No estamos en Live');
+                    this.cleanupExtensionResources();
+                    clearInterval(navigationCheckInterval);
+                }
+            }, 10000);
+            
+            // Guardar referencias
+            StateModule.navigationCheckInterval = navigationCheckInterval;
+            StateModule.urlObserver = urlObserver;
+            
+            console.log('✅ Sistema de detección de navegación configurado correctamente');
+        },
+        
+        /**
+         * Verifica cambios de URL
+         */
+        checkUrlChange() {
+            const currentUrl = window.location.href;
+            if (currentUrl !== this.lastUrl) {
+                console.log('🔄 Cambio de URL detectado:', {
+                    anterior: this.lastUrl,
+                    actual: currentUrl
+                });
+                this.lastUrl = currentUrl;
+                
+                const { enTikTok, enLive } = ContextModule.getCurrentContext();
+                console.log('🎯 Contexto actual:', { enTikTok, enLive });
+                
+                // Notificar cambio de contexto
+                MessagingModule.sendMessage({
+                    action: 'updateContext',
+                    enTikTok: enTikTok,
+                    enLive: enLive
+                }).catch(error => {
+                    console.warn('Error al notificar cambio de contexto:', error);
+                });
+                
+                if (!enLive) {
+                    this.cleanupExtensionResources();
+                }
+            }
+        },
+        
+        /**
+         * Limpia todos los recursos de la extensión
+         */
+        cleanupExtensionResources() {
             console.log('🧹 Limpieza completa de recursos - No estamos en Live');
             
             // Detener automatización
-            if (state.intervalo) {
-                safeInterval.clear(state.intervalo);
-                state.intervalo = null;
+            if (StateModule.intervalo) {
+                IntervalModule.clear(StateModule.intervalo);
+                StateModule.intervalo = null;
             }
             
-            // Limpiar modo humano si está activo
-            if (state.modoHumano.activo) {
+            // Limpiar modo humano
+            if (StateModule.modoHumano.activo) {
                 console.log('🧹 Limpiando modo humano durante cleanup');
-                limpiarModoHumano();
+                ModoHumanoModule.limpiar();
             }
             
-            // Limpiar todos los intervalos seguros
-            safeInterval.clearAll();
+            // Limpiar todos los intervalos
+            IntervalModule.clearAll();
             
-            // Limpiar timers de chat
-            if (state.chatTimeout) {
-                clearTimeout(state.chatTimeout);
-                state.chatTimeout = null;
+            // Limpiar timers
+            TimerModule.cleanupAll();
+            
+            // Limpiar observer de chat
+            if (StateModule.chatObserver && StateModule.chatObserver.cleanup) {
+                StateModule.chatObserver.cleanup();
             }
             
-            // Limpiar observer de chat si existe
-            if (state.chatObserver && state.chatObserver.cleanup) {
-                state.chatObserver.cleanup();
+            // Limpiar eventos de chat
+            if (StateModule.chatCleanup) {
+                StateModule.chatCleanup();
             }
             
-            // Limpiar eventos de chat si existe la función
-            if (state.chatCleanup) {
-                state.chatCleanup();
+            // Limpiar notificaciones
+            NotificationModule.limpiarTodasLasNotificaciones();
+            
+            // Resetear estados
+            StateModule.activo = false;
+            StateModule.pausadoPorChat = false;
+            
+            // Actualizar interfaz
+            UIModule.actualizarColoresBoton();
+            if (UIModule.elementos.selector) {
+                UIModule.elementos.selector.disabled = false;
+                UIModule.elementos.selector.style.opacity = '1';
             }
             
-            // Limpiar notificaciones flotantes independientes
-            limpiarNotificacionesFlotantes();
-            
-            // Limpiar timers de chat y cuenta regresiva
-            timers.cleanupAll();
-            
-            // Resetear estados relacionados con automatización
-            state.activo = false;
-            state.pausadoPorChat = false;
-            
-            // Actualizar interfaz para mostrar estado inactivo
-            if (elementos.boton) {
-                // Actualizar colores dinámicamente
-                actualizarColoresBoton();
-            }
-            if (elementos.selector) {
-                elementos.selector.disabled = false;
-                elementos.selector.style.opacity = '1';
-            }
-            
-            // Notificar al background script que se detuvo
-            safeRuntimeMessage({ 
+            // Notificar al background
+            MessagingModule.sendMessage({ 
                 action: 'stopped',
                 enTikTok: true,
-                enLive: false                    // Ya no estamos en Live
-            })
-                .catch(error => console.warn('Error al notificar estado:', error));
-        };
-        
-        /**
-         * VERIFICADOR DE CAMBIOS DE URL Y CONTEXTO
-         * 
-         * Verifica si la URL ha cambiado y actualiza el contexto apropiadamente.
-         * También maneja la detección de cambios entre TikTok/no-TikTok y Live/no-Live.
-         */
-        const checkUrlChange = () => {
-            const currentUrl = window.location.href;
-            if (currentUrl !== lastUrl) {
-                console.log('🔄 Cambio de URL detectado:', {
-                    anterior: lastUrl,
-                    actual: currentUrl
-                });
-                lastUrl = currentUrl;
-                
-                // Obtener contexto actual
-                const { enTikTok, enLive } = getCurrentContext();
-                console.log('🎯 Contexto actual:', { enTikTok, enLive });
-                
-                // Notificar cambio de contexto al background
-                notifyContextChange(enTikTok, enLive);
-                
-                // Si ya no estamos en un live, limpiar recursos
-                if (!enLive) {
-                    cleanupExtensionResources();
-                }
-            }
-        };
-        
-        /**
-         * MUTATION OBSERVER PARA DETECTAR CAMBIOS DE URL EN SPA
-         * 
-         * TikTok es una Single Page Application, por lo que los cambios de página
-         * no siempre disparan eventos de navegación tradicionales.
-         */
-        const urlObserver = new MutationObserver(() => {
-            // Usar setTimeout para evitar ejecutar demasiado frecuentemente
-            setTimeout(checkUrlChange, 100);
-        });
-        
-        // Configurar el observer para detectar cambios en el título de la página
-        // que suelen ocurrir cuando TikTok cambia de página
-        urlObserver.observe(document, {
-            subtree: true,
-            childList: true
-        });
-        
-        /**
-         * EVENT LISTENERS PARA EVENTOS DE NAVEGACIÓN
-         * 
-         * Detecta navegación tradicional y eventos del navegador.
-         */
-        
-        // Detectar navegación con botones del navegador (atrás/adelante)
-        window.addEventListener('popstate', () => {
-            console.log('📍 Evento popstate detectado');
-            setTimeout(checkUrlChange, 100);
-        });
-        
-        // Detectar cuando el usuario va a salir de la página
-        window.addEventListener('beforeunload', () => {
-            console.log('🚪 Página being unloaded');
-            cleanupExtensionResources();
-        });
-        
-        // Detectar cambios de visibilidad de la página
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                console.log('👁️ Página oculta');
-            } else {
-                console.log('👁️ Página visible, verificando ubicación...');
-                setTimeout(checkUrlChange, 500);
-            }
-        });
-        
-        /**
-         * VERIFICACIÓN PERIÓDICA COMO RESPALDO
-         * 
-         * Como medida adicional de seguridad, verifica periódicamente
-         * que seguimos en un live de TikTok.
-         */
-        const navigationCheckInterval = setInterval(() => {
-            if (!isOnTikTokLive()) {
-                console.log('⏰ Verificación periódica: No estamos en Live');
-                cleanupExtensionResources();
-                clearInterval(navigationCheckInterval);
-            }
-        }, 10000); // Verificar cada 10 segundos
-        
-        // Guardar referencia para limpieza posterior
-        state.navigationCheckInterval = navigationCheckInterval;
-        state.urlObserver = urlObserver;
-        
-        console.log('✅ Sistema de detección de navegación configurado correctamente');
-    }
-
-    /**
-     * =============================================================================
-     * FUNCIÓN DE LIMPIEZA DEFENSIVA PERIÓDICA
-     * =============================================================================
-     * 
-     * Función que se ejecuta periódicamente para limpiar cualquier notificación
-     * huérfana que pueda haber quedado en el DOM debido a race conditions o errores.
-     */
-    function limpiezaDefensivaPeriodica() {
-        try {
-            if (!elementos.contenedorNotificaciones) return;
-            
-            const notificacionesHuerfanas = Array.from(elementos.contenedorNotificaciones.children)
-                .filter(el => {
-                    const texto = el.textContent || '';
-                    return texto.includes('Reactivando en') || 
-                           texto.includes('Reactivando Auto Tap-Tap') ||
-                           texto.includes('Auto Tap-Tap pausado');
-                });
-            
-            if (notificacionesHuerfanas.length > 0) {
-                console.log(`🗑️ Limpieza defensiva: encontradas ${notificacionesHuerfanas.length} notificaciones huérfanas`);
-                
-                notificacionesHuerfanas.forEach((el, index) => {
-                    try {
-                        // Verificar si la notificación debería estar activa
-                        const texto = el.textContent || '';
-                        let deberiaEstarActiva = false;
-                        
-                        if (texto.includes('Reactivando en') && state.pausadoPorChat && timers.cuentaRegresiva) {
-                            // Esta notificación debería estar activa, no la toques
-                            if (state.notificacionCuentaRegresiva === el) {
-                                deberiaEstarActiva = true;
-                            }
-                        }
-                        
-                        if (!deberiaEstarActiva) {
-                            console.log(`🗑️ Removiendo notificación huérfana ${index + 1}: "${texto.substring(0, 50)}..."`);
-                            if (el.parentNode) {
-                                el.parentNode.removeChild(el);
-                            }
-                        }
-                    } catch (error) {
-                        console.warn(`Error removiendo notificación huérfana ${index}:`, error);
-                    }
-                });
-            }
-        } catch (error) {
-            console.warn('Error en limpieza defensiva periódica:', error);
+                enLive: false
+            }).catch(error => console.warn('Error al notificar estado:', error));
         }
-    }
-
-    // Configurar limpieza defensiva periódica cada 30 segundos
-    setInterval(limpiezaDefensivaPeriodica, 30000);
-
+    };
+    
     /**
      * =============================================================================
-     * PUNTO DE ENTRADA PRINCIPAL DE LA EXTENSIÓN
+     * MÓDULO DE RECONEXIÓN DE EXTENSIÓN
      * =============================================================================
      * 
-     * Esta es la llamada que inicia todo el proceso de la extensión. Se ejecuta
-     * inmediatamente después de que el script se inyecta en la página, y llama
-     * a la función init() para comenzar la inicialización.
+     * Gestiona la reconexión cuando el contexto se invalida
      */
-    init();
+    const ExtensionModule = {
+        /**
+         * Intenta reconectar la extensión
+         */
+        reload() {
+            console.log('🔄 Reconectando extensión...');
+            
+            if (!ContextModule.isOnTikTokLive()) {
+                console.warn('🚫 Reconexión cancelada: No estamos en un Live de TikTok');
+                NavigationModule.cleanupExtensionResources();
+                return;
+            }
+            
+            // Limpiar recursos actuales
+            if (StateModule.intervalo) clearInterval(StateModule.intervalo);
+            if (StateModule.chatTimeout) clearTimeout(StateModule.chatTimeout);
+            
+            let intentosReconexion = 0;
+            const maxIntentos = 3;
+            
+            const intentarReconexion = () => {
+                if (!ContextModule.isOnTikTokLive()) {
+                    console.warn('🚫 Reintento cancelado: Ya no estamos en un Live de TikTok');
+                    return;
+                }
+                
+                if (intentosReconexion >= maxIntentos) {
+                    console.warn('❌ Máximo de intentos de reconexión alcanzado, recargando página...');
+                    window.location.reload();
+                    return;
+                }
+                
+                intentosReconexion++;
+                console.log(`🔄 Intento de reconexión ${intentosReconexion}/${maxIntentos}...`);
+                
+                try {
+                    // Verificar contexto de extensión
+                    chrome.runtime.getURL('');
+                    
+                    // Restaurar estado si estaba activo
+                    if (StateModule.activo) {
+                        const intervalo = parseInt(UIModule.elementos.selector.value);
+                        StateModule.intervalo = setInterval(() => AutomationModule.presionarL(), intervalo);
+                        
+                        MessagingModule.sendMessage({ 
+                            action: 'started',
+                            contador: StateModule.contador,
+                            enTikTok: true,
+                            enLive: true
+                        }).catch(error => console.warn('Error al notificar inicio:', error));
+                    } else {
+                        MessagingModule.sendMessage({ 
+                            action: 'stopped',
+                            enTikTok: true,
+                            enLive: true
+                        }).catch(error => console.warn('Error al notificar parada:', error));
+                    }
+                    
+                    // Reconfigurar listeners
+                    MessagingModule.setupFullListener();
+                    
+                    // Sincronizar configuración
+                    StorageModule.get(['tiempoReactivacion']).then(result => {
+                        if (result.tiempoReactivacion) {
+                            StateModule.tiempoReactivacion = result.tiempoReactivacion;
+                            if (UIModule.elementos.reactivacionInput) {
+                                UIModule.elementos.reactivacionInput.value = result.tiempoReactivacion;
+                            }
+                        }
+                    });
+                    
+                    console.log('✅ Reconexión exitosa');
+                    
+                } catch (error) {
+                    console.warn(`❌ Error en intento ${intentosReconexion}:`, error);
+                    setTimeout(intentarReconexion, 1000 * intentosReconexion);
+                }
+            };
+            
+            intentarReconexion();
+        }
+    };
+    
+    /**
+     * =============================================================================
+     * MÓDULO DE INICIALIZACIÓN
+     * =============================================================================
+     * 
+     * Coordina la inicialización de todos los módulos
+     */
+    const InitModule = {
+        /**
+         * Función principal de inicialización
+         */
+        async init() {
+            console.log('🚀 Iniciando extensión Auto Tap-Tap TikTok...');
+            
+            // Fase 1: Crear interfaz
+            UIModule.crearInterfaz();
+            
+            // Fase 2: Restaurar estado persistente
+            try {
+                const result = await StorageModule.get([
+                    'intervalo',
+                    'totalTapTaps',
+                    'position',
+                    'tiempoReactivacion'
+                ]);
+                
+                if (result.intervalo) {
+                    UIModule.elementos.selector.value = result.intervalo;
+                }
+                
+                if (result.totalTapTaps) {
+                    StateModule.contador = result.totalTapTaps;
+                    UIModule.actualizarContador();
+                }
+                
+                if (result.position) {
+                    const { x, y } = result.position;
+                    StateModule.xOffset = x;
+                    StateModule.yOffset = y;
+                    UIModule.elementos.contenedor.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+                }
+                
+                if (result.tiempoReactivacion) {
+                    StateModule.tiempoReactivacion = result.tiempoReactivacion;
+                    UIModule.elementos.reactivacionInput.value = result.tiempoReactivacion;
+                }
+            } catch (error) {
+                console.warn('Error restaurando estado:', error);
+            }
+            
+            // Fase 3: Configurar event listeners
+            MessagingModule.setupFullListener();
+            
+            // Fase 4: Activar sistema de chat
+            ChatModule.manejarInteraccion();
+            
+            // Fase 5: Sistema de navegación
+            NavigationModule.configurar();
+            
+            // Fase 6: Notificar contexto inicial
+            const { enTikTok, enLive } = ContextModule.getCurrentContext();
+            console.log('🎯 Inicializando con contexto:', { enTikTok, enLive });
+            
+            MessagingModule.sendMessage({
+                action: 'updateContext',
+                enTikTok: enTikTok,
+                enLive: enLive
+            }).catch(error => {
+                console.warn('Error al notificar contexto inicial:', error);
+            });
+            
+            // Configurar limpieza defensiva periódica
+            setInterval(() => this.limpiezaDefensivaPeriodica(), 30000);
+            
+            console.log('✅ Extensión inicializada correctamente');
+        },
+        
+        /**
+         * Limpieza defensiva periódica
+         */
+        limpiezaDefensivaPeriodica() {
+            try {
+                if (!UIModule.elementos.contenedorNotificaciones) return;
+                
+                const notificacionesHuerfanas = Array.from(UIModule.elementos.contenedorNotificaciones.children)
+                    .filter(el => {
+                        const texto = el.textContent || '';
+                        return texto.includes('Reactivando en') || 
+                               texto.includes('Reactivando Auto Tap-Tap') ||
+                               texto.includes('Auto Tap-Tap pausado');
+                    });
+                
+                if (notificacionesHuerfanas.length > 0) {
+                    console.log(`🗑️ Limpieza defensiva: encontradas ${notificacionesHuerfanas.length} notificaciones huérfanas`);
+                    
+                    notificacionesHuerfanas.forEach((el, index) => {
+                        try {
+                            const texto = el.textContent || '';
+                            let deberiaEstarActiva = false;
+                            
+                            if (texto.includes('Reactivando en') && StateModule.pausadoPorChat && TimerModule.timers.cuentaRegresiva) {
+                                if (StateModule.notificacionCuentaRegresiva === el) {
+                                    deberiaEstarActiva = true;
+                                }
+                            }
+                            
+                            if (!deberiaEstarActiva) {
+                                console.log(`🗑️ Removiendo notificación huérfana ${index + 1}: "${texto.substring(0, 50)}..."`);
+                                if (el.parentNode) {
+                                    el.parentNode.removeChild(el);
+                                }
+                            }
+                        } catch (error) {
+                            console.warn(`Error removiendo notificación huérfana ${index}:`, error);
+                        }
+                    });
+                }
+            } catch (error) {
+                console.warn('Error en limpieza defensiva periódica:', error);
+            }
+        }
+    };
+    
+    /**
+     * =============================================================================
+     * PUNTO DE ENTRADA PRINCIPAL
+     * =============================================================================
+     */
+    
+    // Verificar si ya está inyectada
+    if (ContextModule.isAlreadyInjected()) {
+        console.log('⚠️ La extensión ya está inyectada, saliendo...');
+        return;
+    }
+    
+    // Verificar contexto inicial
+    const { enTikTok, enLive } = ContextModule.getCurrentContext();
+    
+    console.log('🔍 Analizando URL:', {
+        href: window.location.href,
+        pathname: window.location.pathname,
+        search: window.location.search,
+        enTikTok,
+        enLive
+    });
+    
+    if (!enLive) {
+        console.log('ℹ️ Extensión en modo básico: Solo responderá a mensajes del popup');
+        console.log('🔧 Configurando listener básico...');
+        
+        try {
+            MessagingModule.setupBasicListener();
+            console.log('✅ Listener básico configurado correctamente');
+        } catch (error) {
+            console.error('❌ Error al configurar listener básico:', error);
+        }
+        return;
+    }
+    
+    console.log('✅ Extensión en modo completo: Estamos en un Live de TikTok');
+    
+    // Inicializar extensión completa
+    InitModule.init();
 
-// ========================================================================================
-// 🏁 FIN DEL IIFE (Immediately Invoked Function Expression)
-// ========================================================================================
-
-/**
- * CIERRE DEL CONTEXTO ENCAPSULADO
- * 
- * El paréntesis final cierra la función auto-ejecutable que encapsula todo
- * el código de la extensión. Esto mantiene el scope global limpio y previene
- * conflictos con otros scripts que puedan estar ejecutándose en TikTok.
- * 
- * BENEFICIOS DEL ENCAPSULAMIENTO:
- * - Previene contaminación del scope global
- * - Evita conflictos de variables con otros scripts
- * - Permite uso de 'strict mode' de manera aislada
- * - Facilita debugging y mantenimiento del código
- */
 })();
