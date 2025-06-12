@@ -82,7 +82,7 @@ Consulta la carpeta `/Documentation/` para:
 
 ### 🎖️ **Certificación Final**
 **🏅 ESTADO**: **PROYECTO COMPLETADO EXITOSAMENTE**  
-**📅 DESARROLLO**: Diciembre 2024 - Diciembre 2025  
+**📅 DESARROLLO**: Junio 2025 - Junio 2025  
 **🚀 READY FOR PRODUCTION**: ✅ **CERTIFICADO**
 
 ## ⚖️ Copyright
