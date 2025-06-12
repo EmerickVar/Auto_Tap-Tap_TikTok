@@ -78,6 +78,8 @@ verificar_archivos_esenciales() {
         "ejecutar_test_app.sh"
         "optimizar_testing.sh"
         "test_app.js"
+        "setup_testing.sh"
+        "README.md"
     )
     
     local todos_presentes=true

@@ -60,10 +60,6 @@ verificar_estructura() {
         "popup.html"
         "popup.css"
         "popup.js"
-        "../icons/icono_16.png"
-        "../icons/icono_48.png"
-        "../icons/icono_96.png"
-        "../icons/icono_128.png"
     )
     
     echo -e "${CYAN}📋 Verificando archivos de extensión:${NC}"
@@ -79,10 +75,10 @@ verificar_estructura() {
     
     # Verificar archivos de testing
     local archivos_testing=(
-        "ejecutar_test_app.sh"
-        "optimizar_testing.sh"
-        "test_app.js"
         "setup_testing.sh"
+        "optimizar_testing.sh"
+        "ejecutar_test_app.sh"
+        "test_app.js"
         "README.md"
     )
     

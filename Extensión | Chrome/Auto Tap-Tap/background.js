@@ -24,7 +24,7 @@
  * - tiempoReactivacion: Tiempo en segundos para reactivar automatización
  * 
  * @author Emerick Echeverría Vargas
- * @version 1.0
+ * @version 1.1.2 LTS
  * @description Service Worker para gestión de estado y comunicación
  */
 
@@ -350,9 +350,9 @@ chrome.runtime.onInstalled.addListener(() => {
             chrome.storage.local.set({ totalTapTaps: 0 });
         }
         
-        // Verifica si tiempoReactivacion existe, si no, lo inicializa en 10 segundos
+        // Verifica si tiempoReactivacion existe, si no, lo inicializa en 5 segundos
         if (!result.tiempoReactivacion) {
-            chrome.storage.local.set({ tiempoReactivacion: 10 });
+            chrome.storage.local.set({ tiempoReactivacion: 5 });
         }
     });
     
@@ -576,6 +576,35 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             console.log('🎉 Auto Tap-Tap reactivado desde chat');
             const reactivatedCount = request.contador || 0;
             updateBadge(reactivatedCount, true, true); // enTikTok=true, enLive=true
+            sendResponse({ success: true });
+            break;
+
+        // ====================================================================
+        case 'tiempoReactivacionChanged':
+            /**
+             * Maneja notificación de cambio en el tiempo de reactivación
+             * 
+             * PROPÓSITO:
+             * Cuando el usuario cambia el tiempo de reactivación desde el div flotante,
+             * este mensaje se reenvía a todos los popups abiertos para mantener
+             * la sincronización entre interfaces.
+             * 
+             * DATOS DE REQUEST ESPERADOS:
+             * - tiempo: Nuevo tiempo de reactivación en segundos (5-60)
+             */
+            console.log('⚙️ Tiempo de reactivación cambiado:', request.tiempo);
+            
+            // Reenviar el mensaje a todos los popups abiertos para sincronizar
+            chrome.runtime.sendMessage({
+                action: 'tiempoReactivacionChanged',
+                tiempo: request.tiempo
+            }, () => {
+                // Ignorar errores si no hay popup abierto
+                if (chrome.runtime.lastError) {
+                    console.log('No hay popup abierto para sincronizar');
+                }
+            });
+            
             sendResponse({ success: true });
             break;
 

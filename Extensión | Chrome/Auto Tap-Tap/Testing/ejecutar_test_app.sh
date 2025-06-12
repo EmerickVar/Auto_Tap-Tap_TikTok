@@ -259,6 +259,8 @@ limpiar_archivos_extra() {
         "ejecutar_test_app.sh"
         "optimizar_testing.sh"
         "test_app.js"
+        "setup_testing.sh"
+        "README.md"
     )
     
     # Buscar archivos extra en el directorio de testing

@@ -59,7 +59,7 @@
  * │ CARACTERÍSTICAS PRINCIPALES                                             │
  * ├─────────────────────────────────────────────────────────────────────────┤
  * │                                                                         │
- * │ ⚡️ VELOCIDADES CONFIGURABLES:                                           │
+ * │ ⚡️️ VELOCIDADES CONFIGURABLES:                                           │
  * │    • Modo Humano (Variable/Aleatorio)                                   │
  * │    • 200ms (Muy rápido)                                                 │
  * │    • 250ms (Rápido)                                                     │
@@ -67,9 +67,9 @@
  * │    • 1000ms (Lento)                                                     │
  * │                                                                         │
  * │ 🤖 MODO HUMANO AVANZADO:                                                │
- * │    • Sesiones de actividad con duración variable (15-45s)               │
- * │    • Cooldowns realistas entre sesiones (5-20s)                         │
- * │    • Frecuencia de tap-taps variable dentro de sesiones                 │
+ * │    • Sesiones de actividad con duración variable (27.5-783.5s)          │
+ * │    • Cooldowns realistas entre sesiones (3.5-9.3s)                      │
+ * │    • Frecuencia de tap-taps variable dentro de sesiones (200-485ms)     │
  * │    • Comportamiento completamente aleatorio y natural                   │
  * │                                                                         │
  * │ 💬 INTEGRACIÓN CON CHAT:                                                │
@@ -198,7 +198,7 @@
          * 3. Aplicar patrón regex específico para Live streams
          * 4. Retornar resultado de la validación
          * 
-         * @regex-pattern /^\/@[^\/]+\/live(?:\/[^?]*)?$/
+         * @regex_pattern /^\/@[^\/]+\/live(?:\/[^?]*)?$/
          * - ^           : Inicio de string
          * - \/@         : Literal "/@" 
          * - [^\/]+      : Uno o más caracteres que no sean "/"
@@ -348,7 +348,7 @@
      * │                                                                         │
      * └─────────────────────────────────────────────────────────────────────────┘
      * 
-     * @data-integrity
+     * @data_integrity
      * • Estado inmutable donde sea posible
      * • Validación de tipos en propiedades críticas
      * • Valores por defecto seguros
@@ -463,11 +463,11 @@
         /**
          * @property {number} tiempoReactivacion
          * @description Tiempo en segundos para reactivación automática tras chat.
-         * @default 10
-         * @range 10-60 segundos
+         * @default 5
+         * @range 5-60 segundos
          * @configurable Usuario puede modificar desde interfaz
          */
-        tiempoReactivacion: 10,
+        tiempoReactivacion: 5,
         
         /**
          * @property {boolean} pausadoPorChat
@@ -519,7 +519,7 @@
          * 
          * @property {number} modoHumano.frecuenciaSesion
          * @description Duración en ms de una sesión activa de modo humano.
-         * @range 27500-78350 ms (27.5-78.35 segundos)
+         * @range 27500-783500 ms (27.5-783.5 segundos)
          * @random Se genera aleatoriamente en cada sesión
          * 
          * @property {number} modoHumano.frecuenciaTapTap
@@ -644,7 +644,7 @@
      * • Gestión de lifecycle consistente
      * • Prevención de timers duplicados
      * 
-     * @timer-categories
+     * @timer_categories
      * ┌─────────────────────────────────────────────────────────────────────────┐
      * │ CATEGORÍAS DE TIMERS                                                    │
      * ├─────────────────────────────────────────────────────────────────────────┤
@@ -662,7 +662,7 @@
      * Utiliza un Map central para rastrear todos los timers por categoría,
      * permitiendo limpieza selectiva o total según las necesidades.
      * 
-     * @thread-safety
+     * @thread_safety
      * • Operaciones atómicas para evitar race conditions
      * • Validación de existencia antes de cleanup
      * • Manejo seguro de IDs nulos o inválidos
@@ -747,7 +747,7 @@
          * • Múltiples llamadas son seguras (operaciones idempotentes)
          * • No lanza excepciones por timers ya limpiados
          * 
-         * @side-effects
+         * @side_effects
          * • Detiene todos los timers activos inmediatamente
          * • Puede interrumpir operaciones en progreso
          * • Limpia referencias en StateModule.modoHumano
@@ -760,7 +760,7 @@
          * • Invocado durante shutdown completo
          * 
          * @performance O(n) donde n = número de categorías de timers
-         * @thread-safety Thread-safe para operaciones de cleanup
+         * @thread_safety Thread-safe para operaciones de cleanup
          */
         cleanupAll() {
             console.log('🧹 Ejecutando cleanup completo de timers...');
@@ -809,7 +809,7 @@
      * • Logging detallado para debugging
      * • Fallbacks seguros en caso de fallos
      * 
-     * @error-handling
+     * @error_handling
      * ┌─────────────────────────────────────────────────────────────────────────┐
      * │ TIPOS DE ERRORES MANEJADOS                                              │
      * ├─────────────────────────────────────────────────────────────────────────┤
@@ -831,13 +831,13 @@
      * │                                                                         │
      * └─────────────────────────────────────────────────────────────────────────┘
      * 
-     * @storage-keys
+     * @storage_keys
      * • intervalo: Velocidad seleccionada (200, 250, 500, 1000, 0)
      * • totalTapTaps: Contador total de tap-taps
      * • position: {x, y} Posición de la interfaz flotante
      * • tiempoReactivacion: Segundos para reactivación tras chat
      * 
-     * @api-wrapper
+     * @api_wrapper
      * Este módulo actúa como wrapper de chrome.storage.local proporcionando:
      * • Promesas en lugar de callbacks
      * • Validación automática de contexto
@@ -861,7 +861,7 @@
          * contexto válido (TikTok Live) para evitar operaciones innecesarias
          * o problemáticas en páginas incorrectas.
          * 
-         * @error-recovery
+         * @error_recovery
          * Si detecta errores específicos del contexto de extensión invalidado,
          * automáticamente activa el sistema de reconexión a través de
          * ExtensionModule.reload().
@@ -910,7 +910,7 @@
          * proporcionando una interfaz moderna de Promesas para el resto
          * de la aplicación.
          * 
-         * @error-handling
+         * @error_handling
          * • Verifica chrome.runtime.lastError después de la operación
          * • Rechaza la promesa si hay errores
          * • Resuelve sin valor si la operación es exitosa
@@ -955,7 +955,7 @@
          * Convierte la API de callback de Chrome en una Promise moderna,
          * facilitando el uso con async/await en el resto de la aplicación.
          * 
-         * @fallback-behavior
+         * @fallback_behavior
          * Si una clave no existe en el almacenamiento, Chrome Storage devuelve
          * un objeto vacío para esa clave. Este comportamiento se mantiene
          * para consistencia con la API nativa.
@@ -974,7 +974,7 @@
          * • Recuperación batch de múltiples claves
          * • Almacenamiento local (acceso rápido)
          * 
-         * @error-propagation
+         * @error_propagation
          * Los errores se propagan hacia arriba para ser manejados por el
          * código que llama, permitiendo decisiones contextuales sobre
          * cómo manejar fallos de recuperación.
@@ -1041,7 +1041,7 @@
      * • updateReactivationTime: { tiempo } → Cambia tiempo de reactivación
      * • updateTapTaps: { count } → Sincroniza contador
      * 
-     * @error-handling
+     * @error_handling
      * • Extension context invalidated → ExtensionModule.reload()
      * • Message channel closed → Reconexión automática
      * • CORS policy errors → Ignorar silenciosamente
@@ -1084,7 +1084,7 @@
          * 5. Procesar respuesta y validar formato
          * 6. Resolver/rechazar promesa según resultado
          * 
-         * @error-recovery
+         * @error_recovery
          * EXTENSION CONTEXT INVALIDATED:
          * • Activa ExtensionModule.reload() automáticamente
          * • Intenta reconectar la extensión
@@ -1122,7 +1122,7 @@
          * • Validación temprana evita llamadas innecesarias
          * • Manejo eficiente de errores comunes
          * 
-         * @thread-safety
+         * @thread_safety
          * Cada llamada es independiente con su propio timeout y error handling.
          * No hay estado compartido que pueda causar race conditions.
          */
@@ -1223,7 +1223,7 @@
          * {
          *   activo: false,
          *   contador: 0,
-         *   tiempoReactivacion: 10,
+         *   tiempoReactivacion: 5,
          *   pausadoPorChat: false,
          *   enTikTok: true,
          *   enLive: false
@@ -1234,7 +1234,7 @@
          *   error: 'Funcionalidad no disponible. Ve a una página Live de TikTok.'
          * }
          * 
-         * @error-handling
+         * @error_handling
          * • Try-catch completo para prevenir fallos
          * • Respuestas de error descriptivas
          * • Logging detallado para debugging
@@ -1247,7 +1247,7 @@
         setupBasicListener() {
             console.log('🔧 Configurando sistema de mensajería básico...');
             
-            const basicMessageListener = (request, sender, sendResponse) => {
+            const basicMessageListener = (request, _sender, sendResponse) => {
                 try {
                     if (request.action === 'getStatus') {
                         console.log('📡 Popup consultó estado - Respondiendo con estado inactivo (página TikTok no-Live)');
@@ -1255,7 +1255,7 @@
                         sendResponse({
                             activo: false,
                             contador: 0,
-                            tiempoReactivacion: 10,
+                            tiempoReactivacion: 5,
                             pausadoPorChat: false,
                             enTikTok: true,
                             enLive: false
@@ -1298,19 +1298,19 @@
          * el funcionamiento normal de la extensión en páginas Live, incluyendo
          * consultas de estado, comandos de control y sincronización de datos.
          * 
-         * @message-handling
+         * @message_handling
          * ┌─────────────────────────────────────────────────────────────────────────┐
          * │ ACCIONES SOPORTADAS                                                     │
          * ├─────────────────────────────────────────────────────────────────────────┤
          * │                                                                         │
          * │ getStatus               → Estado completo actual                        │
          * │ toggle                  → Activar/desactivar automatización             │
-         * │ updateReactivationTime  → Cambiar tiempo de reactivación (10-60s)       │
+         * │ updateReactivationTime  → Cambiar tiempo de reactivación (5-60s)       │
          * │ updateTapTaps          → Sincronizar contador de tap-taps               │
          * │                                                                         │
          * └─────────────────────────────────────────────────────────────────────────┘
          * 
-         * @state-synchronization
+         * @state_synchronization
          * getStatus devuelve el estado completo:
          * {
          *   activo: boolean,           // Si automatización está activa
@@ -1326,7 +1326,7 @@
          * • updateTapTaps: valida que count sea number válido
          * • toggle: sin validación adicional (delegado a AutomationModule)
          * 
-         * @error-handling
+         * @error_handling
          * • Try-catch completo alrededor de todo el procesamiento
          * • Respuestas de error específicas para cada validación
          * • Logging detallado para debugging
@@ -1351,7 +1351,7 @@
                 chrome.runtime.onMessage.removeListener(this.messageListener);
             }
             
-            this.messageListener = (request, sender, sendResponse) => {
+            this.messageListener = (request, _sender, sendResponse) => {
                 try {
                     console.log('📨 Mensaje recibido:', request);
                     
@@ -1373,7 +1373,7 @@
                             break;
                             
                         case 'updateReactivationTime':
-                            if (request.tiempo && request.tiempo >= 10 && request.tiempo <= 60) {
+                            if (request.tiempo && request.tiempo >= 5 && request.tiempo <= 60) {
                                 StateModule.tiempoReactivacion = request.tiempo;
                                 if (UIModule.elementos.reactivacionInput) {
                                     UIModule.elementos.reactivacionInput.value = request.tiempo;
@@ -1636,7 +1636,7 @@
         generarVariables() {
             console.log('🎲 Generando nuevas variables aleatorias para modo humano...');
             
-            StateModule.modoHumano.frecuenciaSesion = Math.floor(Math.random() * (78350 - 27500 + 1)) + 27500;
+            StateModule.modoHumano.frecuenciaSesion = Math.floor(Math.random() * (783500 - 27500 + 1)) + 27500;
             StateModule.modoHumano.frecuenciaTapTap = Math.floor(Math.random() * (485 - 200 + 1)) + 200;
             StateModule.modoHumano.cooldownSesion = Math.floor(Math.random() * (9295 - 3565 + 1)) + 3565;
             
@@ -1670,12 +1670,27 @@
             NotificationModule.agregar(
                 `🤖 Modo Humano: Sesión activa por ${(StateModule.modoHumano.frecuenciaSesion / 1000).toFixed(1)}s`, 
                 'info', 
-                3000
+                5000 // Duración de la notificación
             );
         },
         
         /**
-         * Finaliza la sesión y comienza el cooldown
+         * Finaliza una sesión del modo humano e inicia un período de cooldown.
+         * 
+         * Este método detiene todos los intervalos y timers activos relacionados con la sesión del modo humano,
+         * actualiza el estado de la sesión a inactivo, e inicia un timer de cooldown. Después de que expire
+         * el período de cooldown, intentará iniciar una nueva sesión si se cumplen todas las condiciones.
+         * 
+         * El método realiza las siguientes acciones:
+         * - Limpia el intervalo principal si está activo
+         * - Limpia el timer de sesión del modo humano
+         * - Establece el estado de la sesión como inactiva
+         * - Calcula y establece el tiempo de cooldown restante
+         * - Inicia un timer de cooldown que activará una nueva sesión al completarse
+         * - Muestra una notificación sobre el período de cooldown
+         * 
+         * @memberof ModoHumanoModule
+         * @returns {void}
          */
         finalizarSesion() {
             console.log('🛑 Finalizando sesión de modo humano...');
@@ -1698,9 +1713,17 @@
             
             TimerModule.timers.modoHumanoCooldown = setTimeout(() => {
                 console.log('🔄 Cooldown completado, regenerando variables...');
-                if (StateModule.modoHumano.activo && !StateModule.modoHumano.pausadoPorChat && !StateModule.apagadoManualmente) {
+                // CORRECCIÓN: Verificar condiciones más específicas para Modo Humano
+                if (StateModule.modoHumano.activo && !StateModule.modoHumano.pausadoPorChat && !StateModule.apagadoManualmente && StateModule.activo) {
                     this.generarVariables();
                     this.iniciarSesion();
+                } else {
+                    console.log('⚠️ Condiciones no cumplidas para nueva sesión:', {
+                        modoHumanoActivo: StateModule.modoHumano.activo,
+                        pausadoPorChat: StateModule.modoHumano.pausadoPorChat,
+                        apagadoManualmente: StateModule.apagadoManualmente,
+                        sistemaActivo: StateModule.activo
+                    });
                 }
             }, StateModule.modoHumano.cooldownSesion);
             
@@ -1763,9 +1786,17 @@
                 
                 TimerModule.timers.modoHumanoCooldown = setTimeout(() => {
                     console.log('🔄 Cooldown completado tras reanudar, regenerando variables...');
-                    if (StateModule.modoHumano.activo && !StateModule.modoHumano.pausadoPorChat && !StateModule.apagadoManualmente) {
+                    // CORRECCIÓN: Verificar condiciones más específicas para Modo Humano
+                    if (StateModule.modoHumano.activo && !StateModule.modoHumano.pausadoPorChat && !StateModule.apagadoManualmente && StateModule.activo) {
                         this.generarVariables();
                         this.iniciarSesion();
+                    } else {
+                        console.log('⚠️ Condiciones no cumplidas para reiniciar sesión:', {
+                            modoHumanoActivo: StateModule.modoHumano.activo,
+                            pausadoPorChat: StateModule.modoHumano.pausadoPorChat,
+                            apagadoManualmente: StateModule.apagadoManualmente,
+                            sistemaActivo: StateModule.activo
+                        });
                     }
                 }, StateModule.modoHumano.tiempoCooldownRestante);
             }
@@ -1972,7 +2003,8 @@
                     clearTimeout(this.inactivityTimer);
                 }
 
-                if (StateModule.pausadoPorChat && !chatInput.textContent.trim()) {
+                // CORRECCIÓN: Verificar que el sistema esté activo además de pausado por chat
+                if (StateModule.pausadoPorChat && StateModule.activo && !chatInput.textContent.trim()) {
                     this.inactivityTimer = setTimeout(() => {
                         console.log('⏳ Inactividad detectada en chat vacío');
                         NotificationModule.mostrarCuentaRegresiva(`⏳ Reactivando en ${StateModule.tiempoReactivacion}s...`);
@@ -2041,7 +2073,7 @@
                     apagadoManualmente: StateModule.apagadoManualmente
                 });
 
-                if (!chatContainer.contains(e.target) && StateModule.pausadoPorChat && !StateModule.apagadoManualmente) {
+                if (!chatContainer.contains(e.target) && StateModule.pausadoPorChat && StateModule.activo && !StateModule.apagadoManualmente) {
                     console.log('🎯 Click fuera del chat detectado - Iniciando cuenta regresiva');
                     
                     if (!TimerModule.timers.cuentaRegresiva) {
@@ -2196,27 +2228,27 @@
             const estilos = {
                 success: {
                     background: 'rgba(14, 79, 2, 0.95)',
-                    color: '#fff',
-                    border: '1px solid rgb(24, 80, 2)',
+                    color: 'rgb(255, 255, 255)',
+                    border: '1px solid rgba(24, 80, 2, 0.3)',
                     boxShadow: '0 2px 8px rgba(66, 224, 4, 0.2)'
                 },
                 warning: {
                     background: 'rgba(255, 0, 80, 0.95)',
-                    color: '#fff',
-                    border: '1px solid #ff0050',
+                    color: 'rgb(255, 255, 255)',
+                    border: '1px solid rgba(255, 0, 80, 0.3)',
                     boxShadow: '0 2px 8px rgba(255, 0, 80, 0.2)'
                 },
                 info: {
-                    background: 'rgba(0, 0, 0, 0.95)',
-                    color: '#fff',
-                    border: '1px solid #666',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+                    background: 'rgba(0, 242, 234, 0.95)',
+                    color: 'rgb(255, 255, 255)',
+                    border: '1px solid rgba(0, 242, 234, 0.3)',
+                    boxShadow: '0 2px 8px rgba(0, 242, 234, 0.2)'
                 },
                 countdown: {
-                    background: 'rgba(255, 165, 0, 0.95)',
-                    color: '#fff',
-                    border: '1px solid #ff8c00',
-                    boxShadow: '0 2px 8px rgba(255, 165, 0, 0.3)'
+                    background: 'rgba(0, 0, 0, 0.95)',
+                    color: 'rgba(66, 152, 4, 1)',
+                    border: '1px solid rgba(0, 0, 0, 0.3)',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
                 }
             };
             
@@ -2281,7 +2313,7 @@
         mostrarCuentaRegresiva(mensajeInicial) {
             console.log(`🚀 Iniciando mostrarCuentaRegresiva: "${mensajeInicial}"`);
             
-            if (!StateModule.pausadoPorChat || StateModule.apagadoManualmente || StateModule.activo) {
+            if (!StateModule.pausadoPorChat || StateModule.apagadoManualmente || !StateModule.activo) {
                 console.log('⚠️ Condiciones no válidas para cuenta regresiva');
                 console.log('Estado actual:', {
                     pausadoPorChat: StateModule.pausadoPorChat,
@@ -2348,22 +2380,28 @@
             StateModule.limpiarCuentaRegresiva = limpiarCuentaRegresiva;
             
             TimerModule.timers.cuentaRegresiva = setInterval(() => {
-                if (!StateModule.pausadoPorChat || StateModule.apagadoManualmente || StateModule.activo) {
+                if (!StateModule.pausadoPorChat || StateModule.apagadoManualmente || !StateModule.activo) {
                     console.log('⚠️ Cancelando cuenta regresiva - estado cambió');
                     limpiarCuentaRegresiva();
                     return;
                 }
                 
-                tiempoRestante--;
+                tiempoRestante--; // Decrementar cada 1 segundo
                 
                 if (tiempoRestante > 0) {
                     if (StateModule.notificacionCuentaRegresiva && StateModule.notificacionCuentaRegresiva.parentNode) {
                         StateModule.notificacionCuentaRegresiva.textContent = `⏳ Reactivando en ${tiempoRestante}s...`;
                         
-                        if (tiempoRestante <= 3) {
-                            StateModule.notificacionCuentaRegresiva.style.color = '#ffff00';
-                        } else {
-                            StateModule.notificacionCuentaRegresiva.style.color = '#ff8c00';
+                        // Calcular umbrales para mejor legibilidad
+                        const dosTercios = Math.floor(StateModule.tiempoReactivacion * (2/3));
+                        const unTercio = Math.floor(StateModule.tiempoReactivacion * (1/3));
+                        
+                        if (tiempoRestante > dosTercios) { // Por encima de 2/3 del tiempo total
+                            StateModule.notificacionCuentaRegresiva.style.color = 'rgba(66, 152, 4, 1)'; // Verde intenso
+                        } else if (tiempoRestante > unTercio && tiempoRestante <= dosTercios) { // Entre 1/3 y 2/3 del tiempo total
+                            StateModule.notificacionCuentaRegresiva.style.color = 'rgba(255, 140, 0, 1)'; // Naranja intenso
+                        } else if (tiempoRestante <= unTercio) { // Por debajo de 1/3 del tiempo total
+                            StateModule.notificacionCuentaRegresiva.style.color = 'rgba(104, 4, 37, 1)'; // Rojo intenso
                         }
                     }
                 } else {
@@ -2373,7 +2411,7 @@
                     ChatModule.reactivarAutoTapTap(true);
                     limpiarCuentaRegresiva();
                 }
-            }, 1000);
+            }, 1000); // Actualización cada 1 segundo
         },
         
         /**
@@ -2532,7 +2570,7 @@
                 width: 280px;
                 background: rgba(0, 0, 0, 0.95);
                 color: white;
-                border-                radius: 12px;
+                border-radius: 12px;
                 box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
                 z-index: 999999;
                 font-family: Arial, sans-serif;
@@ -2580,6 +2618,7 @@
             
             // Crear contenido principal
             const contenidoPrincipal = document.createElement('div');
+            contenidoPrincipal.id = 'contenidoPrincipal';
             contenidoPrincipal.style.cssText = `padding: 15px;`;
             
             // Crear elementos individuales
@@ -2607,6 +2646,7 @@
             
             // Ensamblar elementos
             this.elementos.contenedor.appendChild(this.elementos.barraArrastre);
+            this.elementos.contenedorPrincipal = contenidoPrincipal;
             this.elementos.contenedor.appendChild(contenidoPrincipal);
             this.elementos.contenedor.appendChild(this.elementos.contenedorNotificaciones);
             
@@ -2652,7 +2692,7 @@
             selectorContainer.style.cssText = `margin-bottom: 15px;`;
             
             this.elementos.selectorLabel = document.createElement('label');
-            this.elementos.selectorLabel.textContent = '⚡️ Velocidad:';
+            this.elementos.selectorLabel.textContent = '⚡️️ Velocidad:';
             this.elementos.selectorLabel.style.cssText = `
                 display: block;
                 margin-bottom: 8px;
@@ -2787,7 +2827,7 @@
             
             this.elementos.reactivacionInput = document.createElement('input');
             this.elementos.reactivacionInput.type = 'number';
-            this.elementos.reactivacionInput.min = '10';
+            this.elementos.reactivacionInput.min = '5';
             this.elementos.reactivacionInput.max = '60';
             this.elementos.reactivacionInput.value = '10';
             this.elementos.reactivacionInput.style.cssText = `
@@ -2881,30 +2921,36 @@
             
             // Input de reactivación
             this.elementos.reactivacionInput.addEventListener('change', () => {
-                const nuevoTiempo = parseInt(this.elementos.reactivacionInput.value);
-                if (nuevoTiempo >= 10 && nuevoTiempo <= 60) {
+                let nuevoTiempo = parseInt(this.elementos.reactivacionInput.value);
+                
+                // Validar y corregir valores fuera de rango
+                if (isNaN(nuevoTiempo) || nuevoTiempo < 5) nuevoTiempo = 5;
+                if (nuevoTiempo > 60) nuevoTiempo = 60;
+                
+                // Actualizar input con valor corregido
+                this.elementos.reactivacionInput.value = nuevoTiempo;
+                
+                if (nuevoTiempo >= 5 && nuevoTiempo <= 60) {
                     StateModule.tiempoReactivacion = nuevoTiempo;
                     StorageModule.save({ tiempoReactivacion: nuevoTiempo });
+                    
+                    // Notificar al background script para que sincronice con el popup
+                    MessagingModule.sendMessage({
+                        action: 'tiempoReactivacionChanged',
+                        tiempo: nuevoTiempo
+                    }).catch(error => console.warn('Error notificando cambio de tiempo:', error));
                 }
             });
             
             // Botón minimizar
             this.elementos.botonMinimizar.addEventListener('click', () => {
-                const controles = [
-                    this.elementos.boton,
-                    this.elementos.selectorLabel,
-                    this.elementos.selector,
-                    this.elementos.contadorDiv,
-                    this.elementos.botonReset,
-                    this.elementos.configDiv,
-                    this.elementos.copyrightDiv
-                ];
+                // Verificar si el contenido principal está minimizado
+                const isMinimized = this.elementos.contenedorPrincipal.style.display === 'none';
                 
-                const isMinimized = this.elementos.boton.style.display === 'none';
-                controles.forEach(el => {
-                    if (el) el.style.display = isMinimized ? 'block' : 'none';
-                });
+                // Alternar visibilidad del contenido principal
+                this.elementos.contenedorPrincipal.style.display = isMinimized ? 'block' : 'none';
                 
+                // Cambiar el texto del botón minimizar
                 this.elementos.botonMinimizar.textContent = isMinimized ? '−' : '+';
             });
             
@@ -3201,7 +3247,7 @@
                     // Restaurar estado si estaba activo
                     if (StateModule.activo) {
                         const intervalo = parseInt(UIModule.elementos.selector.value);
-                        StateModule.intervalo = setInterval(() => AutomationModule.presionarL(), intervalo);
+                        StateModule.intervalo = IntervalModule.create(() => AutomationModule.presionarL(), intervalo);
                         
                         MessagingModule.sendMessage({ 
                             action: 'started',

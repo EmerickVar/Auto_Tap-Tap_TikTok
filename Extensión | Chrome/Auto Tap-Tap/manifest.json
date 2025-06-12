@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "TikTok | Auto Tap-Tap",
-  "version": "1.0.0",
+  "version": "1.1.2",
   "description": "Automatiza los tap-taps en TikTok con la tecla L para la versión web. | By: @EmerickVar [New Age Coding Organization]",
   "author": "Emerick Echeverría Vargas",
   "permissions": [

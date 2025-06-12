@@ -48,7 +48,7 @@
 ║  👨‍💻 INFORMACIÓN DEL DESARROLLADOR:                                                                                                                                    ║
 ║      • AUTOR: Emerick Echeverría Vargas (@EmerickVar)                                                                                                                  ║
 ║      • ORGANIZACIÓN: New Age Coding Organization                                                                                                                       ║
-║      • VERSIÓN: 1.0.0 (Junio 2025)                                                                                                                                     ║
+║      • VERSIÓN: 1.1.2 LTS (Junio 2025)                                                                                                                                     ║
 ║      • COMPATIBILIDAD: Chrome Extension Manifest V3, ES6+, Async/Await                                                                                                ║
 ║                                                                                                                                                                          ║
 ╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
@@ -344,13 +344,13 @@ document.addEventListener('DOMContentLoaded', () => {
     la configuración entre el popup y el content script.
     
     FUNCIONALIDAD:
-    1. Valida que el valor esté en rango permitido (10-60 segundos)
+    1. Valida que el valor esté en rango permitido (5-60 segundos)
     2. Guarda configuración en chrome.storage.local
     3. Envía nueva configuración al content script
     4. Mantiene sincronización bidireccional de settings
     
     VALIDACIONES:
-    - Mínimo: 10 segundos (evita spam excesivo)
+    - Mínimo: 5 segundos (permite reactivación más rápida)
     - Máximo: 60 segundos (evita inactividad prolongada)
     - Auto-corrección de valores fuera de rango
     */
@@ -359,7 +359,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let tiempo = parseInt(elementos.chatReactivationTime.value);
         
         // 🔧 Corregir valores inválidos o fuera de rango
-        if (isNaN(tiempo) || tiempo < 10) tiempo = 10;  // Mínimo 10 segundos
+        if (isNaN(tiempo) || tiempo < 5) tiempo = 5;    // Mínimo 5 segundos
         if (tiempo > 60) tiempo = 60;                   // Máximo 60 segundos
         
         // 🎯 Actualizar input con valor corregido
@@ -398,7 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     /* 
     ================================================================================
-    ⚡ INICIALIZACIÓN Y CONFIGURACIÓN INICIAL DEL POPUP
+    ⚡️ INICIALIZACIÓN Y CONFIGURACIÓN INICIAL DEL POPUP
     ================================================================================
     Secuencia de inicialización que prepara el popup con configuraciones
     guardadas y establece el sistema de actualización continua
